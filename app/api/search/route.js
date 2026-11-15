@@ -148,15 +148,18 @@ async function handleSearch(body, req) {
   // Cache yoxla (freshness/exclude də key-də olmalıdır - səhv nəticə qaytarılmasın)
   const cKey = cacheKey("search", { q: query.toLowerCase(), n: maxResults, c: maxChars, v: FILTER_VERSION, f: freshness || "", x: excludeDomains.join(",") });
   const cached = await cacheGet(cKey);
-  // v13 P7 (audit fix): jsonl da cache oxuyur — yazma tərəfi VƏ YALNIZ json-dır
-  // (skipFetch/snippet-only yarımçıq nəticə cache-ə yazılmır), yəni cache-də
-  // HƏMİŞƏ tam məzmun var, "zəhərlənmə" dövrü bitib. simple miss qalır
-  // (render ucuzdur, cache faydası kiçik).
-  if (cached && format !== "simple") {
+  // v13 P7 + v13.1 (audit fix): BÜTÜN formatlar cache oxuyur — yazma tərəfi də
+  // artıq format-dan asılı deyil (aşağıda). "Zəhərlənmə" dövrü (simple/jsonl
+  // yarımçıq/snippet-only nəticənin cache-a düşməsi) skipFetch/boş/time qorumaları
+  // ilə bitdi: cache-də HƏMİŞƏ tam məzmun var, responseObj format-dan asılıdır.
+  if (cached) {
     const obj = { ...cached, meta: { ...cached.meta, cached: true, took_ms: Date.now() - started } };
     logReq(requestId, query, obj.meta.took_ms, { status: 200, cached: true });
     if (format === "jsonl") {
       return jsonlResponse(obj.results, { query: obj.query, intent: obj.intent, providers_used: obj.meta.providers_used, took_ms: obj.meta.took_ms, cached: true }, rateLimitHeaders(rl, requestId));
+    }
+    if (format === "simple") {
+      return jsonResponse({ query: obj.query, results: (obj.results || []).map(r => ({ title: r.title, url: r.url, snippet: (r.snippet || r.content || "").slice(0, 200) })) }, 200, rateLimitHeaders(rl, requestId));
     }
     return jsonResponse(obj, 200, rateLimitHeaders(rl, requestId));
   }
@@ -428,11 +431,13 @@ async function handleSearch(body, req) {
   // Cache yaz (5 dəq); fallback (degraded) nəticələri 30s - provider geri gəldikdə
   // junk cavab istifadəçini uzun saxlamasın.
   // YALNIZ cache-ə yaz:
-  //  - format=json (simple/jsonl öz cache-ə yazır və zəhərləyirdi - yarımçıq/snippet-only nəticə)
+  //  - (v13.1: format məhdudiyyəti YOXDUR - əvvəlki "simple/jsonl zəhərləyirdi"
+  //    dövrü skipFetch qoruması ilə bitdi; oxuma/yazma eyni scope-da olmalı ki
+  //    jsonl/json istəqlər bir-birini qızdırıblar)
   //  - nəticələr boş deyil (blocked/no_match 5 dəq donmamalı - provider geri gəlsə təravətli olar)
-  //  - skipFetch deyil (snippet-only yarımçıq məzmun json cache-a düşməsin)
+  //  - skipFetch deyil (snippet-only yarımçıq məzmun cache-ə düşməsin)
   //  - intent != time (vaxt hər dəqiqə dəyişir - 5 dəq köhnə saat qaytarılmamalı)
-  const cacheable = format === "json" && !skipFetch && intent !== "time" && finalResults.length > 0;
+  const cacheable = !skipFetch && intent !== "time" && finalResults.length > 0;
   // v12.2: DEGRADED cavab (3+ provider xətası) 5 dəqiqəyə DƏYİL 30 san cache olar —
   // əvvəlki davranış anti-bot pəncərəsində zəif nəticələri 300s "qidalanırdı"
   const degraded = usedFallback || Object.keys(errors).length >= 3;
