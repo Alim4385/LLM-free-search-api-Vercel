@@ -97,7 +97,7 @@ Deploy-dan sonra URL belə olacaq:
 ## Xüsusiyyətlər
 - ✅ Key-siz: DDG HTML + Bing HTML + Google News RSS + Wikipedia (+ SearXNG ehtiyat)
 - ✅ Azərbaycan stemming: Bakı/Bakıda eyni sayılır
-- ✅ linkedom + readability ilə sayt təmizləmə + SSRF qorunması (yalnız public IP)
+- ✅ linkedom + readability ilə sayt təmizləmə + SSRF qorunması (yalnız public IP; redirect-lər hər hop-da yoxlanılır, port 80/443)
 - ✅ Open-Meteo ilə hava (scraping yoxdur)
 - ✅ Upstash Redis cache (optional, olmasa in-memory)
 - ✅ Rate limit (IP başına 30/dəq) + prompt injection qorunması
@@ -115,3 +115,5 @@ Deploy-dan sonra URL belə olacaq:
 - Vercel Hobby: funksiya ~10-60 saniyə (route `maxDuration: 30` qoyulub). Sistem paralel fetch edir, adətən 2-4 saniyəyə cavab verir.
 - Bəzi saytlar bot qorumasına görə açılmaya bilər — o zaman snippet istifadə olunur.
 - Rate limit Upstash olmadan per-instance-dir (Vercel serverless xüsusiyyəti) — dəqiq 30/dəq üçün Upstash əlavə et.
+- **Mahiyyət (privacy):** uzun Azərbaycan dili sorğuları (3+ söz) üçün EN tərcümə (anchor) almaq məqsədilə sorğu mətni **MyMemory**-ə (api.mymemory.translated.net) göndərilir — üçüncü tərəf xidmətidir, API key tələb etmir. Qısa sorğular üçün heç bir xarici tərcümə xidməti çağırılmır.
+- Hər web nəticə `untrusted: true` işarəsi daşır — məzmun istehsalçı səhifələrdən gəlir, LLM ona data kimi yanaşmalıdır (təlimat kimi yox).

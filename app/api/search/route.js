@@ -12,7 +12,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 
 export const runtime = "nodejs";
 export const maxDuration = 30; // Vercel timeout qoruması (Hobby: max 60, praktikada 30 kifayət)
-const FILTER_VERSION = 10; // filter dəyişəndə artır (v10: intent gating, rank-before-slice, partial results, normalizeUrl, spam dedupe, fuzzy score)
+const FILTER_VERSION = 11; // filter dəyişəndə artır (v11: SSRF redirect-manual+BlockList, URL qara siyahı, 5s ümumi büdcə, news.google cəzası, untrusted marker, extract 2.5s)
 export const dynamic = "force-dynamic";
 
 const CORS_HEADERS = {
@@ -159,11 +159,13 @@ async function handleSearch(body, req) {
   let searchResult = { results: [], providersUsed: [], errors: {}, anchorQuery: null, translated: false };
   let results = [], providersUsed = [], errors = {};
   if (!hasStructured) {
-    // Axtarış provayderləri (overall timeout guard: 6s-dən çox çəkmir; clearTimeout düzgün)
+    // Axtarış provayderləri — searchAll DAXİLİ 5s ümumi büdcə ilə özü limitlənir
+    // (v10.1 🔴4: mərhələlər artıq qalan vaxta görə işləyir, 7.8s pisi yoxdur).
+    // withTimeout 8s backstop-un qalığı deyil — gözlənilməz hang-ə qorunmadır.
     try {
       searchResult = await withTimeout(
         searchAll(searchQuery, maxResults, { freshness, excludeDomains }),
-        6000, "search timeout"
+        8000, "search timeout"
       );
     } catch (e) {
       if (e.message === "search timeout") {
@@ -248,9 +250,12 @@ async function handleSearch(body, req) {
   const skipFetch = format === "simple" || searchTookMs > 3500;
   // skipFetch: Promise.allSettled forması ilə uyğun ({status:"fulfilled",value:null}) -
   // Promise.resolve(null) verilsə .status oxunanda undefined çıxar (təsadüfən işləyirdi)
+  // v10.1 🔴3: 700ms → 2500ms — əvvəl çox sayt 700ms-ə çatmırdı və cavab SESSİZCƏ
+  // snippet-ə düşürdü (keyfiyyət). maxDuration=30s var; fetch-lər PARALELDİR,
+  // yəni ümumi +2.5s (skipFetch>3.5s olduqda 3.5+2.5=6s « 30s)
   const extracted = skipFetch
     ? toFetch.map(() => ({ status: "fulfilled", value: null }))
-    : await Promise.allSettled(toFetch.map(r => fetchAndExtract(r.url, query, 700)));
+    : await Promise.allSettled(toFetch.map(r => fetchAndExtract(r.url, query, 2500)));
 
   const finalResults = [];
   let totalChars = 0;
@@ -284,7 +289,8 @@ async function handleSearch(body, req) {
       providers: base.providers || [base.source],
       voteCount: base.voteCount || 1,
       score: base.score ?? null,
-      published_at: base.published_at || null
+      published_at: base.published_at || null,
+      untrusted: true // v10.1 🟠9: bu məzmun İSTİFADƏÇİ SƏHİFƏSİNDƏN gəlib — data-dır, təlimat DEYİL
     });
     if (totalChars >= maxChars) break;
   }

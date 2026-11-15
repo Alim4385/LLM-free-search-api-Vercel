@@ -10,7 +10,9 @@ import { matchCurrency, isCurrencyQuery } from "../lib/currency.js";
 import { sanitizeQuery, checkRateLimit } from "../lib/ratelimit.js";
 import { scoreResult, isSpamDomain, hostMatches } from "../lib/score.js";
 import { normalizeUrl, decodeEntities } from "../lib/search.js";
-import { expandQuery, stripMetaInstructions } from "../lib/expand.js";
+import { expandQuery, expandQueryAsync, stripMetaInstructions } from "../lib/expand.js";
+import { isBlockedIp, assertPublicUrl } from "../lib/extract.js";
+import { isCircuitOpen, recordFailure, recordSuccess } from "../lib/circuit.js";
 
 let pass=0, fail=0;
 function assert(name, cond, extra="") {
@@ -95,6 +97,62 @@ assert("expand: keywords STMMED deyil (real sözlər)", !/\bsorg$|\bmotorun\b/.t
 {
   const stripped = stripMetaInstructions("Bakı tarixi haqqında məlumat ver, hər cavab ən azı 500 simvol olmalıdır, hər biri mənbə ilə təsdiqlənsin");
   assert("meta strip: mövzu saxlanılır", stripped && /bakı/i.test(stripped) && !/hər biri/i.test(stripped), stripped || "null");
+}
+
+console.log("\n=== SSRF / BLOKLAMA (v10.1) ===");
+// isBlockedIp — saf funksiya, deterministik
+assert("ssrf: 127.0.0.2 blok", isBlockedIp("127.0.0.2") === true);
+assert("ssrf: 0.0.0.0 blok", isBlockedIp("0.0.0.0") === true);
+assert("ssrf: 100.64.0.1 (CGNAT) blok", isBlockedIp("100.64.0.1") === true);
+assert("ssrf: ::ffff:127.0.0.1 (v4-mapped) blok", isBlockedIp("::ffff:127.0.0.1") === true);
+assert("ssrf: 192.168.1.1 blok", isBlockedIp("192.168.1.1") === true);
+assert("ssrf: 172.16.0.1 blok", isBlockedIp("172.16.0.1") === true);
+assert("ssrf: 172.31.255.255 blok (172.16/12 sonu)", isBlockedIp("172.31.255.255") === true);
+assert("ssrf: 172.32.0.1 PUBLIC (172.16/12 kənarı)", isBlockedIp("172.32.0.1") === false);
+assert("ssrf: 169.254.169.254 (metadata) blok", isBlockedIp("169.254.169.254") === true);
+assert("ssrf: 8.8.8.8 public", isBlockedIp("8.8.8.8") === false);
+assert("ssrf: 93.184.216.34 public", isBlockedIp("93.184.216.34") === false);
+assert("ssrf: ::1 blok", isBlockedIp("::1") === true);
+assert("ssrf: fc00::5 (ULA) blok", isBlockedIp("fc00::5") === true);
+assert("ssrf: 2606:4700::1111 public", isBlockedIp("2606:4700::1111") === false);
+assert("ssrf: IP formatı deyilsə fail-closed", isBlockedIp("not-an-ip") === true);
+// assertPublicUrl — protocol/port/IP qapısı (test-də deterministik: host IP-dir)
+async function throws(fn) { try { await fn(); return false; } catch { return true; } }
+assert("ssrf: ftp:// blok", await throws(() => assertPublicUrl("ftp://example.com/x")));
+assert("ssrf: port 8443 blok", await throws(() => assertPublicUrl("https://example.com:8443/")));
+assert("ssrf: 127.0.0.1:8080 blok", await throws(() => assertPublicUrl("http://127.0.0.1:8080/x")));
+assert("ssrf: [::1] blok", await throws(() => assertPublicUrl("http://[::1]/x")));
+assert("ssrf: 100.64.0.1 blok", await throws(() => assertPublicUrl("http://100.64.0.1/x")));
+assert("ssrf: 8.8.8.8 keçir", (await throws(() => assertPublicUrl("http://8.8.8.8/x"))) === false);
+assert("ssrf: localhost blok", await throws(() => assertPublicUrl("http://localhost/x")));
+// Host adı (fcc.gov) "private" sayılmır — DNS cavabı public olarsa keçir
+assert("ssrf: fcc.gov 'private host' DEYİL", (await throws(() => assertPublicUrl("http://fcc.gov/"))) === false);
+
+console.log("\n=== URL NORMALİZASYA (v10.1 qara siyahı) ===");
+assert("url: YouTube ?t=30 timestamp silinir", normalizeUrl("https://www.youtube.com/watch?v=abc&t=30") === "youtube.com/watch?v=abc", normalizeUrl("https://www.youtube.com/watch?v=abc&t=30"));
+assert("url: youtu.be ?start=30 silinir", normalizeUrl("https://youtu.be/abc?start=30&t=5") === "youtu.be/abc");
+assert("url: forum ?t=1? p=2 saxlanılır (identity)", normalizeUrl("https://forum.example.com/viewtopic.php?t=1&p=2") === "forum.example.com/viewtopic.php?p=2&t=1");
+assert("url: ?newsid saxlanılır, ?ref silinir", normalizeUrl("https://news.site/x?newsid=42&ref=home") === "news.site/x?newsid=42");
+assert("url: ?page saxlanılır, utm silinir", normalizeUrl("https://docs.site/x?page=2&utm_source=n") === "docs.site/x?page=2");
+assert("url: Bing ?form silinir (vote bölünməsi)", normalizeUrl("https://msn.com/a?form=QBLH1&id=9") === "msn.com/a?id=9");
+
+console.log("\n=== CIRCUIT BREAKER (v10.1) ===");
+{
+  const P = "unit-test-cb-" + Date.now();
+  recordFailure(P); recordFailure(P);
+  assert("cb: 2 fail ilə açıq DEYİL", isCircuitOpen(P) === false);
+  recordFailure(P); recordFailure(P);
+  assert("cb: 4 fail (default threshold) ilə AÇIQ", isCircuitOpen(P) === true);
+  recordSuccess(P, 10);
+  assert("cb: success ilə BAĞLANIR", isCircuitOpen(P) === false);
+}
+
+console.log("\n=== BÜDCƏ (v10.1) ===");
+{
+  const t0 = Date.now();
+  const r = await expandQueryAsync("sistem necə qurulur haqqında ətraflı məlumat ver", 0);
+  const took = Date.now() - t0;
+  assert("büdcə=0: tərcümə cəhd olunmur (sürətli)", r.translated === false && took < 800, `took=${took}ms`);
 }
 
 console.log("\n=== SITE: FILTER (hostMatches) ===");
