@@ -1,6 +1,6 @@
 {
   "name": "qaqa_search",
-  "description": "Key-siz veb axtarışı. Sual verildikdə bir neçə saytı gəzib, suala aid hissələri təmizləyib JSON qaytarır. Hava sualları üçün Open-Meteo-dan dəqiq məlumat verir. LLM bu funksiyanı çağırıb nəticələri [1], [2] kimi nömrələrlə cavabında istifadə etməlidir.",
+  "description": "Use this for current events, recent versions, prices, exchange rates, weather, or anything you're unsure about. It searches multiple engines, fetches the relevant pages, and returns clean snippets. Cite results as [1], [2] in your answer and verify numbers/dates against the returned content (the 'answer' field is a fragment of content, not a verified answer - do not repeat it without checking). Prefer results with a published_at date for freshness questions (null = no date). If results are empty or meta.confidence is low/none, say you couldn't find it - do not fill the gap from your own knowledge. Supports Azerbaijani and English queries. Weather/time/currency queries return exact structured data (Open-Meteo / CBAR).",
   "parameters": {
     "type": "object",
     "properties": {
