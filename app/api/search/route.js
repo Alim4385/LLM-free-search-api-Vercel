@@ -1,9 +1,9 @@
 import { searchAll } from "../../../lib/search.js";
 import { fetchAndExtract } from "../../../lib/extract.js";
 import { selectRelevantParagraphs } from "../../../lib/rank.js";
-import { isWeatherQuery, fetchWeather, weatherToText } from "../../../lib/weather.js";
-import { isTimeQuery, fetchBakuTime, timeToText } from "../../../lib/time.js";
-import { isCurrencyQuery, fetchCBAR, currencyToText } from "../../../lib/currency.js";
+import { matchWeather, fetchWeather, weatherToText } from "../../../lib/weather.js";
+import { matchTime, fetchBakuTime, timeToText } from "../../../lib/time.js";
+import { matchCurrency, fetchCBAR, currencyToText } from "../../../lib/currency.js";
 import { tokenize } from "../../../lib/rank.js";
 import { scoreResult, diversifyByDomain, extractQuotedPhrases, containsPhrase, isSpamDomain, hostMatches } from "../../../lib/score.js";
 import { expandQuery, isMetaQuery, stripMetaInstructions } from "../../../lib/expand.js";
@@ -12,7 +12,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 
 export const runtime = "nodejs";
 export const maxDuration = 30; // Vercel timeout qoruması (Hobby: max 60, praktikada 30 kifayət)
-const FILTER_VERSION = 9; // filter dəyişəndə artır (v9: cache only-ok, input hardening, site: fix, timeout guard)
+const FILTER_VERSION = 10; // filter dəyişəndə artır (v10: intent gating, rank-before-slice, partial results, normalizeUrl, spam dedupe, fuzzy score)
 export const dynamic = "force-dynamic";
 
 const CORS_HEADERS = {
@@ -90,7 +90,9 @@ async function handleSearch(body, req) {
     rl = await checkRateLimit(ip);
   }
   if (!rl.ok) {
-    return jsonResponse({ error: "rate_limited", message: "Çox tez sorğu göndərdin. Bir az gözlə.", retry_after: rl.retryAfter }, 429, rateLimitHeaders(rl, requestId));
+    // v10 🟠14: standart Retry-After header-ı (body-dəki retry_after-ın yanısıra -
+    // HTTP client-lar/LLM wrapper-lar header-ı oxuyur, body-yi yox)
+    return jsonResponse({ error: "rate_limited", message: "Çox tez sorğu göndərdin. Bir az gözlə.", retry_after: rl.retryAfter }, 429, { ...rateLimitHeaders(rl, requestId), "Retry-After": String(Math.min(rl.retryAfter || 60, 60)) });
   }
 
   const rawQuery = body.query ?? body.q ?? "";
@@ -115,20 +117,24 @@ async function handleSearch(body, req) {
     return jsonResponse({ ...cached, meta: { ...cached.meta, cached: true, took_ms: Date.now() - started } }, 200, rateLimitHeaders(rl, requestId));
   }
 
-  let intent = "general";
-  if (isWeatherQuery(query)) intent = "weather";
-  else if (isTimeQuery(query)) intent = "time";
-  else if (isCurrencyQuery(query)) intent = "currency";
+  // v10 🔴3: intent GATING - exakt (qısa sorğu + exakt fraza) → structure-only.
+  // weak (uzun sorğuda "hava"/"saat"/"dollar" sözü) → structure VƏ search birləşik.
+  // Əvvəl tək "saat"/"kurs" tokeni HƏR sorğuda intent açırıb searchAll-ı tam atırırdı
+  // ("saat 3-də başlayan kurs haqqında məlumat" → boş cavab + saat).
+  const intentMatches = { weather: matchWeather(query), time: matchTime(query), currency: matchCurrency(query) };
+  const intentName = ["weather", "time", "currency"].find(k => intentMatches[k].hit) || null;
+  const intentExact = intentName ? intentMatches[intentName].exact : false;
+  let intent = intentName || "general";
 
   let weather = null, weatherText = "";
   let timeData = null, timeText = "";
   let currencyData = null, currencyText = "";
 
-  if (intent === "weather") {
-    try { weather = await fetchWeather(query); weatherText = weatherToText(weather); } catch {}
-  } else if (intent === "time") {
+  if (intentName === "weather") {
+    try { weather = await fetchWeather(query); weatherText = weatherToText(weather); } catch { weather = null; }
+  } else if (intentName === "time") {
     try { timeData = await fetchBakuTime(); timeText = timeToText(timeData); } catch {}
-  } else if (intent === "currency") {
+  } else if (intentName === "currency") {
     try { currencyData = await fetchCBAR(); currencyText = currencyToText(currencyData); } catch {}
   }
 
@@ -142,8 +148,14 @@ async function handleSearch(body, req) {
   // (post-filter üçün extractQuotedPhrases aşağıda bir dəfə çağırılır - phrases)
 
   // Struktur intent (weather/time/currency): API-dən cavab, axtarış/scraping yoxdur
-  // Tələb: "Weather queries: use Open-Meteo API, no scraping" - searchAll atlanır (latency + düzgünlük)
-  const hasStructured = (intent === "weather" && weather) || (intent === "time" && timeData) || (intent === "currency" && currencyData);
+  // Tələb: "Weather queries: use Open-Meteo API, no scraping" - EXACT intent-də searchAll
+  // atlanır (latency + düzgünlük). v10 🔴3: weak intent-də (və ya fetch uğursuz olduqda)
+  // search ALLA da işləyir - LLM both signal alır (məs. "hava limanı" → search nəticələri).
+  const hasStructured = intentExact && (
+    (intentName === "weather" && weather) ||
+    (intentName === "time" && timeData) ||
+    (intentName === "currency" && currencyData)
+  );
   let searchResult = { results: [], providersUsed: [], errors: {}, anchorQuery: null, translated: false };
   let results = [], providersUsed = [], errors = {};
   if (!hasStructured) {
@@ -230,7 +242,10 @@ async function handleSearch(body, req) {
   // Latency cap (DeepSeek p99): axtarış artıq 2s çəkibsə, content fetch atlanır (snippet-only)
   const toFetch = filtered.slice(0, maxResults);
   const searchTookMs = Date.now() - started;
-  const skipFetch = format === "simple" || searchTookMs > 2000;
+  // v10 🟠7: threshold 2000→3500ms — əvvəlki 2s demək olar HƏMİŞƏ keçirildi
+  // (paralel provider + expansion ~2s çəkirdi) → snippet-only cavab, keyfiyyət düşdü.
+  // maxDuration=30s büdcəsi var, 3.5s + fetch (0.7s parallel) rahat sığılır.
+  const skipFetch = format === "simple" || searchTookMs > 3500;
   // skipFetch: Promise.allSettled forması ilə uyğun ({status:"fulfilled",value:null}) -
   // Promise.resolve(null) verilsə .status oxunanda undefined çıxar (təsadüfən işləyirdi)
   const extracted = skipFetch
@@ -248,6 +263,8 @@ async function handleSearch(body, req) {
     if (ex) {
       title = ex.title || title;
       content = selectRelevantParagraphs(ex.text, query, title, perSourceChars);
+      // v10 🔴4: paragraph seçimi boş qaytardısa (v10-dan əvvəl belə olurdu) snippet fallback
+      if (!content || !content.trim()) content = base.snippet || "";
     } else {
       // sayt açılmadısa snippet-i istifadə et
       content = base.snippet || "";

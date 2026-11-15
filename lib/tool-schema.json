@@ -17,14 +17,27 @@
       },
       "max_chars": {
         "type": "integer",
-        "description": "Ümumi mətn limiti. Default 4000.",
-        "default": 4000
+        "description": "Ümumi mətn limiti. Default 4000, min 500, max 8000.",
+        "default": 4000,
+        "minimum": 500,
+        "maximum": 8000
       },
       "format": {
         "type": "string",
         "enum": ["json", "jsonl", "simple"],
         "description": "json = tək JSON obyekt (default), jsonl = hər sətir JSON (stream), simple = yalnız title/url/snippet (əhatəli LLM tool çağırışı üçün)",
         "default": "json"
+      },
+      "freshness": {
+        "type": "string",
+        "enum": ["day", "week", "month", "year"],
+        "description": "Təzilik filtri - yalnız bu müddət daxilində nəşr olunmuş nəticələr (təzə xəbər sualları üçün, məs. 'week')."
+      },
+      "exclude_domains": {
+        "type": "array",
+        "items": { "type": "string" },
+        "maxItems": 20,
+        "description": "İstisna olunacaq domenlər, məs. [\"reddit.com\", \"quora.com\"]. Max 20."
       }
     },
     "required": ["query"]
