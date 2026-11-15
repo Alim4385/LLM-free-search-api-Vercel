@@ -8,8 +8,8 @@ import { matchWeather, isWeatherQuery, detectCity } from "../lib/weather.js";
 import { matchTime, isTimeQuery } from "../lib/time.js";
 import { matchCurrency, isCurrencyQuery } from "../lib/currency.js";
 import { sanitizeQuery, checkRateLimit } from "../lib/ratelimit.js";
-import { scoreResult, isSpamDomain, hostMatches, diversifyByDomain, isJunkDomain } from "../lib/score.js";
-import { cleanContent, pickAnswer, detectQueryLanguage, wikiExtractUrl } from "../lib/clean.js";
+import { scoreResult, isSpamDomain, hostMatches, diversifyByDomain, isJunkDomain, computeConfidence } from "../lib/score.js";
+import { cleanContent, pickAnswer, cutWord, detectQueryLanguage, wikiExtractUrl } from "../lib/clean.js";
 import { normalizeUrl, decodeEntities, stripQuestionWords } from "../lib/search.js";
 import { expandQuery, expandQueryAsync, stripMetaInstructions, isMetaQuery } from "../lib/expand.js";
 import { isLongAzQuery } from "../lib/translate.js";
@@ -171,6 +171,29 @@ assert("extractCache: miss -> null", extractCacheGet("https://cache-miss.example
   assert("extractCache: 4MB cap - ən köhnə entry evict olunur",
     extractCacheGet("https://evict.example/1") === null && extractCacheGet("https://evict.example/2") !== null);
 }
+
+// v14 (user review #1): confidence v3 — no_results xəta DEYİL (əvvəlki bug: hər sorğu "low")
+console.log("\n=== CONFIDENCE V3 (v14) ===");
+const R = (over = {}) => ({ content: "x".repeat(400), providers: ["bing"], voteCount: 1, source: "bing", ...over });
+assert("conf: boş → none", computeConfidence([], {}, false) === "none");
+assert("conf: fallback → low", computeConfidence([R()], {}, true) === "low");
+assert("conf: no_results xəta DEYİL (v14 - əvvəlki bug)", computeConfidence([R()], { github: "no_results", wikipedia: "no_results", tavily: "no_results" }, false) === "medium");
+assert("conf: 3 hard xəta → hələ medium", computeConfidence([R({ providers: ["bing", "brave"], voteCount: 2 })], { tavily: "bad_request", brave: "rate_limited", ddg: "blocked" }, false) === "high");
+assert("conf: 4+ hard xəta → low (degraded)", computeConfidence([R({ providers: ["bing", "brave"], voteCount: 2 })], { tavily: "bad_request", brave: "rate_limited", ddg: "blocked", bing: "timeout" }, false) === "low");
+assert("conf: 2 provider + substantial → high", computeConfidence([R({ providers: ["bing", "brave"], voteCount: 2 })], { tavily: "bad_request" }, false) === "high");
+assert("conf: struktur API (kısa content belə) → high", computeConfidence([R({ source: "open-meteo", content: "Bakı hazırda: 10°C" })], {}, false) === "high");
+assert("conf: tək provider + qısa content → medium", computeConfidence([R({ content: "kısa" })], {}, false) === "medium");
+assert("conf: tək provider + substantial + soft xəta → medium", computeConfidence([R()], { github: "no_results", arxiv: "no_results" }, false) === "medium");
+
+// v14 (user review #4): snippet word-boundary cut
+console.log("\n=== CUT WORD (v14) ===");
+assert("cutWord: qısa mətn dəyişmir", cutWord("qısa mətn") === "qısa mətn");
+assert("cutWord: boşluqsuz uzun blok → raw kəs + …", cutWord("a".repeat(100), 20) === "a".repeat(20) + "…");
+// "söz "×80 = 320 char; default max 200: sliced = "söz "×50 (199-da boşluq),
+// lastSpace=199 > 40 → 199-da kəs → 49 tam "söz " + "söz" + "…"
+const cw = cutWord("söz ".repeat(80));
+assert("cutWord: söz sərhədində kəsir (yarım söz qalmır)", cw === "söz ".repeat(49) + "söz…" && cw.length === 200, cw.slice(0, 60) + "…[" + cw.length + "]");
+assert("cutWord: son boşluq qalmır", !/…$/.test(cw) || !/ \.$/.test(cw) && !/…[ ]$/.test(cw));
 // Host adı (fcc.gov) "private" sayılmır — DNS cavabı public olarsa keçir
 assert("ssrf: fcc.gov 'private host' DEYİL", (await throws(() => assertPublicUrl("http://fcc.gov/"))) === false);
 
