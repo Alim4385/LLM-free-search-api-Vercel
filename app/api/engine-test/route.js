@@ -1,6 +1,6 @@
 // VAXTICI TEST ENDPOINT — provider-ları Vercel IP-lərindən probedir.
 // DELETE AFTER TESTING.
-import { searchDDG, searchDDGInstant, searchSearXNG, fetchTimeout } from "../../../../lib/search.js";
+import { searchDDG, searchDDGInstant, searchSearXNG, fetchTimeout } from "../../../lib/search.js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
