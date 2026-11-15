@@ -54,7 +54,7 @@ export async function GET(req) {
     catch (e) { return { key: "ddg_instant", value: { ok: false, error: String(e.message || e).slice(0, 150) } }; }
   })());
 
-  // --- SearXNG json (20 instance paralel) ---
+  // --- SearXNG json (20 instance paralel) + real results for the ones that return JSON ---
   const instances = [
     "https://searx.be", "https://searx.tiekoetter.com", "https://search.bus-hit.me",
     "https://paulgo.io", "https://searx.dresden.network", "https://search.inetol.net",
@@ -64,16 +64,45 @@ export async function GET(req) {
     "https://search.im-in.space", "https://searx.exo.org"
   ];
   jobs.push((async () => {
-    const results = await Promise.all(instances.map(inst => probe(inst, `${inst}/search?q=${encodeURIComponent(q)}&format=json`, 4500)));
-    const jsonResults = results.map(({ out: r }) => {
-      if (r.status === 200) {
-        r.looks_json = r.body_sample ? r.body_sample.trim().startsWith("{") : true;
+    const results = await Promise.all(instances.map(async (inst) => {
+      const { out: r, text } = await probe(inst, `${inst}/search?q=${encodeURIComponent(q)}&format=json`, 4500);
+      if (r.status === 200 && text.trim().startsWith("{")) {
+        r.looks_json = true;
+        try {
+          const j = JSON.parse(text);
+          const arr = j.results || [];
+          r.result_count = arr.length;
+          r.top = arr.slice(0, 4).map(x => ({ t: String(x.title || "").slice(0, 80), u: String(x.url || "").slice(0, 90) }));
+        } catch (e) { r.looks_json = false; }
+      } else if (r.status === 200) {
+        r.looks_json = false;
       }
       return r;
-    });
-    // json body check: body_sample missing — refetch ok ones is wasteful; instead count "url": occurrences not possible from sample. Keep status only.
-    return { key: "searxng_json", value: jsonResults };
+    }));
+    return { key: "searxng_json", value: results };
   })());
+
+  // --- Detailed quality probe: dresden.network with an AZ and an EN query ---
+  if (searchParams.get("detail") === "1") {
+    const detailQs = [
+      { label: "AZ", q2: "Azərbaycan paytaxtı" },
+      { label: "AZ2", q2: "Necati İmamverdiyev kimdir" },
+      { label: "EN", q2: "capital of Azerbaijan" }
+    ];
+    for (const d of detailQs) {
+      const { out: r, text } = await probe("dresden-" + d.label, `https://searx.dresden.network/search?q=${encodeURIComponent(d.q2)}&format=json`, 6000);
+      r.query = d.q2;
+      if (r.status === 200 && text.trim().startsWith("{")) {
+        try {
+          const j = JSON.parse(text);
+          const arr = j.results || [];
+          r.result_count = arr.length;
+          r.top = arr.slice(0, 5).map(x => ({ t: String(x.title || "").slice(0, 90), u: String(x.url || "").slice(0, 100), c: String(x.content || "").slice(0, 60) }));
+        } catch (e) { r.err = String(e).slice(0, 80); }
+      }
+      out["dresden_" + d.label] = r;
+    }
+  }
 
   // --- SearXNG provider (code path) ---
   jobs.push((async () => {
