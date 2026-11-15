@@ -1,0 +1,32 @@
+{
+  "name": "qaqa_search",
+  "description": "Key-siz veb axtarışı. Sual verildikdə bir neçə saytı gəzib, suala aid hissələri təmizləyib JSON qaytarır. Hava sualları üçün Open-Meteo-dan dəqiq məlumat verir. LLM bu funksiyanı çağırıb nəticələri [1], [2] kimi nömrələrlə cavabında istifadə etməlidir.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "query": {
+        "type": "string",
+        "description": "Axtarış sualı. Azərbaycan və ya İngilis dilində yaz."
+      },
+      "max_results": {
+        "type": "integer",
+        "description": "Neçə sayt gəzilsin. Default 5, max 8.",
+        "default": 5,
+        "minimum": 1,
+        "maximum": 8
+      },
+      "max_chars": {
+        "type": "integer",
+        "description": "Ümumi mətn limiti. Default 4000.",
+        "default": 4000
+      },
+      "format": {
+        "type": "string",
+        "enum": ["json", "jsonl"],
+        "description": "json = tək JSON obyekt, jsonl = hər sətir JSON (stream üçün)",
+        "default": "json"
+      }
+    },
+    "required": ["query"]
+  }
+}
