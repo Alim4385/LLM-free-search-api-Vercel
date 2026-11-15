@@ -10,7 +10,7 @@ import { matchCurrency, isCurrencyQuery } from "../lib/currency.js";
 import { sanitizeQuery, checkRateLimit } from "../lib/ratelimit.js";
 import { scoreResult, isSpamDomain, hostMatches, diversifyByDomain, isJunkDomain } from "../lib/score.js";
 import { cleanContent, pickAnswer, detectQueryLanguage, wikiExtractUrl } from "../lib/clean.js";
-import { normalizeUrl, decodeEntities } from "../lib/search.js";
+import { normalizeUrl, decodeEntities, stripQuestionWords } from "../lib/search.js";
 import { expandQuery, expandQueryAsync, stripMetaInstructions } from "../lib/expand.js";
 import { isBlockedIp, assertPublicUrl } from "../lib/extract.js";
 import { isCircuitOpen, recordFailure, recordSuccess } from "../lib/circuit.js";
@@ -289,6 +289,13 @@ console.log("\n=== V12: JUNK DOMAINS + TOPIC GATING (score.js) ===");
   const gs = scoreResult({ title: "Gündəm xəbərləri", url: "https://news.google.com/", snippet: "son xeberler gundem today breaking", source: "google-news" }, t2, "tr", "son xeberler gundem");
   assert("topic: news sorğusunda github < news mənbə", gh < gs, `gh=${gh} gs=${gs}`);
 }
+
+console.log("\n=== V12.1: WIKI QUESTION-WORD STRIP (v12.1) ===");
+assert("qstrip: AZ 'kimdir' atılır", stripQuestionWords("İlham Əliyev kimdir") === "İlham Əliyev", stripQuestionWords("İlham Əliyev kimdir"));
+assert("qstrip: 'haqqında' atılır", stripQuestionWords("Bakı haqqında") === "Bakı");
+assert("qstrip: EN 'what is' atılır", stripQuestionWords("what is RAG in LLM") === "RAG in LLM", stripQuestionWords("what is RAG in LLM"));
+assert("qstrip: tək sorğu sözü → orijinal qalır", stripQuestionWords("kimdir") === "kimdir");
+assert("qstrip: adi sorğu dəyişmir", stripQuestionWords("Bakı çimərliklər") === "Bakı çimərliklər");
 
 console.log("\n=== V12: DIVERSITY (maxPerDomain=1) ===");
 {

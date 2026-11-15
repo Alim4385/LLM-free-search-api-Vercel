@@ -13,9 +13,10 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 
 export const runtime = "nodejs";
 export const maxDuration = 30; // Vercel timeout qoruması (Hobby: max 60, praktikada 30 kifayət)
-const FILTER_VERSION = 12; // filter dəyişəndə artır (v12: content hygiene - wiki extracts API + junk cleaner,
-// answer cümləsi, junk domains + homepage drop, dil uyğunsuzluğu cəzası, mövzu qaydaları,
-// diversity maxPerDomain=1, bing mkt + tavily country per language)
+const FILTER_VERSION = 13; // filter dəyişəndə artır (v12: content hygiene - wiki extracts API + junk cleaner,
+// answer cümləsi, junk domains, dil uyğunsuzluğu cəzası, mövzu qaydaları,
+// diversity maxPerDomain=1, bing mkt + tavily country per language;
+// v12.1: wiki sorğudan question-word sil (kimdir/nədir/what is), fallback relevance sort)
 export const dynamic = "force-dynamic";
 
 const CORS_HEADERS = {
@@ -199,11 +200,14 @@ async function handleSearch(body, req) {
   // degraded hallında bing junk-u (recipe/liqueur səhifələri) əvəzinə mənbəli cavab.
   let usedFallback = false;
   if (!scored.length && results.length) { usedFallback = true;
+    // v12.1: fallback skor əvvəl hesablanır — trusted domen daxilində ən RELEVANT
+    // nəticə üstün tutulur (əvvəl yalnız trusted/vote/rrf idi: "İlham Əliyev"
+    // sorğusunda əlaqəsiz proverb wiki-səhifəsi #1 ola bilərdi)
     const trusted = u => { try { return /wikipedia\.org|\.gov(\.|$)|cbar\.az$|president\.az$|azerbaijan\.az$|e-gov\.az$/.test(new URL(u).hostname.replace(/^www\./, "")); } catch { return false; } };
     scored = [...results]
-      .sort((a, b) => Number(trusted(b.url)) - Number(trusted(a.url)) || (b.voteCount || 0) - (a.voteCount || 0) || (b.rrfScore || 0) - (a.rrfScore || 0))
-      .slice(0, 2)
-      .map(r => ({ ...r, score: scoreResult(r, qTerms, qLang, query) }));
+      .map(r => ({ ...r, score: scoreResult(r, qTerms, qLang, query) }))
+      .sort((a, b) => Number(trusted(b.url)) - Number(trusted(a.url)) || (b.score - a.score) || (b.voteCount || 0) - (a.voteCount || 0) || (b.rrfScore || 0) - (a.rrfScore || 0))
+      .slice(0, 2);
   }
   // Deterministic sort: score desc, voteCount desc, URL asc (tie-breaker - Test6 fix)
   // Skor bərabər olduqda provayder cavab sırası təsadüfi olur - URL ilə sabitləşdir
