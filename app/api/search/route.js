@@ -11,7 +11,7 @@ import { cacheGet, cacheSet, cacheKey } from "../../../lib/cache.js";
 import { checkRateLimit, getClientIp, sanitizeQuery } from "../../../lib/ratelimit.js";
 
 export const runtime = "nodejs";
-const FILTER_VERSION = 7; // filter dəyişəndə artır - köhnə junk cache ignore olunur (v7: trusted-domain fallback)
+const FILTER_VERSION = 8; // filter dəyişəndə artır - köhnə junk cache ignore olunur (v8: soft-fail circuit, fallback TTL)
 export const dynamic = "force-dynamic";
 
 const CORS_HEADERS = {
@@ -141,7 +141,8 @@ async function handleSearch(body, req) {
   // -> LLM-ə 0 nəticə gedirdi (keyfiyyət bozulması). Boş əllə qayıtmaq < 1 zəif mənbə.
   // Dəyərləndirmə: etibarlı domenlər (wikipedia/.gov/rəsmi AZ saytlar) öncəlikli -
   // degraded hallında bing junk-u (recipe/liqueur səhifələri) əvəzinə mənbəli cavab.
-  if (!scored.length && results.length) {
+  let usedFallback = false;
+  if (!scored.length && results.length) { usedFallback = true;
     const trusted = u => { try { return /wikipedia\.org|\.gov(\.|$)|cbar\.az$|president\.az$|azerbaijan\.az$|e-gov\.az$/.test(new URL(u).hostname.replace(/^www\./, "")); } catch { return false; } };
     scored = [...results]
       .sort((a, b) => Number(trusted(b.url)) - Number(trusted(a.url)) || (b.voteCount || 0) - (a.voteCount || 0) || (b.rrfScore || 0) - (a.rrfScore || 0))
@@ -272,8 +273,9 @@ async function handleSearch(body, req) {
     }
   };
 
-  // Cache yaz (5 dəq)
-  await cacheSet(cKey, responseObj, 300);
+  // Cache yaz (5 dəq); fallback (degraded) nəticələri 30s - provider geri gəldikdə
+  // junk cavab istifadəçini uzun saxlamasın
+  await cacheSet(cKey, responseObj, usedFallback ? 30 : 300);
 
   if (format === "jsonl") {
     return jsonlResponse(finalResults, { query, intent, providers_used: providersUsed, took_ms: responseObj.meta.took_ms });
