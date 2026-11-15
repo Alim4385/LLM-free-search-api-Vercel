@@ -11,8 +11,9 @@ import { sanitizeQuery, checkRateLimit } from "../lib/ratelimit.js";
 import { scoreResult, isSpamDomain, hostMatches, diversifyByDomain, isJunkDomain } from "../lib/score.js";
 import { cleanContent, pickAnswer, detectQueryLanguage, wikiExtractUrl } from "../lib/clean.js";
 import { normalizeUrl, decodeEntities, stripQuestionWords } from "../lib/search.js";
-import { expandQuery, expandQueryAsync, stripMetaInstructions } from "../lib/expand.js";
-import { isBlockedIp, assertPublicUrl } from "../lib/extract.js";
+import { expandQuery, expandQueryAsync, stripMetaInstructions, isMetaQuery } from "../lib/expand.js";
+import { isLongAzQuery } from "../lib/translate.js";
+import { isBlockedIp, assertPublicUrl, extractCacheGet, extractCacheSet } from "../lib/extract.js";
 import { isCircuitOpen, recordFailure, recordSuccess } from "../lib/circuit.js";
 
 let pass=0, fail=0;
@@ -40,8 +41,14 @@ assert("weather: Bakı hava", isWeatherQuery("Bakı hava necədir"));
 assert("weather: Bakı hava EXACT", matchWeather("Bakı hava necədir").exact === true);
 assert("weather: sabah hava", isWeatherQuery("sabah hava neçə dərəcə olacaq"));
 assert("weather: temperatur", isWeatherQuery("temperatur neçədir"));
-assert("weather: 'hava limanı' hit verir (şəhərsiz cancel qoruyucu)", matchWeather("hava limanı harada yerləşir").hit === true);
-assert("weather: 'hava limanı baki...' uzun sorğu WEAK", matchWeather("hava limanı baki harada yerləşir").exact === false);
+// v13 P1: "hava limanı" (airport) / "hava yolu" (airline) hava DEYİL — əvvəlki
+// davranışda "Bakı hava limanı" exact:true idi və searchAll tam atılırdı (audit probe)
+assert("weather: 'hava limanı' weather DEYİL (v13 airport fix)", matchWeather("hava limanı harada yerləşir").hit === false);
+assert("weather: 'Bakı hava limanı' hit false (v13 - əvvəl exact:true idi)", matchWeather("Bakı hava limanı").hit === false);
+assert("weather: 'hava yolları' weather DEYİL (airline)", matchWeather("Azərbaycan hava yolları").hit === false);
+assert("weather: 'Bakı hava' hələ də EXACT", matchWeather("Bakı hava").hit === true && matchWeather("Bakı hava").exact === true);
+assert("weather: 'Gəncədə hava necədir' hələ də hit", isWeatherQuery("Gəncədə hava necədir"));
+assert("weather: 'temperatur neçədir' hələ də hit", isWeatherQuery("temperatur neçədir"));
 assert("weather: Gəncə şəhəri", detectCity("Gəncədə hava") === "gence");
 assert("weather: Qubadli ≠ Quba (word-boundary)", detectCity("Qubadlida hava necədir") === "qubadli", detectCity("Qubadlida hava necədir"));
 assert("weather: Quba hələ də Quba", detectCity("Qubada hava") === "quba");
@@ -99,6 +106,26 @@ assert("expand: keywords STMMED deyil (real sözlər)", !/\bsorg$|\bmotorun\b/.t
   const stripped = stripMetaInstructions("Bakı tarixi haqqında məlumat ver, hər cavab ən azı 500 simvol olmalıdır, hər biri mənbə ilə təsdiqlənsin");
   assert("meta strip: mövzu saxlanılır", stripped && /bakı/i.test(stripped) && !/hər biri/i.test(stripped), stripped || "null");
 }
+// v13 P2: tək topic marker ("ən azı N" / "hər biri") légitim sorğuda da olur —
+// əvvəlki tək-marker qaydası "ən azı 5 ölkə" kimi sorğuları meta sayıb "5"-i silirdi
+assert("meta: 'ən azı 5 ölkə' légitim - meta DEYİL (v13)", isMetaQuery("Azərbaycanla sərhəddi olan ən azı 5 ölkə var") === false);
+assert("meta: 'hər biri neçə qapıya' légitim - meta DEYİL (v13)", isMetaQuery("Hər biri neçə qapıya malikdir?") === false);
+assert("meta: 'ən azı 3 nəticə qaytarmalıdır' imperativ - meta DİR (v13)", isMetaQuery("ən azı 3 nəticə qaytarmalıdır") === true);
+assert("meta: iki topic marker - meta DİR (v13)", isMetaQuery("sual ver ən azı 5, hər biri fərqli") === true);
+assert("meta: 'olmalıdır' tək imperativ - meta DİR (v13)", isMetaQuery("Nəticələr JSON formatında olmalıdır") === true);
+// Route yolunun simulyasiyası: isMetaQuery=false → stripMetaInstructions çağrılmır → "5" qorunur
+{
+  const mq = "Azərbaycanla sərhəddi olan ən azı 5 ölkə var";
+  const routeQuery = isMetaQuery(mq) ? (stripMetaInstructions(mq) || mq) : mq;
+  assert("meta: légitim sorğunun '5'-i qorunur (v13 route yolu)", routeQuery === mq, routeQuery);
+}
+// v13 P10: tokenize "ne/zaman" atırdı → adi TR sualı tərcümə/EN anchor-a çatmırdı (canlı probe)
+assert("TR: 'Ankara ne zaman kuruldu' gate AÇIQ (v13)", isLongAzQuery("Ankara ne zaman kuruldu") === true);
+assert("TR: 'Kapadokya da ne yapılır' gate AÇIQ (v13)", isLongAzQuery("Kapadokya da ne yapılır") === true);
+assert("TR: 'Türkiye nin başkenti neden Ankara' gate AÇIQ (dəyişməz)", isLongAzQuery("Türkiye'nin başkenti neden Ankara'dır") === true);
+assert("AZ: 'Bakı hava' qısa - gate yoxdur (dəyişməz)", isLongAzQuery("Bakı hava") === false);
+assert("AZ: 'Azərbaycanın paytaxtı' qısa - gate yoxdur (dəyişməz)", isLongAzQuery("Azərbaycanın paytaxtı") === false);
+assert("EN: 'retrieval augmented generation systems' gate yoxdur (dəyişməz)", isLongAzQuery("retrieval augmented generation systems") === false);
 
 console.log("\n=== SSRF / BLOKLAMA (v10.1) ===");
 // isBlockedIp — saf funksiya, deterministik
@@ -126,6 +153,24 @@ assert("ssrf: [::1] blok", await throws(() => assertPublicUrl("http://[::1]/x"))
 assert("ssrf: 100.64.0.1 blok", await throws(() => assertPublicUrl("http://100.64.0.1/x")));
 assert("ssrf: 8.8.8.8 keçir", (await throws(() => assertPublicUrl("http://8.8.8.8/x"))) === false);
 assert("ssrf: localhost blok", await throws(() => assertPublicUrl("http://localhost/x")));
+
+// v13 T1: URL-level extract cache (URL → məzmun; wiki 24h, digər 1h; null cache-ə düşmür)
+console.log("\n=== EXTRACT CACHE (v13 T1) ===");
+assert("extractCache: miss -> null", extractCacheGet("https://cache-miss.example/x") === null);
+{
+  const val = { title: "t", text: "x".repeat(200), url: "https://cache-hit.example/p" };
+  extractCacheSet("https://cache-hit.example/p", val);
+  assert("extractCache: set/get eyni obyekt", extractCacheGet("https://cache-hit.example/p") === val);
+}
+// 4MB cap: tək entry cap-dan böyükdürsə saxlan (size>1 guard), əvvəlki köhnə entry atılır
+{
+  const small = { title: "t", text: "a".repeat(160), url: "https://evict.example/1" };
+  extractCacheSet("https://evict.example/1", small);
+  const big = { title: "t", text: "a".repeat(4 * 1024 * 1024 + 500), url: "https://evict.example/2" };
+  extractCacheSet("https://evict.example/2", big);
+  assert("extractCache: 4MB cap - ən köhnə entry evict olunur",
+    extractCacheGet("https://evict.example/1") === null && extractCacheGet("https://evict.example/2") !== null);
+}
 // Host adı (fcc.gov) "private" sayılmır — DNS cavabı public olarsa keçir
 assert("ssrf: fcc.gov 'private host' DEYİL", (await throws(() => assertPublicUrl("http://fcc.gov/"))) === false);
 
