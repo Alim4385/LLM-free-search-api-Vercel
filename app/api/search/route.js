@@ -136,6 +136,15 @@ async function handleSearch(body, req) {
   let scored = results.map(r => ({ ...r, score: scoreResult(r, qTerms) }));
   // Snippet boşdursa və score aşağıdırsa at
   scored = scored.filter(r => r.score >= 1.5 && (r.snippet || "").trim().length >= 10);
+  // Keyfiyyət fallback: filter hamısını atdı amma xam nəticələr varsa top-2 saxlan (vote/RRF ilə).
+  // Səbəb: Tavily/Brave cooldown-da olanda tək provayderin zəif nəticəsi 1.5 altına düşür
+  // -> LLM-ə 0 nəticə gedirdi (keyfiyyət bozulması). Boş əllə qayıtmaq < 1 zəif mənbə.
+  if (!scored.length && results.length) {
+    scored = [...results]
+      .sort((a, b) => (b.voteCount || 0) - (a.voteCount || 0) || (b.rrfScore || 0) - (a.rrfScore || 0))
+      .slice(0, 2)
+      .map(r => ({ ...r, score: scoreResult(r, qTerms) }));
+  }
   // Deterministic sort: score desc, voteCount desc, URL asc (tie-breaker - Test6 fix)
   // Skor bərabər olduqda provayder cavab sırası təsadüfi olur - URL ilə sabitləşdir
   scored.sort((a, b) => (b.score - a.score) || ((b.voteCount || 0) - (a.voteCount || 0)) || a.url.localeCompare(b.url));
