@@ -1,12 +1,12 @@
 {
   "name": "qaqa_search",
-  "description": "Use this for current events, recent versions, prices, exchange rates, weather, or anything you're unsure about. It searches multiple engines, fetches the relevant pages, and returns clean snippets. Cite results as [1], [2] in your answer and verify numbers/dates against the returned content (the 'answer' field is a fragment of content, not a verified answer - do not repeat it without checking). Prefer results with a published_at or updated_at date for freshness questions (both null = no date; updated_at = last modification, not publication). If results are empty or meta.confidence is low/none, say you couldn't find it - do not fill the gap from your own knowledge. meta.fallback=true means raw results existed but none were relevant - treat as not found. Supports Azerbaijani and English queries. Weather/time/currency queries return exact structured data (Open-Meteo / CBAR).",
+  "description": "Use this for current events, recent versions, facts, prices, exchange rates, weather, or anything you are unsure about. It searches multiple engines, extracts clean page content, and returns results in the same language as the query. Cite results as [1], [2] and verify every number/date strictly against the returned content. Prefer results with a published_at or updated_at date for freshness questions (both null = no date; updated_at = last modification, not publication). STRICT HALLUCINATION RULE: If results are empty, meta.confidence is 'low' or 'none', or meta.fallback is true, explicitly tell the user you could not find/verify the answer — NEVER guess or fill gaps from your own memory. Weather/time/currency queries return exact official structured data (Open-Meteo / Asia-Baku / CBAR).",
   "parameters": {
     "type": "object",
     "properties": {
       "query": {
         "type": "string",
-        "description": "Axtarış sualı. Azərbaycan və ya İngilis dilində yaz."
+        "description": "Axtarış sualı. Hansı dildə yazsan, cavab da həmin dildə qaytarılır (AZ/TR/EN)."
       },
       "max_results": {
         "type": "integer",
@@ -25,13 +25,13 @@
       "format": {
         "type": "string",
         "enum": ["json", "jsonl", "simple"],
-        "description": "json = tək JSON obyekt (default), jsonl = hər sətir JSON (stream), simple = yalnız title/url/snippet (əhatəli LLM tool çağırışı üçün)",
+        "description": "json = tək JSON obyekt (default), jsonl = hər sətir JSON (stream), simple = yalnız title/url/snippet",
         "default": "json"
       },
       "freshness": {
         "type": "string",
         "enum": ["day", "week", "month", "year"],
-        "description": "Təzilik filtri - yalnız bu müddət daxilində nəşr olunmuş nəticələr (təzə xəbər sualları üçün, məs. 'week')."
+        "description": "Təzilik filtri - yalnız bu müddət daxilində nəşr olunmuş nəticələr (məs. 'week')."
       },
       "exclude_domains": {
         "type": "array",

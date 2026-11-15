@@ -392,6 +392,43 @@ console.log("\n=== V12: DIVERSITY (maxPerDomain=1) ===");
   ];
   const d1 = diversifyByDomain(items, 5, 1);
   assert("diversity: maxPerDomain=1 → 3-dən 2 (Google tərzi)", d1.length === 2 && d1[1].url.includes("b.example.com"), JSON.stringify(d1.map(x => x.url)));
+  const docsItems = [
+    { url: "https://vercel.com/docs/functions/limitations", title: "Vercel Functions Limitations", snippet: "Timeout limits", source: "bing", score: 8 },
+    { url: "https://vercel.com/docs/functions/configuring-functions/duration", title: "Configuring Max Duration", snippet: "maxDuration setting", source: "bing", score: 7 }
+  ];
+  const dDocs = diversifyByDomain(docsItems, 5, 1, 2);
+  assert("diversity v15: rəsmi docs saytında 2 fərqli yüksək skorlu səhifə qalır", dDocs.length === 2);
+}
+
+console.log("\n=== V15: XƏBƏR ŞABLONU, REKLAM LİNKİ, TƏKRAR SÖZ VƏ İNFOBOX ===");
+{
+  const newsRaw = "Oxu.Az Trend-ə istinadən xəbər verir ki, sabah Bakıda güclü külək əsəcək.\nBizi Telegram-da izləyin!\nHəmçinin oxuyun: Başqa xəbər\nBakı xəbər Bakı xəbər Bakı xəbər Bakı xəbər Bakı son";
+  const cleaned = cleanContent(newsRaw);
+  assert("v15 clean: 'Oxu.Az ... xəbər verir ki,' kəsilir, əsas xəbər qalır", !/xəbər verir ki/i.test(cleaned) && cleaned.includes("Sabah Bakıda güclü külək əsəcək"), cleaned);
+  assert("v15 clean: Telegram / Həmçinin oxuyun promo sətirləri silinir", !/telegram|həmçinin oxuyun/i.test(cleaned), cleaned);
+  assert("v15 clean: təkrarlanan söz yığını (word salad) silinir", !/Bakı xəbər Bakı xəbər/i.test(cleaned), cleaned);
+}
+{
+  const linksRaw = "Ən populyar saytlar:\n1. Google (https://google.com?utm_source=ads&fbclid=123) - axtarış\n2. YouTube (youtube.com) - video\nReklam: https://bit.ly/3xyz999 və https://doubleclick.net/ad";
+  const cleaned = cleanContent(linksRaw);
+  assert("v15 clean: həqiqi sayt adları (google.com, youtube.com) QORUNUR", cleaned.includes("https://google.com") && cleaned.includes("youtube.com"), cleaned);
+  assert("v15 clean: reklam/qısa linklər (bit.ly, doubleclick) və utm silinir", !cleaned.includes("bit.ly") && !cleaned.includes("doubleclick") && !cleaned.includes("utm_source"), cleaned);
+}
+{
+  assert("v15 stem: Azərbaycanla == Azərbaycan", stemAz("Azərbaycanla") === stemAz("Azərbaycan"), `${stemAz("Azərbaycanla")} vs ${stemAz("Azərbaycan")}`);
+  assert("v15 stem: Bakıdakı == Bakı", stemAz("Bakıdakı") === stemAz("Bakı"), `${stemAz("Bakıdakı")} vs ${stemAz("Bakı")}`);
+  assert("v15 lang: 'Bakı haqqında' = az (tr deyil!)", detectQueryLanguage("Bakı haqqında") === "az");
+  assert("v15 currency: 'dollar nə vaxt yarandı' valyuta deyil (tarix sualı)", matchCurrency("dollar nə vaxt yarandı").hit === false);
+  assert("v15 currency: '100 dollar cərimə' exact deyil (axtarış getməlidir)", matchCurrency("100 dollar cərimə").exact === false);
+  assert("v15 weather: 'Bakıda külək fəsadları' exact deyil (xəbər axtarışı getməlidir)", matchWeather("Bakıda külək fəsadları").exact === false);
+  const trapQ = "Qara dənizin dibində 1847-ci ildə tapılan pirat gəmisinin kapitanının anası haqqında məlumat";
+  const trapScore = scoreResult(
+    { title: "Caucasus Online", url: "https://az.wikipedia.org/wiki/Caucasus_Online", snippet: "Qara dənizin dibi ilə çəkilmiş optik kabel sistemi.", source: "wikipedia" },
+    tokenize(trapQ),
+    "az",
+    trapQ
+  );
+  assert("v15 P5 hallüsinasiya qoruması: 9 anlayışlı sualda yalnız 2 ümumi söz tutarsa score=0", trapScore === 0, String(trapScore));
 }
 
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);

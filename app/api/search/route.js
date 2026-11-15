@@ -1,39 +1,32 @@
 import { searchAll } from "../../../lib/search.js";
 import { fetchAndExtract } from "../../../lib/extract.js";
-import { selectRelevantParagraphs } from "../../../lib/rank.js";
+import { selectRelevantParagraphs, tokenize } from "../../../lib/rank.js";
 import { matchWeather, fetchWeather, weatherToText } from "../../../lib/weather.js";
 import { matchTime, fetchBakuTime, timeToText } from "../../../lib/time.js";
 import { matchCurrency, fetchCBAR, currencyToText } from "../../../lib/currency.js";
-import { tokenize } from "../../../lib/rank.js";
-import { scoreResult, diversifyByDomain, extractQuotedPhrases, containsPhrase, isSpamDomain, hostMatches, computeConfidence } from "../../../lib/score.js";
+import { scoreResult, diversifyByDomain, extractQuotedPhrases, containsPhrase, isSpamDomain, hostMatches, computeConfidence, isNewsQuery } from "../../../lib/score.js";
 import { cleanContent, cutWord, detectQueryLanguage } from "../../../lib/clean.js";
 import { expandQuery, isMetaQuery, stripMetaInstructions } from "../../../lib/expand.js";
+import { translateResultsToQueryLang } from "../../../lib/translate.js";
 import { cacheGet, cacheSet, cacheKey } from "../../../lib/cache.js";
 import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../../lib/ratelimit.js";
 
 export const runtime = "nodejs";
-export const maxDuration = 30; // Vercel timeout qoruması (Hobby: max 60, praktikada 30 kifayət)
-const FILTER_VERSION = 17; // filter dəyişəndə artır (tarixçə):
-// v12: content hygiene (wiki extracts API + junk cleaner), answer cümləsi, junk domains,
-// dil cəzası, mövzu qaydaları, diversity maxPerDomain=1, bing mkt + tavily country;
-// v12.1: wiki question-word sil, fallback relevance sort; v12.2: degraded cache 30s,
-// Unicode \\b fix, qstrip extend;
-// v13: weather "hava limanı" fix, isMetaQuery fix, meta.confidence, jsonl cache,
-// singleflight, TR gate, CBAR 3s, DNS TTL 10s, observability, extract cache;
-// v13.2: top_answer SİLİNDİ (hallüsinasiya riski), confidence v2, meta.dated_results,
-// hallüsinasiya-qarşı note, tool-schema description;
-// v14: confidence v3 (no_results artıq xəta DEYİL - əvvəl hər sorğu "low" çıxırdı),
-// fallback→boş (score<1.5 junk artıq qayıtmır), DDG default-off (ENABLE_DDG=1),
-// brave 1.1s guard, published_at/updated_at ayırımı (wiki timestamp=son dəyişiklik,
-// github updated_at=son push - publish deyil), answer sahəsi SİLİNDİ (over-trust),
-// snippet word-boundary cut, debug=1 → provider_errors_raw, 400→bad_request mapping
+export const maxDuration = 30;
+const FILTER_VERSION = 18; // v15:
+// - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
+// - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
+// - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
+// - Wikipedia tam məqalə + infobox faktları + TR wiki + WIKI_UA + qısa siyahı sətirlərinin qorunması
+// - Brave 1-çağırış + Promise mutex (429 öz-özünü bloklama fix), StackOverflow rəsmi API (tech sualları)
+// - Top-1/Top-2 mənbələrə daha geniş simvol payı, skipFetch 5500ms, sənəd saytlarında maxPerDomain=2,
+//   valyuta/hava tarixi sual tələləri (dollar nə vaxt yarandı) düzəldildi.
 export const dynamic = "force-dynamic";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
-  // Brauzer JS-dən rate header-larını oxumaq üçün lazımdır
   "Access-Control-Expose-Headers": "X-RateLimit-Limit, X-RateLimit-Remaining, X-Request-Id"
 };
 
@@ -44,16 +37,10 @@ function jsonResponse(obj, status = 200, extraHeaders = {}) {
   });
 }
 
-// v13 P8 (audit fix): observability — əvvəl requestId generasiya olunurdu amma
-// heç bir log-a yazılmırdı → problem (provider 429, latency skoku) əl ilə
-// axtarılırdı. İndi: hər istəyə bir JSON sətiri (Vercel logs). Query 40 char-da
-// kəsilir (PII + log həcmi qoruması). /api/metrics (in-memory counter) Upstash
-// batch-inə qoyuldu — free tier-də per-instance counter-ların dəyəri zəifdir.
 function logReq(rid, q, ms, extra) {
   try { console.log(JSON.stringify({ rid, q: String(q).slice(0, 40), ms, ...extra })); } catch {}
 }
 
-// Rate limit headerləri (LLM limit-i bilsin) + Request ID (request başına TEK id)
 function rateLimitHeaders(rl, requestId) {
   return {
     "X-RateLimit-Limit": String(RATE_LIMIT),
@@ -62,7 +49,6 @@ function rateLimitHeaders(rl, requestId) {
   };
 }
 
-// Promise timeout + düzgün clearTimeout (yaxşı nəticə gələndə timer yaddaşda qalmır)
 function withTimeout(promise, ms, label) {
   let t;
   return Promise.race([
@@ -71,12 +57,7 @@ function withTimeout(promise, ms, label) {
   ]).finally(() => clearTimeout(t));
 }
 
-// v13 P4 (audit fix): in-process singleflight — eyni paralel axtarışlar
-// (eyni q+n+freshness+exclude, eyni instance) bir Promise paylaşır:
-// N paralel istəq = 1 provider fırtınası, N×10 deyil (429 skoklarının kök
-// səbəblərindən biri). Cross-instance dedupe Upstash tələb edir (shared-state
-// batch — env hələ qurulmayıb).
-const searchInflight = new Map(); // key -> Promise
+const searchInflight = new Map();
 function searchAllShared(q, n, opts) {
   const key = q.toLowerCase() + "|" + n + "|" + (opts.freshness || "") + "|" + (opts.excludeDomains || []).join(",");
   let p = searchInflight.get(key);
@@ -93,7 +74,6 @@ function jsonlResponse(results, meta, extraHeaders = {}) {
   lines.push(JSON.stringify({ type: "meta", ...meta }));
   for (const r of results) lines.push(JSON.stringify({ type: "result", ...r }));
   lines.push(JSON.stringify({ type: "done", count: results.length }));
-  // Real stream: ilk sətir (meta) dərhal flush olunur - client await etmədən parse etməyə başlayır
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     start(controller) {
@@ -117,47 +97,38 @@ async function handleSearch(body, req) {
   const started = Date.now();
   const ip = getClientIp(req);
   const requestId = Math.random().toString(36).slice(2, 10);
-  // Pis giriş: null/array/object deyil → 400 (500 deyil)
   if (!body || typeof body !== "object" || Array.isArray(body)) {
     return jsonResponse({ error: "invalid_body", message: "Body JSON obyekt olmalıdır" }, 400);
   }
 
-  // checkRateLimit async-dir: Upstash varsa shared counter (bütün instance-lar), yoxdursa in-memory
+  const rawQuery = body.query ?? body.q ?? "";
   let rl = await checkRateLimit(ip);
   if (!rl.ok && rl.retryAfter <= 5) {
-    // Queue: qısa gözləmə ilə növbəyə qoy (LLM burst sorğuları üçün 429 əvəzinə)
     await new Promise(r => setTimeout(r, rl.retryAfter * 1000 + 100));
     rl = await checkRateLimit(ip);
   }
   if (!rl.ok) {
     logReq(requestId, rawQuery, Date.now() - started, { status: 429 });
-    // v10 🟠14: standart Retry-After header-ı (body-dəki retry_after-ın yanısıra -
-    // HTTP client-lar/LLM wrapper-lar header-ı oxuyur, body-yi yox)
     return jsonResponse({ error: "rate_limited", message: "Çox tez sorğu göndərdin. Bir az gözlə.", retry_after: rl.retryAfter }, 429, { ...rateLimitHeaders(rl, requestId), "Retry-After": String(Math.min(rl.retryAfter || 60, 60)) });
   }
 
-  const rawQuery = body.query ?? body.q ?? "";
   if (typeof rawQuery !== "string") return jsonResponse({ error: "invalid_query_type", message: "query string olmalıdır" }, 400);
   const query = sanitizeQuery(rawQuery);
   if (!query) return jsonResponse({ error: "missing_query", message: "query sahəsi tələb olunur" }, 400);
 
   const maxResults = Math.min(Math.max(parseInt(body.max_results || body.maxResults || "5", 10) || 5, 1), 8);
   const maxChars = Math.min(Math.max(parseInt(body.max_chars || body.maxChars || "4000", 10) || 4000, 500), 8000);
-  // Tip qoruması: format/freshness number/string deyilsə partlamasın (400 əvəzinə fallback)
-  const fmt = (typeof body.format === "string" ? body.format : "json").toLowerCase(); // json | jsonl | simple
+  const fmt = (typeof body.format === "string" ? body.format : "json").toLowerCase();
   const format = ["json", "jsonl", "simple"].includes(fmt) ? fmt : "json";
   const fr = (typeof body.freshness === "string" ? body.freshness : "").toLowerCase();
   const freshness = ["day","week","month","year"].includes(fr) ? fr : null;
   const excludeDomains = Array.isArray(body.exclude_domains) ? body.exclude_domains.filter(d => typeof d === "string").map(d => d.toLowerCase().replace(/^www\./, "")).slice(0, 20) : [];
-  const perSourceChars = Math.ceil(maxChars / maxResults);
+  const qLang = detectQueryLanguage(query);
+  const reqLang = typeof body.lang === "string" && ["az", "tr", "en", "ru"].includes(body.lang.toLowerCase()) ? body.lang.toLowerCase() : qLang;
+  const shouldTranslateResults = body.translate_results !== false && body.translate_results !== "0" && body.translate_results !== 0;
 
-  // Cache yoxla (freshness/exclude də key-də olmalıdır - səhv nəticə qaytarılmasın)
-  const cKey = cacheKey("search", { q: query.toLowerCase(), n: maxResults, c: maxChars, v: FILTER_VERSION, f: freshness || "", x: excludeDomains.join(",") });
+  const cKey = cacheKey("search", { q: query.toLowerCase(), n: maxResults, c: maxChars, l: reqLang, tr: shouldTranslateResults ? 1 : 0, v: FILTER_VERSION, f: freshness || "", x: excludeDomains.join(",") });
   const cached = await cacheGet(cKey);
-  // v13 P7 + v13.1 (audit fix): BÜTÜN formatlar cache oxuyur — yazma tərəfi də
-  // artıq format-dan asılı deyil (aşağıda). "Zəhərlənmə" dövrü (simple/jsonl
-  // yarımçıq/snippet-only nəticənin cache-a düşməsi) skipFetch/boş/time qorumaları
-  // ilə bitdi: cache-də HƏMİŞƏ tam məzmun var, responseObj format-dan asılıdır.
   if (cached) {
     const obj = { ...cached, meta: { ...cached.meta, cached: true, took_ms: Date.now() - started } };
     logReq(requestId, query, obj.meta.took_ms, { status: 200, cached: true });
@@ -170,10 +141,6 @@ async function handleSearch(body, req) {
     return jsonResponse(obj, 200, rateLimitHeaders(rl, requestId));
   }
 
-  // v10 🔴3: intent GATING - exakt (qısa sorğu + exakt fraza) → structure-only.
-  // weak (uzun sorğuda "hava"/"saat"/"dollar" sözü) → structure VƏ search birləşik.
-  // Əvvəl tək "saat"/"kurs" tokeni HƏR sorğuda intent açırıb searchAll-ı tam atırırdı
-  // ("saat 3-də başlayan kurs haqqında məlumat" → boş cavab + saat).
   const intentMatches = { weather: matchWeather(query), time: matchTime(query), currency: matchCurrency(query) };
   const intentName = ["weather", "time", "currency"].find(k => intentMatches[k].hit) || null;
   const intentExact = intentName ? intentMatches[intentName].exact : false;
@@ -191,19 +158,12 @@ async function handleSearch(body, req) {
     try { currencyData = await fetchCBAR(); currencyText = currencyToText(currencyData); } catch {}
   }
 
-  // Meta-sorğu təmizləmə (DeepSeek P0-2): təlimatı at, mövzunu saxla
   let searchQuery = query;
   if (isMetaQuery(query)) {
     const cleaned = stripMetaInstructions(query);
     if (cleaned) searchQuery = cleaned;
   }
-  // Dırnaq SAXLA (DeepSeek düzəlişi): provayderə dırnaqlı göndər, Brave üstünlük verir
-  // (post-filter üçün extractQuotedPhrases aşağıda bir dəfə çağırılır - phrases)
 
-  // Struktur intent (weather/time/currency): API-dən cavab, axtarış/scraping yoxdur
-  // Tələb: "Weather queries: use Open-Meteo API, no scraping" - EXACT intent-də searchAll
-  // atlanır (latency + düzgünlük). v10 🔴3: weak intent-də (və ya fetch uğursuz olduqda)
-  // search ALLA da işləyir - LLM both signal alır (məs. "hava limanı" → search nəticələri).
   const hasStructured = intentExact && (
     (intentName === "weather" && weather) ||
     (intentName === "time" && timeData) ||
@@ -212,11 +172,7 @@ async function handleSearch(body, req) {
   let searchResult = { results: [], providersUsed: [], errors: {}, anchorQuery: null, translated: false };
   let results = [], providersUsed = [], errors = {};
   if (!hasStructured) {
-    // Axtarış provayderləri — searchAll DAXİLİ 5s ümumi büdcə ilə özü limitlənir
-    // (v10.1 🔴4: mərhələlər artıq qalan vaxta görə işləyir, 7.8s pisi yoxdur).
-    // withTimeout 8s backstop-un qalığı deyil — gözlənilməz hang-ə qorunmadır.
     try {
-      // v13 P4: singleflight — eyni paralel sorğular bir provider fırtınası paylaşır
       searchResult = await searchAllShared(searchQuery, maxResults, { freshness, excludeDomains });
     } catch (e) {
       if (e.message === "search timeout") {
@@ -228,50 +184,41 @@ async function handleSearch(body, req) {
     ({ results, providersUsed, errors } = searchResult);
   }
 
-  // Relevance scoring + threshold (P0)
+  // v15: qTerms-ə searchResult.anchorQuery də əlavə olunur ki, tərcümə ilə tapılan
+  // düzgün EN mənbələr ("Lake Van", "Most visited websites", "Borders of Azerbaijan")
+  // skorlamada 0 alıb atılmasın!
   const exp = expandQuery(query);
-  const qTerms = [...new Set([...tokenize(query), ...tokenize(exp.expanded || ""), ...tokenize(exp.english || "")])];
-  // v12: sorğunun dili — dil cəzası (score.js) + bing mkt/tavily country üçün
-  const qLang = detectQueryLanguage(query);
-  // Xam say spam filtrdən ƏVVƏL hesablanır (sonra olarsa hamısı spamdırsa
-  // no_match çıxır, all_filtered deyil - səhv diaqnoz)
+  const qTerms = [...new Set([
+    ...tokenize(query),
+    ...tokenize(exp.expanded || ""),
+    ...tokenize(exp.english || ""),
+    ...tokenize(searchResult.anchorQuery || "")
+  ])];
+
   const rawCount = results.length;
-  // Spam domen blacklist (Gitee və s.)
   results = results.filter(r => !isSpamDomain(r.url));
   let scored = results.map(r => ({ ...r, score: scoreResult(r, qTerms, qLang, query) }));
-  // Snippet boşdursa və score aşağıdırsa at
   scored = scored.filter(r => r.score >= 1.5 && (r.snippet || "").trim().length >= 10);
-  // v14 (user review #2): fallback JUNK artıq QAYARILMIR. Əvvəl: score<1.5 olan
-  // xam nəticələrdən top-2 saxlanırdı ("boş əllə qayıtmaq < 1 zəif mənbə" — v12
-  // qərarı). Praktika: həqiqi əlaqəli mənbə HƏMİŞƏ score>=1.5 alır (title x2 +
-  // snippet + fuzzy); fallback-yə düşən HƏMİŞƏ əlaqəsiz junk idi (qəsdən boş
-  // test: "2019" wiki + "Winner (band)" LLM kontekstinə girib cavab uydurmağa
-  // təşviq edirdi). İndi: boş results + confidence "none" + fallback=true —
-  // dürüst kontrakt: LLM "tapmadım/təsdiqləyə bilmədim" deməlidir.
+
   let usedFallback = false;
   if (!scored.length && results.length) { usedFallback = true; }
-  // Deterministic sort: score desc, voteCount desc, URL asc (tie-breaker - Test6 fix)
-  // Skor bərabər olduqda provayder cavab sırası təsadüfi olur - URL ilə sabitləşdir
   scored.sort((a, b) => (b.score - a.score) || ((b.voteCount || 0) - (a.voteCount || 0)) || a.url.localeCompare(b.url));
 
-  // Dırnaq post-filter (P1): dırnaqlı ifadə varsa, title/snippet-də axtar
   const phrases = extractQuotedPhrases(query);
   if (phrases.length) {
     const quoted = scored.filter(r => phrases.some(ph => containsPhrase(r.title, ph) || containsPhrase(r.snippet, ph)));
     if (quoted.length) {
       scored = quoted;
     } else {
-      // Dırnaqlı 0 nəticə -> dırnaqsız retry (graceful degradation)
-      // Düzgünlük > latency: retry həmişə edilir (cap Test6-nı n=0 etdi)
       const unquoted = query.replace(/"([^"]+)"/g, "$1");
       if (unquoted !== query) {
         try {
-          // Retry-də ayrıca timeout: 6s axtarış + retry + fetch = maxDuration-a düşə bilər
           const retry = await withTimeout(searchAll(unquoted, maxResults, { freshness, excludeDomains }), 3000, "retry timeout");
-          let retryScored = retry.results.filter(r => !isSpamDomain(r.url)).map(r => ({ ...r, score: scoreResult(r, qTerms, qLang, query) })).filter(r => r.score >= 1.5);
+          const retryTerms = [...new Set([...qTerms, ...tokenize(retry.anchorQuery || "")])];
+          let retryScored = retry.results.filter(r => !isSpamDomain(r.url)).map(r => ({ ...r, score: scoreResult(r, retryTerms, qLang, query) })).filter(r => r.score >= 1.5);
           retryScored.sort((a, b) => (b.score - a.score) || ((b.voteCount || 0) - (a.voteCount || 0)) || a.url.localeCompare(b.url));
           if (retryScored.length) scored = retryScored;
-          else scored = quoted; // yenə 0 olarsa boş qaytar
+          else scored = quoted;
         } catch { scored = quoted; }
       } else {
         scored = quoted;
@@ -279,128 +226,117 @@ async function handleSearch(body, req) {
     }
   }
 
-  // site: post-filter (P1) — exakt host match (substring ilə "evil-wikipedia.org.fake.com" keçirdi)
   const siteMatch = query.match(/site:([a-z0-9.-]+\.[a-z]{2,})/i);
   if (siteMatch) {
     const domain = siteMatch[1].toLowerCase().replace(/^www\./, "");
     scored = scored.filter(r => hostMatches(r.url, domain));
   }
 
-  // Domen diversifikasiyası (P0): domen başına max 2
-  // v12 P3: 2 → 1 (Google tərzi) — diagnostic: eyni sayt növbəti-növbəti görünürdü
-  // (youtube ×2 recipe sorğusunda). 1 = hər sayt top-N-də maksimum 1 dəfə.
-  let filtered = diversifyByDomain(scored, maxResults, 1);
+  // v15 (Claude #3 fix): ümumi saytlarda maxPerDomain=1, rəsmi sənəd/ensiklopediya
+  // domenlərində yüksək skorlu (score>=3.5) 2 fərqli səhifəyə icazə verilir
+  let filtered = diversifyByDomain(scored, maxResults, 1, 2);
   const filteredCount = scored.length;
 
-  // Saytları paralel aç və təmizlə (simple formatda fetch lazım deyil - latency qənaəti)
-  // Latency cap (DeepSeek p99): axtarış artıq 2s çəkibsə, content fetch atlanır (snippet-only)
   const toFetch = filtered.slice(0, maxResults);
   const searchTookMs = Date.now() - started;
-  // v10 🟠7: threshold 2000→3500ms — əvvəlki 2s demək olar HƏMİŞƏ keçirildi
-  // (paralel provider + expansion ~2s çəkirdi) → snippet-only cavab, keyfiyyət düşdü.
-  // maxDuration=30s büdcəsi var, 3.5s + fetch (0.7s parallel) rahat sığılır.
-  const skipFetch = format === "simple" || searchTookMs > 3500;
-  // skipFetch: Promise.allSettled forması ilə uyğun ({status:"fulfilled",value:null}) -
-  // Promise.resolve(null) verilsə .status oxunanda undefined çıxar (təsadüfən işləyirdi)
-  // v10.1 🔴3: 700ms → 2500ms — əvvəl çox sayt 700ms-ə çatmırdı və cavab SESSİZCƏ
-  // snippet-ə düşürdü (keyfiyyət). maxDuration=30s var; fetch-lər PARALELDİR,
-  // yəni ümumi +2.5s (skipFetch>3.5s olduqda 3.5+2.5=6s « 30s)
+  // v15: 3500ms -> 5500ms (mənbə gecikəndə tam məqalə oxunuşunu yarıda kəsməsin)
+  const skipFetch = format === "simple" || searchTookMs > 5500;
+  // v15: həm orijinal sual, həm də ingilis tərcüməsi ilə abzas seçimi!
+  const extractQuery = searchResult.anchorQuery ? `${query} ${searchResult.anchorQuery}` : query;
   const extracted = skipFetch
     ? toFetch.map(() => ({ status: "fulfilled", value: null }))
-    : await Promise.allSettled(toFetch.map(r => fetchAndExtract(r.url, query, 2500)));
+    : await Promise.allSettled(toFetch.map(r => fetchAndExtract(r.url, extractQuery, 2600)));
 
   const finalResults = [];
   let totalChars = 0;
+  const basePerSource = Math.ceil(maxChars / maxResults);
 
   for (let i = 0; i < toFetch.length; i++) {
     const base = toFetch[i];
+    // v15: ən güclü 1-ci və 2-ci mənbəyə daha geniş həcm ayır ki, cavab yarıda kəsilməsin
+    const itemBudget = i === 0
+      ? Math.min(1600, Math.max(basePerSource, Math.round(maxChars * 0.36)))
+      : i === 1
+        ? Math.min(1200, Math.max(basePerSource, Math.round(maxChars * 0.26)))
+        : basePerSource;
+
     const ex = extracted[i].status === "fulfilled" ? extracted[i].value : null;
     let content = "";
     let title = base.title;
     if (ex) {
       title = ex.title || title;
-      content = selectRelevantParagraphs(ex.text, query, title, perSourceChars);
-      // v10 🔴4: paragraph seçimi boş qaytardısa (v10-dan əvvəl belə olurdu) snippet fallback
+      content = selectRelevantParagraphs(ex.text, extractQuery, title, itemBudget);
       if (!content || !content.trim()) content = base.snippet || "";
     } else {
-      // sayt açılmadısa snippet-i istifadə et
       content = base.snippet || "";
     }
-    // v12 P1: junk cleaner — wiki [n]/[edit], cədvəl/tarix zibilliyi, symbol soup,
-    // boilerplate başlıqlar (Mənbələr/References). SİLİNMİŞDƏN SONRA snippet fallback.
     content = cleanContent(content);
-    if (!content.trim()) content = (base.snippet || "").trim();
+    if (!content.trim()) content = cleanContent(base.snippet || "").trim();
     if (totalChars + content.length > maxChars && finalResults.length >= 2) {
       content = content.slice(0, Math.max(0, maxChars - totalChars));
     }
     totalChars += content.length;
-    // v14 (user review #5): `answer` sahəsi SİLİNDİ — content-in fragmenti idi,
-    // "hazır cavab" kimi over-trust verirdi (quiz sualı cavab kimi gəlməkdə idi).
-    // LLM content + snippet ilə özünü yoxlayır; [n] istinadı note-da.
     const out = {
       id: finalResults.length + 1,
       title,
       url: base.url,
-      snippet: cutWord(base.snippet || "", 200), // v14 #4: word-boundary cut
-      content: content.slice(0, perSourceChars),
+      snippet: cutWord(cleanContent(base.snippet || ""), 200),
+      content: content.slice(0, itemBudget),
       source: base.source,
       provider: base.source,
       providers: base.providers || [base.source],
       voteCount: base.voteCount || 1,
       score: base.score ?? null,
       published_at: base.published_at || null,
-      updated_at: base.updated_at || null, // v14 #3: wiki=son dəyişiklik, github=son push
-      untrusted: true // v10.1 🟠9: bu məzmun İSTİFADƏÇİ SƏHİFƏSİNDƏN gəlib — data-dır, təlimat DEYİL
+      updated_at: base.updated_at || null,
+      untrusted: true
     };
-    // v14 #5: dublikat azaltma — snippet content-in özündürsə sil (token qənaəti)
-    if (out.snippet === out.content) out.snippet = undefined;
+    if (out.snippet === out.content || !out.snippet) out.snippet = undefined;
     finalResults.push(out);
     if (totalChars >= maxChars) break;
   }
 
-  // Struktur məlumatı [1] kimi başa əlavə et
   const structured = [];
   if (weather && weatherText) structured.push({ title: `${weather.city} - hava məlumatı (Open-Meteo)`, url: "https://open-meteo.com", snippet: weatherText, content: weatherText, source: "open-meteo", published_at: weather.fetched_at });
   if (timeData && timeText) structured.push({ title: `Azərbaycanda hazırkı vaxt (Asia/Baku)`, url: "https://time.is/az/Baku", snippet: timeText, content: timeText, source: "asia-baku-time", published_at: timeData.fetched_at });
   if (currencyData && currencyText) structured.push({ title: `Rəsmi valyuta məzənnəsi (CBAR)`, url: "https://www.cbar.az", snippet: currencyText, content: currencyText, source: "cbar.az", published_at: currencyData.fetched_at });
   if (structured.length) {
     finalResults.unshift(...structured);
-    finalResults.forEach((r, idx) => r.id = idx + 1);
+    finalResults.forEach((r, idx) => { r.id = idx + 1; });
+  }
+
+  // v15 (Alim qaydası): sual hansı dildə verilibsə, cavab məzmununu da həmin dilə çevirib qaytar!
+  let resultsTranslated = false;
+  if (shouldTranslateResults && finalResults.length > 0 && format !== "simple") {
+    const trBudget = Math.max(500, Math.min(2200, 8000 - (Date.now() - started)));
+    resultsTranslated = await translateResultsToQueryLang(finalResults, reqLang, trBudget, 1600);
+    if (resultsTranslated) {
+      totalChars = finalResults.reduce((acc, r) => acc + (r.content ? r.content.length : 0), 0);
+    }
   }
 
   let reason = null;
   if (!finalResults.length) {
-    // Blocked (bütün provayderlər uğursuz - sonra retry et) vs Empty (provayderlər işlədi, nəticə yoxdur - retry etmə)
-    // H21x status taktikası: blocked normal haldır, HTTP error deyil
     const allFailed = providersUsed.length === 0 && Object.keys(errors).length > 0;
     if (allFailed) reason = "blocked";
     else if (!rawCount) reason = "no_match";
     else if (!filteredCount) reason = "all_filtered";
     else reason = "no_relevant_results";
   }
-  // Daxili səhv mətnləri (e.message) müştəriyə getmir - yalnız təhlükəsiz status
+
   const safeErrors = {};
   for (const [k, v] of Object.entries(errors)) {
     safeErrors[k] = /circuit open/.test(v) ? "cooldown"
       : /429/.test(v) ? "rate_limited"
       : /403|401/.test(v) ? "blocked"
-      // v14 (user review #6d): 400 artıq "error" deyil — API səviyyəsi problemi
-      // (məs. tavily keyless 400 = rejim/limit dəyişikliyi) ayrı görünməlidir
       : /400/.test(v) ? "bad_request"
-      : /no results/.test(v) ? "no_results" // v14 #1: NO_RESULT = xəta DEYİL (confidence v3 onu saymır)
-      : /timeout|abort/i.test(v) ? "timeout" // deadline abort = provider cavab vermədi
+      : /no results/.test(v) ? "no_results"
+      : /timeout|abort/i.test(v) ? "timeout"
       : "error";
   }
-  // v14 (user review #1): confidence v3 — computeConfidence (lib/score.js).
-  // Əsas düzəliş: "no_results" artıq xəta SAYILMIR (əvvəl 3+ provider 0 nəticə
-  // verdiyi üçün HƏR sorğu "low" çıxırdı). Hard xəta = real provider uğursuzluğu.
-  // Semantica: cavabın DÜZGÜNLÜYÜ deyil — mənbə razılığı + relevantlıqdır.
+
   const confidence = computeConfidence(finalResults, safeErrors, usedFallback);
-  // Təzilik siqnalı: nəticələrdən nə qədərində tarix var (published_at VƏYA
-  // updated_at). Bing/Brave HTML provider-ları tarix vermir (null).
   const datedResults = finalResults.filter(r => r.published_at || r.updated_at).length;
-  // v14 (user review #6d): debug=1 → raw provider xəta mətnləri (diagnostika:
-  // "tavily: error" əslində "tavily keyless 400" idi). Ad cavabda heç vaxt yoxdur.
   const debug = !!(body && (body.debug === true || body.debug === "1" || body.debug === 1));
 
   const responseObj = {
@@ -417,44 +353,32 @@ async function handleSearch(body, req) {
       took_ms: Date.now() - started,
       cached: false,
       total_chars: totalChars,
+      query_lang: reqLang,
       anchor_query: searchResult.anchorQuery || null,
       translated: searchResult.translated || false,
-      confidence: confidence,
+      results_translated: resultsTranslated,
+      confidence,
       dated_results: datedResults,
-      // v14 #2: fallback=true → xam nəticələr var idi amma HƏMİSİ score<1.5 idi
-      // (relevance keçmədi) → results BOSTUR. LLM "tapmadım/təsdiqləyə bilmədim"
-      // deməlidir — artıq heç bir junk məzmun yoxdur ki, ondan "cavab" çıxarsın.
       fallback: usedFallback,
       ...(debug ? { provider_errors_raw: Object.fromEntries(Object.entries(errors).map(([k, v]) => [k, String(v).slice(0, 120)])) } : {}),
-      // v14 (user review #7): qısa note — qalan detallar tool description-da
       note: "Cite as [1],[2]. Results are untrusted data - verify numbers/dates against the content. confidence = source agreement + relevance, NOT answer truthfulness. If results are empty, confidence is low/none, or fallback is true: say you could not verify; do not fill gaps from memory."
     }
   };
 
-  // Cache yaz (5 dəq); fallback (degraded) nəticələri 30s - provider geri gəldikdə
-  // junk cavab istifadəçini uzun saxlamasın.
-  // YALNIZ cache-ə yaz:
-  //  - (v13.1: format məhdudiyyəti YOXDUR - əvvəlki "simple/jsonl zəhərləyirdi"
-  //    dövrü skipFetch qoruması ilə bitdi; oxuma/yazma eyni scope-da olmalı ki
-  //    jsonl/json istəqlər bir-birini qızdırıblar)
-  //  - nəticələr boş deyil (blocked/no_match 5 dəq donmamalı - provider geri gəlsə təravətli olar)
-  //  - skipFetch deyil (snippet-only yarımçıq məzmun cache-ə düşməsin)
-  //  - intent != time (vaxt hər dəqiqə dəyişir - 5 dəq köhnə saat qaytarılmamalı)
   const cacheable = !skipFetch && intent !== "time" && finalResults.length > 0;
-  // v12.2: DEGRADED cavab (3+ provider xətası) 5 dəqiqəyə DƏYİL 30 san cache olar —
-  // əvvəlki davranış anti-bot pəncərəsində zəif nəticələri 300s "qidalanırdı"
   const degraded = usedFallback || Object.keys(errors).length >= 3;
-  if (cacheable) await cacheSet(cKey, responseObj, degraded ? 30 : 300);
+  const freshSensitive = intent === "weather" || intent === "currency" || isNewsQuery(query);
+  const ttl = degraded ? 30 : (freshSensitive ? 120 : 300);
+  if (cacheable) await cacheSet(cKey, responseObj, ttl);
 
-  logReq(requestId, query, Date.now() - started, { status: 200, n: finalResults.length, providers: providersUsed.length, errors: Object.keys(errors).length, intent, degraded, fallback: usedFallback, conf: confidence });
+  logReq(requestId, query, Date.now() - started, { status: 200, n: finalResults.length, providers: providersUsed.length, errors: Object.keys(errors).length, intent, degraded, fallback: usedFallback, conf: confidence, rTr: resultsTranslated });
   if (format === "jsonl") {
     return jsonlResponse(finalResults, { query, intent, providers_used: providersUsed, took_ms: responseObj.meta.took_ms, confidence, fallback: usedFallback }, rateLimitHeaders(rl, requestId));
   }
   if (format === "simple") {
-    // LLM tool formatı: sadə siyahı - title, url, snippet (xam HTML yoxdur)
     return jsonResponse({
       query,
-      results: finalResults.map(r => ({ title: r.title, url: r.url, snippet: (r.snippet || r.content || "").slice(0,200) }))
+      results: finalResults.map(r => ({ title: r.title, url: r.url, snippet: (r.snippet || r.content || "").slice(0, 200) }))
     }, 200, rateLimitHeaders(rl, requestId));
   }
   return jsonResponse(responseObj, 200, rateLimitHeaders(rl, requestId));
@@ -466,15 +390,11 @@ export async function OPTIONS() {
 
 export async function POST(req) {
   try {
-    // null body (valid JSON "null") → 400, ({})-ya düşüb 500 olmasın
     const parsed = await req.json().catch(() => null);
     if (parsed === null) return jsonResponse({ error: "invalid_body", message: "Body valid JSON obyekt olmalıdır" }, 400);
     return await handleSearch(parsed, req);
   } catch (e) {
-    // v13 P8: 500-lər log-a düşür (əvvəl səs-küy) - query daxilində ola bilməz,
-    // ona görə yalnız xəta mətni (log-dır, müştəriyə getmir)
     try { console.log(JSON.stringify({ status: 500, err: String((e && e.message) || e).slice(0, 160) })); } catch {}
-    // Daxili xəta mətni müştəriyə getmir (leak)
     return jsonResponse({ error: "internal_error", message: "Daxili xəta baş verdi. Bir az sonra yenidən cəhd et." }, 500);
   }
 }
@@ -488,8 +408,10 @@ export async function GET(req) {
       max_chars: searchParams.get("max_chars") || "4000",
       format: searchParams.get("format") || "json",
       freshness: searchParams.get("freshness") || "",
+      lang: searchParams.get("lang") || "",
+      translate_results: searchParams.get("translate_results") !== "0",
       exclude_domains: searchParams.get("exclude_domains") ? searchParams.get("exclude_domains").split(",") : [],
-      debug: searchParams.get("debug") === "1" // v14 #6d: provider_errors_raw
+      debug: searchParams.get("debug") === "1"
     };
     return await handleSearch(body, req);
   } catch (e) {
