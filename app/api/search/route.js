@@ -11,7 +11,7 @@ import { cacheGet, cacheSet, cacheKey } from "../../../lib/cache.js";
 import { checkRateLimit, getClientIp, sanitizeQuery } from "../../../lib/ratelimit.js";
 
 export const runtime = "nodejs";
-const FILTER_VERSION = 6; // filter dəyişəndə artır - köhnə junk cache ignore olunur (v6: wiki variants, time-intent fix, zero-result fallback)
+const FILTER_VERSION = 7; // filter dəyişəndə artır - köhnə junk cache ignore olunur (v7: trusted-domain fallback)
 export const dynamic = "force-dynamic";
 
 const CORS_HEADERS = {
@@ -139,9 +139,12 @@ async function handleSearch(body, req) {
   // Keyfiyyət fallback: filter hamısını atdı amma xam nəticələr varsa top-2 saxlan (vote/RRF ilə).
   // Səbəb: Tavily/Brave cooldown-da olanda tək provayderin zəif nəticəsi 1.5 altına düşür
   // -> LLM-ə 0 nəticə gedirdi (keyfiyyət bozulması). Boş əllə qayıtmaq < 1 zəif mənbə.
+  // Dəyərləndirmə: etibarlı domenlər (wikipedia/.gov/rəsmi AZ saytlar) öncəlikli -
+  // degraded hallında bing junk-u (recipe/liqueur səhifələri) əvəzinə mənbəli cavab.
   if (!scored.length && results.length) {
+    const trusted = u => { try { return /wikipedia\.org|\.gov(\.|$)|cbar\.az$|president\.az$|azerbaijan\.az$|e-gov\.az$/.test(new URL(u).hostname.replace(/^www\./, "")); } catch { return false; } };
     scored = [...results]
-      .sort((a, b) => (b.voteCount || 0) - (a.voteCount || 0) || (b.rrfScore || 0) - (a.rrfScore || 0))
+      .sort((a, b) => Number(trusted(b.url)) - Number(trusted(a.url)) || (b.voteCount || 0) - (a.voteCount || 0) || (b.rrfScore || 0) - (a.rrfScore || 0))
       .slice(0, 2)
       .map(r => ({ ...r, score: scoreResult(r, qTerms) }));
   }
