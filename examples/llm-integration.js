@@ -13,7 +13,7 @@ export const qaqaSearchTool = {
       properties: {
         query: { type: "string", description: "Axtarış sualı" },
         max_results: { type: "integer", default: 5, minimum: 1, maximum: 8 },
-        format: { type: "string", enum: ["json", "jsonl"], default: "json" }
+        format: { type: "string", enum: ["json", "jsonl", "simple"], default: "json" }
       },
       required: ["query"]
     }
@@ -26,6 +26,11 @@ export async function callQaqaSearch(args) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(args)
   });
+  if (!res.ok) {
+    // 429 (rate limit) / 504 (timeout) olarsa cavab HTML/json ola bilər - res.json() partlamasın
+    const retryAfter = res.headers.get("retry-after") || res.headers.get("x-ratelimit-reset");
+    throw new Error(`Search API ${res.status}${retryAfter ? ` (retry-after: ${retryAfter}s)` : ""}`);
+  }
   const data = await res.json();
   // data.results-i LLM-ə qaytar, o [1], [2] ilə cavab versin
   return data;

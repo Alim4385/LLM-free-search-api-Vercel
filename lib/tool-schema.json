@@ -22,8 +22,8 @@
       },
       "format": {
         "type": "string",
-        "enum": ["json", "jsonl"],
-        "description": "json = tək JSON obyekt, jsonl = hər sətir JSON (stream üçün)",
+        "enum": ["json", "jsonl", "simple"],
+        "description": "json = tək JSON obyekt (default), jsonl = hər sətir JSON (stream), simple = yalnız title/url/snippet (əhatəli LLM tool çağırışı üçün)",
         "default": "json"
       }
     },

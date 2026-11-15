@@ -65,11 +65,17 @@ const tools = [{
 }];
 
 // LLM tool çağırsa:
+// OpenAI-da toolCall.function.arguments ARTIQI JSON string-dir -
+// JSON.stringify(toolCall.arguments) ikiqat kodlaşdırar və API "missing_query" qaytarar!
+const args = typeof toolCall.function.arguments === "string"
+  ? toolCall.function.arguments
+  : JSON.stringify(toolCall.function.arguments);
 const res = await fetch("https://SENIN-PROEKTIN.vercel.app/api/search", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(toolCall.arguments)
+  body: args
 });
+if (!res.ok) throw new Error(`Search API ${res.status}`); // 429/504 cavabı HTML ola bilər
 const data = await res.json();
 // data.results-i LLM-ə ver, o [1][2] ilə cavab versin
 ```
@@ -91,12 +97,21 @@ Deploy-dan sonra URL belə olacaq:
 ## Xüsusiyyətlər
 - ✅ Key-siz: DDG HTML + Bing HTML + Google News RSS + Wikipedia (+ SearXNG ehtiyat)
 - ✅ Azərbaycan stemming: Bakı/Bakıda eyni sayılır
-- ✅ linkedom + readability ilə sayt təmizləmə
+- ✅ linkedom + readability ilə sayt təmizləmə + SSRF qorunması (yalnız public IP)
 - ✅ Open-Meteo ilə hava (scraping yoxdur)
 - ✅ Upstash Redis cache (optional, olmasa in-memory)
 - ✅ Rate limit (IP başına 30/dəq) + prompt injection qorunması
-- ✅ JSON + JSONL format
+- ✅ JSON + JSONL (real stream) + simple format
+- ✅ Circuit breaker + soft-fail (boş nəticə provayderi cooldown-a salmır)
+
+## Opsional Env Dəyərləri (Vercel → Settings → Environment Variables)
+| Env | Nə edir |
+|-----|---------|
+| `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` | **Tövsiyə olunur.** Cache + rate limit shared counter olur (bütün serverless instance-lar eyni 30/dəq limitini görür; olmasa limit per-instance olur və soyuq startda sıfırlanır) |
+| `SEARXNG_URL` | Öz SearXNG instance-ın (self-hosted) — ən etibarlı keyless provider |
+| `ENGINES_API_KEY` | `/api/engines` endpoint-ini `x-api-key` header ilə qoruyur (qoymasan açıq qalır) |
 
 ## Limitlər
-- Vercel Hobby: funksiya ~10-60 saniyə. Sistem paralel fetch edir, adətən 2-4 saniyəyə cavab verir.
+- Vercel Hobby: funksiya ~10-60 saniyə (route `maxDuration: 30` qoyulub). Sistem paralel fetch edir, adətən 2-4 saniyəyə cavab verir.
 - Bəzi saytlar bot qorumasına görə açılmaya bilər — o zaman snippet istifadə olunur.
+- Rate limit Upstash olmadan per-instance-dir (Vercel serverless xüsusiyyəti) — dəqiq 30/dəq üçün Upstash əlavə et.
