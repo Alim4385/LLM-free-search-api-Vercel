@@ -13,10 +13,11 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 
 export const runtime = "nodejs";
 export const maxDuration = 30; // Vercel timeout qoruması (Hobby: max 60, praktikada 30 kifayət)
-const FILTER_VERSION = 13; // filter dəyişəndə artır (v12: content hygiene - wiki extracts API + junk cleaner,
+const FILTER_VERSION = 14; // filter dəyişəndə artır (v12: content hygiene - wiki extracts API + junk cleaner,
 // answer cümləsi, junk domains, dil uyğunsuzluğu cəzası, mövzu qaydaları,
 // diversity maxPerDomain=1, bing mkt + tavily country per language;
-// v12.1: wiki sorğudan question-word sil (kimdir/nədir/what is), fallback relevance sort)
+// v12.1: wiki sorğudan question-word sil (kimdir/nədir/what is), fallback relevance sort;
+// v12.2: degraded cache TTL 30s + question-word regex Unicode \\b fix (AZ hərfləri \\w-də deyil) + qstrip extend)
 export const dynamic = "force-dynamic";
 
 const CORS_HEADERS = {
@@ -372,7 +373,10 @@ async function handleSearch(body, req) {
   //  - skipFetch deyil (snippet-only yarımçıq məzmun json cache-a düşməsin)
   //  - intent != time (vaxt hər dəqiqə dəyişir - 5 dəq köhnə saat qaytarılmamalı)
   const cacheable = format === "json" && !skipFetch && intent !== "time" && finalResults.length > 0;
-  if (cacheable) await cacheSet(cKey, responseObj, usedFallback ? 30 : 300);
+  // v12.2: DEGRADED cavab (3+ provider xətası) 5 dəqiqəyə DƏYİL 30 san cache olar —
+  // əvvəlki davranış anti-bot pəncərəsində zəif nəticələri 300s "qidalanırdı"
+  const degraded = usedFallback || Object.keys(errors).length >= 3;
+  if (cacheable) await cacheSet(cKey, responseObj, degraded ? 30 : 300);
 
   if (format === "jsonl") {
     return jsonlResponse(finalResults, { query, intent, providers_used: providersUsed, took_ms: responseObj.meta.took_ms }, rateLimitHeaders(rl, requestId));

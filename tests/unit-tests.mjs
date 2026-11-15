@@ -290,12 +290,30 @@ console.log("\n=== V12: JUNK DOMAINS + TOPIC GATING (score.js) ===");
   assert("topic: news sorğusunda github < news mənbə", gh < gs, `gh=${gh} gs=${gs}`);
 }
 
+console.log("\n=== UNICODE CODEPOINT GUARD (v12.3 - korrupsiya müdafiəsi) ===");
+// Bu testlər \u-escape ilə YAZILIB: input kanalı ə korpusa daşımamış olsa belə,
+// KODUN HƏQİQİ U+0259 (ə)/U+018F (Ə) ilə işlədiyini yoxlayır.
+// Standart ISO-9 azərbaycan yazışı: ə=U+0259, Ə=U+018F. U+018E=Ǝ başqa hərfdir (reversed E), layihədə yoxdur.
+assert("guard: normalizeAz həqiqi U+018F ə-i işləyir", normalizeAz("Az\u018Frbaycan") === "azerbaycan", normalizeAz("Az\u018Frbaycan"));
+assert("guard: detectQueryLanguage həqiqi U+018F (Ə başlanğıc)", detectQueryLanguage("Az\u018Frbaycan haqq\u0131nda") === "az", detectQueryLanguage("Az\u018Frbaycan haqq\u0131nda"));
+assert("guard: detectQueryLanguage həqiqi U+0259 (ə orta)", detectQueryLanguage("Bak\u0131da \u00e7im\u0259rlikl\u0259r harada var") === "az", detectQueryLanguage("Bak\u0131da \u00e7im\u0259rlikl\u0259r harada var"));
+assert("guard: stemAz həqiqi ə sonluqlu söz", stemAz("Bak\u0131da") === stemAz("Bak\u0131"), `${stemAz("Bak\u0131da")} vs ${stemAz("Bak\u0131")}`);
+assert("guard: stripQuestionWords həqiqi nə/yerləşir", stripQuestionWords("Bak\u0131 harada yerl\u0259\u015fir") === "Bak\u0131", stripQuestionWords("Bak\u0131 harada yerl\u0259\u015fir"));
+assert("guard: dil cəzası həqiqi ə blob-u local sayır", (() => {
+  const t = tokenize("Bak\u0131da \u00e7im\u0259rlikl\u0259r harada var");
+  const az = scoreResult({ title: "Bak\u0131 \u00e7im\u0259rlikl\u0259ri", url: "https://sefer.az/x", snippet: "Bak\u0131da \u00e7im\u0259rlikl\u0259r Neft\u00e7alada var.", source: "bing" }, t, "az", "Bak\u0131da \u00e7im\u0259rlikl\u0259r harada var");
+  const en = scoreResult({ title: "Beaches of Baku guide", url: "https://travel.example.com/baku", snippet: "Baku has beautiful beaches along the Caspian Sea.", source: "bing" }, t, "az", "Bak\u0131da \u00e7im\u0259rlikl\u0259r harada var");
+  return az >= 1.5 && az > en;
+})(), "həqiqi-ə dil cəzası test");
+
 console.log("\n=== V12.1: WIKI QUESTION-WORD STRIP (v12.1) ===");
 assert("qstrip: AZ 'kimdir' atılır", stripQuestionWords("İlham Əliyev kimdir") === "İlham Əliyev", stripQuestionWords("İlham Əliyev kimdir"));
 assert("qstrip: 'haqqında' atılır", stripQuestionWords("Bakı haqqında") === "Bakı");
 assert("qstrip: EN 'what is' atılır", stripQuestionWords("what is RAG in LLM") === "RAG in LLM", stripQuestionWords("what is RAG in LLM"));
 assert("qstrip: tək sorğu sözü → orijinal qalır", stripQuestionWords("kimdir") === "kimdir");
 assert("qstrip: adi sorğu dəyişmir", stripQuestionWords("Bakı çimərliklər") === "Bakı çimərliklər");
+assert("qstrip: 'harada yerləşir' atılır", stripQuestionWords("Bakı harada yerləşir") === "Bakı", stripQuestionWords("Bakı harada yerləşir"));
+assert("qstrip: 'nə vaxtdır' atılır", stripQuestionWords("İstiqlaliyyət günü nə vaxtdır") === "İstiqlaliyyət günü", stripQuestionWords("İstiqlaliyyət günü nə vaxtdır"));
 
 console.log("\n=== V12: DIVERSITY (maxPerDomain=1) ===");
 {
