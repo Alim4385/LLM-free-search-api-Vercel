@@ -11,7 +11,7 @@ import { cacheGet, cacheSet, cacheKey } from "../../../lib/cache.js";
 import { checkRateLimit, getClientIp, sanitizeQuery } from "../../../lib/ratelimit.js";
 
 export const runtime = "nodejs";
-const FILTER_VERSION = 5; // filter dəyişəndə artır - köhnə junk cache ignore olunur (v5: arxiv -2, minHits, anchor, normalize fix)
+const FILTER_VERSION = 6; // filter dəyişəndə artır - köhnə junk cache ignore olunur (v6: wiki variants, time-intent fix, zero-result fallback)
 export const dynamic = "force-dynamic";
 
 const CORS_HEADERS = {
