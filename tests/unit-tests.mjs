@@ -8,7 +8,8 @@ import { matchWeather, isWeatherQuery, detectCity } from "../lib/weather.js";
 import { matchTime, isTimeQuery } from "../lib/time.js";
 import { matchCurrency, isCurrencyQuery } from "../lib/currency.js";
 import { sanitizeQuery, checkRateLimit } from "../lib/ratelimit.js";
-import { scoreResult, isSpamDomain, hostMatches } from "../lib/score.js";
+import { scoreResult, isSpamDomain, hostMatches, diversifyByDomain, isJunkDomain } from "../lib/score.js";
+import { cleanContent, pickAnswer, detectQueryLanguage, wikiExtractUrl } from "../lib/clean.js";
 import { normalizeUrl, decodeEntities } from "../lib/search.js";
 import { expandQuery, expandQueryAsync, stripMetaInstructions } from "../lib/expand.js";
 import { isBlockedIp, assertPublicUrl } from "../lib/extract.js";
@@ -171,6 +172,134 @@ for(let i=0;i<35;i++){ const rl = await checkRateLimit(ip,30,60000); if(rl.ok) o
 assert("rate limit 30-dan sonra bloklayır", okCount===30, `okCount=${okCount}`);
 const blocked = await checkRateLimit(ip,30,60000);
 assert("rate limit retryAfter qaytarır", !blocked.ok && blocked.retryAfter >= 1, `retryAfter=${blocked.retryAfter}`);
+
+console.log("\n=== V12: CONTENT HYGIENE (clean.js) ===");
+{
+  const t = "Bakı — Azərbaycanın paytaxtıdır [1] və ən böyük şəhəridir [2]. Əhalisi 2.3 milyondur [edit] [citation needed].";
+  const c = cleanContent(t);
+  assert("clean: [1]/[2] sitat markerləri silinir", !/\[\d+\]/.test(c), c);
+  assert("clean: [edit] silinir", !/\[edit\]/i.test(c), c);
+  assert("clean: [citation needed] silinir", !/citation needed/i.test(c), c);
+  assert("clean: həqiqi mətn QALIR", c.includes("paytaxtıdır") && c.includes("2.3 milyondur"), c);
+}
+{
+  const c = cleanContent("Daha çox bax: [[Bakı]]. Həm də [[Azərbaycan|Azərbaycan Respublikası]] haqqında.");
+  assert("clean: [[X|Y]] → Y", c.includes("Azərbaycan Respublikası"), c);
+  assert("clean: [[X]] → X, mötərizə qalmır", c.includes("Bakı") && !c.includes("[["), c);
+}
+{
+  const t = ["Tərif", "------", "Ad | Bakı | Əhali | 2.3M", "12.12.2025", "2025", "|||---|||", "§§§###$$$", "Mənbələr", "Bu şəhər çox köhnədir."].join("\n");
+  const c = cleanContent(t);
+  assert("clean: cədvəl sətiri (3+ pipe) silinir", !c.includes("Əhali"), c);
+  assert("clean: tarix zibilliyi (12.12.2025) silinir", !c.includes("12.12.2025"), c);
+  assert("clean: tək il (2025) sətiri silinir", !/\b2025\b/.test(c), c);
+  assert("clean: symbol soup silinir", !c.includes("§§§"), c);
+  assert("clean: 'Mənbələr' boilerplate başlıq silinir", !c.includes("Mənbələr"), c);
+  assert("clean: həqiqi cümlə QALIR", c.includes("çox köhnədir"), c);
+}
+{
+  const c = cleanContent("References\nSee also\nThis is a real sentence about Baku city.");
+  assert("clean: EN boilerplate (References/See also) silinir", !c.includes("References") && !c.includes("See also"), c);
+  assert("clean: EN həqiqi cümlə QALIR", c.includes("real sentence about Baku"), c);
+}
+{
+  const t = "Azərbaycan Respublikası 1991-ci ildə müstəqillik qazanıb. Paytaxtı Bakıdır.";
+  assert("clean: təmiz mətn bütövlükdə dəyişmir", cleanContent(t) === t);
+}
+
+console.log("\n=== V12: ANSWER EXTRACTION (pickAnswer) ===");
+{
+  const t = "Bu səhifədə əlavə məzmun yoxdur. İlhəm Əliyev 1961-ci ildə anadan olub. O, hazırda dövlət başçısıdır.";
+  const a = pickAnswer(t, "İlhəm Əliyev kimdir");
+  assert("answer: cavab cümləsi seçilir (İlhəm Əliyev → anadan olub)", a.includes("1961-ci ildə anadan olub"), a);
+}
+{
+  const a = pickAnswer("Təkcə bir cümlə var bu kiçik mətni içində.", "tam əlaqəsiz başqa şey");
+  assert("answer: term tapılmasa ən uzun cümlə qayıdır", a.length >= 20, a);
+}
+{
+  assert("answer: boş mətn → ''", pickAnswer("", "x") === "");
+}
+{
+  const t = "Qızıl qram 2025-ci ildə 1250 ABŞ dollarıdır. Qızıl gümüşdən bahidir.";
+  const a = pickAnswer(t, "qızıl qiyməti");
+  assert("answer: qiymət cümləsi seçilir", a.includes("1250"), a);
+}
+{
+  // TOC/nav bloku "cümlə" sayılmamalı (səhifə adı gəlirdi, cavab gəlmirdi)
+  const t = "Məzmun\n1 Tarix\n2 İqtisadiyyat\nBakı — Azərbaycanın paytaxtıdır. Əhalisi 2,3 milyondur.";
+  const a = pickAnswer(t, "Bakı əhalisi neçədir");
+  assert("answer: TOC sətirləri cavabda OLMAMALI", !a.includes("Tarix") && !a.includes("İqtisadiyyat") && a.includes("Bakı"), a);
+}
+
+console.log("\n=== V12: QUERY LANGUAGE (detectQueryLanguage) ===");
+assert("lang: AZ (ə işarəsi)", detectQueryLanguage("Bakıda çimərliklər harada var") === "az");
+assert("lang: TR (turk xarakterləri)", detectQueryLanguage("Nasılsın") === "tr");
+assert("lang: TR (İstanbul)", detectQueryLanguage("İstanbul film festivali") === "tr");
+assert("lang: EN (saf ASCII)", detectQueryLanguage("best sci-fi movies 2025") === "en");
+assert("lang: 'Türkiyədə' = az (ə üstün)", detectQueryLanguage("Türkiyədə hava necədir") === "az");
+
+console.log("\n=== V12: WIKIPEDIA EXTRACTS (wikiExtractUrl) ===");
+assert("wiki: /wiki/URL → extracts API (explaintext)", (wikiExtractUrl("https://az.wikipedia.org/wiki/İlhəm_Əliyev") || "").includes("explaintext=1"));
+assert("wiki: extracts URL düzgün host", (wikiExtractUrl("https://en.wikipedia.org/wiki/Artificial_intelligence") || "").startsWith("https://en.wikipedia.org/w/api.php"));
+assert("wiki: File: səhifəsi → null", wikiExtractUrl("https://en.wikipedia.org/wiki/File:Sun.jpg") === null);
+assert("wiki: Category/Kategori → null", wikiExtractUrl("https://tr.wikipedia.org/wiki/Kategori:2025_Türk_filmleri") === null);
+assert("wiki: qeyri-wiki host → null", wikiExtractUrl("https://example.com/wiki/x") === null);
+assert("wiki: anasəhifə (/wiki/) → null", wikiExtractUrl("https://az.wikipedia.org/wiki/") === null);
+
+console.log("\n=== V12: JUNK DOMAINS + TOPIC GATING (score.js) ===");
+{
+  const t = tokenize("Bakıda çimərliklər harada var");
+  const r = scoreResult({ title: "Harada Corporation", url: "https://rocketreach.co/harada-contacts_b5d2c9a0", snippet: "Contact information for Baku-based company Harada Corporation.", source: "bing" }, t, "az", "Bakıda çimərliklər harada var");
+  assert("junk: rocketreach (B2B directory) → 0", r === 0, String(r));
+  const r2 = scoreResult({ title: "LinkedIn", url: "https://www.linkedin.com/company/harada", snippet: "Harada Corporation Baku company profile.", source: "bing" }, t, "az", "Bakıda çimərliklər harada var");
+  assert("junk: linkedin directory → 0", r2 === 0, String(r2));
+  assert("junk: isJunkDomain helper", isJunkDomain("https://crunchbase.com/organization/x") && !isJunkDomain("https://example.com/x"));
+}
+{
+  const t = tokenize("Bakıda çimərliklər harada var");
+  const home = scoreResult({ title: "Google", url: "https://www.google.com/", snippet: "Baku search engine Google and multinational technology company.", source: "bing" }, t, "az", "Bakıda çimərliklər harada var");
+  assert("junk: google.com ANA səhifəsi (path=/) → 0", home === 0, String(home));
+}
+{
+  // dil uyğunsuzluğu: AZ sorğuda lokal (ə / .az) nəticə EN-yə üstün olmalıdır
+  const t = tokenize("Bakıda çimərliklər harada var");
+  const enRes = scoreResult({ title: "Beaches of Baku guide", url: "https://travel.example.com/baku", snippet: "Baku has beautiful beaches along the Caspian Sea.", source: "bing" }, t, "az", "Bakıda çimərliklər harada var");
+  const azRes = scoreResult({ title: "Bakı çimərlikləri", url: "https://sefer.az/baki-cimerlikleri", snippet: "Bakıda çimərliklər Neftçala, Sahil və Ceyranbatu rayonlarında var.", source: "bing" }, t, "az", "Bakıda çimərliklər harada var");
+  assert("lang: AZ sorğuda lokal nəticə EN-yə üstün gəlir", azRes > enRes && azRes >= 1.5, `az=${azRes} en=${enRes}`);
+  // EN sorğuda cəza OLMAMALI (regress qoruması)
+  const te = tokenize("baku beaches");
+  const enLocal = scoreResult({ title: "Beaches of Baku guide", url: "https://travel.example.com/baku", snippet: "Baku has beautiful beaches along the Caspian Sea.", source: "bing" }, te, "en", "baku beaches");
+  assert("lang: EN sorğuda dil cəzası YOXDUR", enLocal >= 1.5, String(enLocal));
+}
+{
+  // mövzu qaydaları: film sorğusunda hacker-news = zibil; news sorğusunda github = zibil
+  const t = tokenize("best sci-fi movies 2025");
+  const hn = scoreResult({ title: "Show HN: Movie list", url: "https://news.ycombinator.com/item?id=1", snippet: "Sci fi movies 2025 discussion", source: "hacker-news" }, t, "en", "best sci-fi movies 2025");
+  const tm = scoreResult({ title: "Best Sci-Fi Movies of 2025", url: "https://www.imdb.com/list/scifi-2025/", snippet: "The best science fiction movies released in 2025 ranked", source: "bing" }, t, "en", "best sci-fi movies 2025");
+  assert("topic: film sorğusunda hacker-news demoted olur", hn < tm, `hn=${hn} tm=${tm}`);
+  // texniki sorğuda github cəzalanMAMALI (regress)
+  const tt = tokenize("nodejs async await best practices");
+  const ghOk = scoreResult({ title: "nodejs async patterns", url: "https://github.com/x/async", snippet: "nodejs async await best practices library", source: "github" }, tt, "en", "nodejs async await best practices");
+  assert("topic: texniki sorğuda github cəzalanmır", ghOk >= 1.5, String(ghOk));
+}
+{
+  const t2 = tokenize("son xeberler gundem");
+  const gh = scoreResult({ title: "news repo", url: "https://github.com/x/news", snippet: "son xeberler gundem archive repository", source: "github" }, t2, "tr", "son xeberler gundem");
+  const gs = scoreResult({ title: "Gündəm xəbərləri", url: "https://news.google.com/", snippet: "son xeberler gundem today breaking", source: "google-news" }, t2, "tr", "son xeberler gundem");
+  assert("topic: news sorğusunda github < news mənbə", gh < gs, `gh=${gh} gs=${gs}`);
+}
+
+console.log("\n=== V12: DIVERSITY (maxPerDomain=1) ===");
+{
+  const items = [
+    { url: "https://a.example.com/1", title: "Birinci sayt nəticəsi", snippet: "məzmun məzmun", source: "bing", score: 10 },
+    { url: "https://a.example.com/2", title: "İkinci səhifə başqa başlıq", snippet: "başqa məzmun", source: "bing", score: 9 },
+    { url: "https://b.example.com/1", title: "Üçüncü sayt nəticəsi", snippet: "başqa məzmun", source: "bing", score: 8 }
+  ];
+  const d1 = diversifyByDomain(items, 5, 1);
+  assert("diversity: maxPerDomain=1 → 3-dən 2 (Google tərzi)", d1.length === 2 && d1[1].url.includes("b.example.com"), JSON.stringify(d1.map(x => x.url)));
+}
 
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);
 process.exit(fail?1:0);

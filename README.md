@@ -34,7 +34,7 @@ LLM sual alır → qaqa_search tool-un çağırır → POST /api/search
   "intent": "weather",
   "results": [
     { "id": 1, "title": "Bakı - hava (Open-Meteo)", "url": "https://open-meteo.com", "content": "Bakı hazırda: temperatur 18°C..." },
-    { "id": 2, "title": "...", "url": "https://...", "content": "aidiyyəti abzas..." }
+    { "id": 2, "title": "...", "url": "https://...", "content": "aidiyyəti abzas...", "answer": "sorğuya ən uyğun cavab cümləsi..." }
   ],
   "meta": { "providers_used": ["bing","wikipedia"], "took_ms": 1200 }
 }
@@ -97,6 +97,7 @@ Deploy-dan sonra URL belə olacaq:
 ## Xüsusiyyətlər
 - ✅ Key-siz: DDG HTML + Bing HTML + Google News RSS + Wikipedia (+ SearXNG ehtiyat)
 - ✅ Azərbaycan stemming: Bakı/Bakıda eyni sayılır
+- ✅ Cavab keyfiyyəti (v12): Wikipedia üçün təmiz TextExtracts API (heç bir `[n]`/`[edit]`/TOC zibilli), məzmun junk-cleaner (cədvəl/tarix/symbol-soup sətirləri, boilerplate başlıqlar), hər nəticədə `answer` field (sorğuya ən uyğun cümlə), B2B directory domenlərinin qadağası (rocketreach/linkedin və s.), dil uyğunsuzluğu cəzası (AZ sorğuda EN-only nəticələr arxaya düşür), mövzu qaydaları (film sorğusunda GitHub/HN demoted), domen diversifikasiyası (hər sayt top-N-də 1 dəfə — Google tərzi), Bing `mkt`/Tavily `country` sorğu dilinə görə (AZ/TR lokal rank)
 - ✅ linkedom + readability ilə sayt təmizləmə + SSRF qorunması (yalnız public IP; redirect-lər hər hop-da yoxlanılır, port 80/443)
 - ✅ Open-Meteo ilə hava (scraping yoxdur)
 - ✅ Upstash Redis cache (optional, olmasa in-memory)

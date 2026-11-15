@@ -6,13 +6,16 @@ import { matchTime, fetchBakuTime, timeToText } from "../../../lib/time.js";
 import { matchCurrency, fetchCBAR, currencyToText } from "../../../lib/currency.js";
 import { tokenize } from "../../../lib/rank.js";
 import { scoreResult, diversifyByDomain, extractQuotedPhrases, containsPhrase, isSpamDomain, hostMatches } from "../../../lib/score.js";
+import { cleanContent, pickAnswer, detectQueryLanguage } from "../../../lib/clean.js";
 import { expandQuery, isMetaQuery, stripMetaInstructions } from "../../../lib/expand.js";
 import { cacheGet, cacheSet, cacheKey } from "../../../lib/cache.js";
 import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../../lib/ratelimit.js";
 
 export const runtime = "nodejs";
 export const maxDuration = 30; // Vercel timeout qoruması (Hobby: max 60, praktikada 30 kifayət)
-const FILTER_VERSION = 11; // filter dəyişəndə artır (v11: SSRF redirect-manual+BlockList, URL qara siyahı, 5s ümumi büdcə, news.google cəzası, untrusted marker, extract 2.5s)
+const FILTER_VERSION = 12; // filter dəyişəndə artır (v12: content hygiene - wiki extracts API + junk cleaner,
+// answer cümləsi, junk domains + homepage drop, dil uyğunsuzluğu cəzası, mövzu qaydaları,
+// diversity maxPerDomain=1, bing mkt + tavily country per language)
 export const dynamic = "force-dynamic";
 
 const CORS_HEADERS = {
@@ -179,12 +182,14 @@ async function handleSearch(body, req) {
   // Relevance scoring + threshold (P0)
   const exp = expandQuery(query);
   const qTerms = [...new Set([...tokenize(query), ...tokenize(exp.expanded || ""), ...tokenize(exp.english || "")])];
+  // v12: sorğunun dili — dil cəzası (score.js) + bing mkt/tavily country üçün
+  const qLang = detectQueryLanguage(query);
   // Xam say spam filtrdən ƏVVƏL hesablanır (sonra olarsa hamısı spamdırsa
   // no_match çıxır, all_filtered deyil - səhv diaqnoz)
   const rawCount = results.length;
   // Spam domen blacklist (Gitee və s.)
   results = results.filter(r => !isSpamDomain(r.url));
-  let scored = results.map(r => ({ ...r, score: scoreResult(r, qTerms) }));
+  let scored = results.map(r => ({ ...r, score: scoreResult(r, qTerms, qLang, query) }));
   // Snippet boşdursa və score aşağıdırsa at
   scored = scored.filter(r => r.score >= 1.5 && (r.snippet || "").trim().length >= 10);
   // Keyfiyyət fallback: filter hamısını atdı amma xam nəticələr varsa top-2 saxlan (vote/RRF ilə).
@@ -198,7 +203,7 @@ async function handleSearch(body, req) {
     scored = [...results]
       .sort((a, b) => Number(trusted(b.url)) - Number(trusted(a.url)) || (b.voteCount || 0) - (a.voteCount || 0) || (b.rrfScore || 0) - (a.rrfScore || 0))
       .slice(0, 2)
-      .map(r => ({ ...r, score: scoreResult(r, qTerms) }));
+      .map(r => ({ ...r, score: scoreResult(r, qTerms, qLang, query) }));
   }
   // Deterministic sort: score desc, voteCount desc, URL asc (tie-breaker - Test6 fix)
   // Skor bərabər olduqda provayder cavab sırası təsadüfi olur - URL ilə sabitləşdir
@@ -218,7 +223,7 @@ async function handleSearch(body, req) {
         try {
           // Retry-də ayrıca timeout: 6s axtarış + retry + fetch = maxDuration-a düşə bilər
           const retry = await withTimeout(searchAll(unquoted, maxResults, { freshness, excludeDomains }), 3000, "retry timeout");
-          let retryScored = retry.results.filter(r => !isSpamDomain(r.url)).map(r => ({ ...r, score: scoreResult(r, qTerms) })).filter(r => r.score >= 1.5);
+          let retryScored = retry.results.filter(r => !isSpamDomain(r.url)).map(r => ({ ...r, score: scoreResult(r, qTerms, qLang, query) })).filter(r => r.score >= 1.5);
           retryScored.sort((a, b) => (b.score - a.score) || ((b.voteCount || 0) - (a.voteCount || 0)) || a.url.localeCompare(b.url));
           if (retryScored.length) scored = retryScored;
           else scored = quoted; // yenə 0 olarsa boş qaytar
@@ -237,7 +242,9 @@ async function handleSearch(body, req) {
   }
 
   // Domen diversifikasiyası (P0): domen başına max 2
-  let filtered = diversifyByDomain(scored, maxResults, 2);
+  // v12 P3: 2 → 1 (Google tərzi) — diagnostic: eyni sayt növbəti-növbəti görünürdü
+  // (youtube ×2 recipe sorğusunda). 1 = hər sayt top-N-də maksimum 1 dəfə.
+  let filtered = diversifyByDomain(scored, maxResults, 1);
   const filteredCount = scored.length;
 
   // Saytları paralel aç və təmizlə (simple formatda fetch lazım deyil - latency qənaəti)
@@ -274,6 +281,13 @@ async function handleSearch(body, req) {
       // sayt açılmadısa snippet-i istifadə et
       content = base.snippet || "";
     }
+    // v12 P1: junk cleaner — wiki [n]/[edit], cədvəl/tarix zibilliyi, symbol soup,
+    // boilerplate başlıqlar (Mənbələr/References). SİLİNMİŞDƏN SONRA snippet fallback.
+    content = cleanContent(content);
+    if (!content.trim()) content = (base.snippet || "").trim();
+    // v12 P1: cavab cümləsi — "səhifə adı gəlirdi, əsas cavab verilmirdi" problemi.
+    // Query terms-ə ən uyğun cümlə (adətən ilk xarakterlər nav/TOC idi).
+    const answer = pickAnswer(content, query);
     if (totalChars + content.length > maxChars && finalResults.length >= 2) {
       content = content.slice(0, Math.max(0, maxChars - totalChars));
     }
@@ -284,6 +298,7 @@ async function handleSearch(body, req) {
       url: base.url,
       snippet: (base.snippet || "").slice(0, 200),
       content: content.slice(0, perSourceChars),
+      answer: answer, // v12 P1: cavab cümləsi (query terms-ə ən uyğun)
       source: base.source,
       provider: base.source,
       providers: base.providers || [base.source],
