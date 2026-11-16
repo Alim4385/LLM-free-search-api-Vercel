@@ -13,7 +13,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
-const FILTER_VERSION = 18; // v15:
+const FILTER_VERSION = 19; // v15.1: detectContentLanguage EN mətn içində tək "(Azerbaijani: Bakı)" qeydinə aldanmır
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
