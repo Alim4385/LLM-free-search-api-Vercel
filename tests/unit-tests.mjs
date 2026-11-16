@@ -649,6 +649,18 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
   assert("v20 tərcüməli brend: 'Reaksiya' səhifəsi react.dev-dən aşağı", reactBad < reactGood, `bad=${reactBad} good=${reactGood}`);
   const promoLine = cleanContent("APA.az xəbər verir ki, bu gün Bakıda görüş keçirilib. Bizi Telegram kanalımızda izləyin.");
   assert("v20 filtr: promo cümləsi xəbər cümləsini yemir", promoLine.includes("görüş keçirilib") && !/Telegram/i.test(promoLine), promoLine);
+
+  // === v21: 2-ci test raundu (15 yeni sual) tapıntıları ===
+  const s21 = (r, q) => scoreResult(r, tokenize(q), "az", q);
+  const wrongRev = s21({ title: "Oktyabr inqilabı", url: "https://az.wikipedia.org/wiki/Oktyabr_inqilabı", snippet: "1917-ci ildə baş verdi", source: "wikipedia" }, "fransız inqilabı nə vaxt baş verdi");
+  const rightRev = s21({ title: "Fransız inqilabı", url: "https://az.wikipedia.org/wiki/Fransız_inqilabı", snippet: "1789-cu ildə baş verdi", source: "wikipedia" }, "fransız inqilabı nə vaxt baş verdi");
+  assert("v21 fərqləndirici söz: 'fransız' olmayan inqilab məqaləsi aşağı düşür", wrongRev < rightRev, `wrong=${wrongRev} right=${rightRev}`);
+  const layoutPage = s21({ title: "Page layout", url: "https://en.wikipedia.org/wiki/Page_layout", snippet: "Web page layout", source: "wikipedia" }, "css grid vs flexbox");
+  const comparePg = s21({ title: "CSS Grid vs Flexbox", url: "https://css-tricks.com/grid-vs-flexbox/", snippet: "The difference between CSS Grid and Flexbox", source: "brave" }, "css grid vs flexbox");
+  assert("v21 müqayisə sualı: ümumi 'Page layout' səhifəsi kəsilir", layoutPage < comparePg, `layout=${layoutPage} cmp=${comparePg}`);
+  const oldRace = s21({ title: "2017 Azərbaycan Qran prisi", url: "https://az.wikipedia.org/wiki/2017_Azərbaycan_Qran_prisi", snippet: "2017-ci ildə keçirilib", source: "wikipedia" }, "Formula 1 Azərbaycan Qran Prisi nə vaxt keçiriləcək");
+  const nextRace = s21({ title: "2026 Azərbaycan Qran Prisi", url: "https://en.wikipedia.org/wiki/2026_Azerbaijan_Grand_Prix", snippet: "26 sentyabr 2026-cı ildə keçiriləcək", source: "wikipedia" }, "Formula 1 Azərbaycan Qran Prisi nə vaxt keçiriləcək");
+  assert("v21 gələcək zaman: köhnə il cəzalanır, cari/gələcək il bonus alır", oldRace < nextRace, `old=${oldRace} next=${nextRace}`);
 }
 
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);
