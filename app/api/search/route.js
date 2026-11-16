@@ -17,7 +17,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 73; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 74; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -332,6 +332,7 @@ async function handleSearch(body, req) {
       ]);
 
   const currentIntent = /(?<![\p{L}])(ən\s+çox|son|bu\s+gün|bugün|hazırda|indiki|yeni|top|best|most\s+visited|most\s+popular|latest|current)(?![\p{L}])/iu.test(normQuery) && !/\b(1\d{3}|20[01]\d)\b/.test(normQuery);
+  const junkPool = [];
   const finalResults = [];
   let totalChars = 0;
   const basePerSource = Math.ceil(maxChars / maxResults);
@@ -364,6 +365,7 @@ async function handleSearch(body, req) {
     // v38: yalnız "Həmçinin bax / ©" qalan content faydasızdır → snippet-ə qayıt
     if (isBoilerplateOnly(content)) content = cleanContent(base.snippet || "").trim() || content;
     if (!content.trim()) content = cleanContent(base.snippet || "").trim();
+    if (!content.trim() && ex && ex.meta_description) content = cleanContent(ex.meta_description).trim();
     if (totalChars + content.length > maxChars && finalResults.length >= 2) {
       content = content.slice(0, Math.max(0, maxChars - totalChars));
     }
@@ -393,10 +395,6 @@ async function handleSearch(body, req) {
     const rawSnippet = cutWord(cleanContent(rawSnipSource), 220);
     // v39.4: nə content, nə snippet məzmun daşımırsa (yalnız "© Copyright" / "Həmçinin bax")
     // → nəticəni göstərmə, ehtiyat namizədlə əvəzlə
-    if (isBoilerplateOnly(clippedContent) && isBoilerplateOnly(rawSnippet)) {
-      degradedStages.push("junk_page_skipped");
-      continue;
-    }
     if (finalResults.length >= maxResults) break;
     const out = {
       id: finalResults.length + 1,
@@ -415,8 +413,20 @@ async function handleSearch(body, req) {
       date_info: buildDateInfo(pubAt, updAt, reqLang),
       untrusted: true
     };
+    // v41.2: məzmunsuz səhifə göstərilmir — amma tam boş qalmasın deyə "ehtiyat hovuz"a yığılır
+    if (isBoilerplateOnly(clippedContent) && (isBoilerplateOnly(rawSnippet) || !rawSnippet.trim())) {
+      degradedStages.push("junk_page_skipped");
+      junkPool.push(out);
+      continue;
+    }
     finalResults.push(out);
     if (totalChars >= maxChars) break;
+  }
+
+  // v41.2: hər şey zibil çıxdısa, boş cavab vermək əvəzinə ən yaxşı 2-ni göstər
+  if (!finalResults.length && junkPool.length) {
+    degradedStages.push("junk_restored");
+    for (const o of junkPool.slice(0, 2)) { o.id = finalResults.length + 1; finalResults.push(o); }
   }
 
   // Səhifə tarixindən sonra köhnə mənbə cəzalandırılıbsa, sıralamanı yenilə və həddən aşağı düşənləri çıxar
