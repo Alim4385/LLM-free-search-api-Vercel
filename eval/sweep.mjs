@@ -67,7 +67,9 @@ for (const it of items.filter(x => x.i >= from && x.i <= to)) {
   const cov = T.length ? T.filter(t => hay.includes(t.slice(0, Math.max(4, t.length - 2)))).length / T.length : 1;
   const boiler = res.filter(x => BOIL.test(x.content || "") || !(x.content || "").trim()).length;
   const exp = expLang(q);
-  const langOk = res.length ? res.some(x => langOf(`${x.title} ${(x.content || "").slice(0, 400)}`) === exp) : false;
+  const langOfRes = (x) => langOf(`${x.title} ${(x.content || "").slice(0, 400)}`);
+  const compat = (a, b) => a === b || (["az","tr"].includes(a) && ["az","tr"].includes(b));
+  const langOk = res.length ? res.some(x => compat(langOfRes(x), exp)) : false;
   const wikiTop = res.length && /wikipedia\.org/.test(res[0].url || "");
   const isNews = /xəbər|news|noticias|haberler|actualités|nachrichten|новости|headlines|son dəqiqə/i.test(q) || it.cat === "XƏBƏR";
   const newsWiki = isNews && wikiTop;
@@ -75,13 +77,13 @@ for (const it of items.filter(x => x.i >= from && x.i <= to)) {
     const d = Date.parse(x.published_at || "");
     return !Number.isNaN(d) && Date.now() - d < 1000 * 86400 * 45;
   });
-  const wantsFresh = /(today|tonight|now|2026|this (week|month|year)|bu gün|bu günə|son dəqiqə|hoy|heute|aujourd|сегодня|nə vaxt|right now)/i.test(q);
+  const wantsFresh = /(today|tonight|right now|live|this (week|month)|bu gün|bu günə|son dəqiqə|hoy|heute|aujourd|сегодня)/i.test(q);
   const row = {
     i: it.i, cat: it.cat, q, n: res.length, took: Date.now() - t0,
     cov: Math.round(cov * 100), boiler, langOk, exp, newsWiki, fresh, wantsFresh,
     top: res[0] ? res[0].title.slice(0, 70) : null,
     host: res[0] ? (() => { try { return new URL(res[0].url).hostname; } catch { return "?"; } })() : null,
-    deg: (j?.meta?.degraded_stages || []).join("|"), err
+    deg: (j?.meta?.degraded_stages || []).join("|"), providers: (j?.meta?.providers_used || []).join("+"), err
   };
   const flags = [];
   if (err) flags.push("ERR");
