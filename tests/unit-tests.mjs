@@ -531,6 +531,13 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     "Azərbaycanda saytlar"
   );
   assert("v17 locale: yad dildəki URL yolu (/sv/) normal səhifədən aşağı xal alır", svScore < enScore, `sv=${svScore} en=${enScore}`);
+  const awardScore = scoreResult(
+    { title: "Filmfare Award for Best Film", url: "https://en.wikipedia.org/wiki/Filmfare_Award_for_Best_Film", snippet: "Filmfare Critics Award for Best Movie in Bollywood Cinema", source: "wikipedia" },
+    tokenize("Ən yaxşı film saytları best movie websites"),
+    "az",
+    "Ən yaxşı film saytları"
+  );
+  assert("v17.1 saytlar niyyəti: 'film saytları' sualında film mükafatı məqaləsi score=0 alır", awardScore === 0, String(awardScore));
 }
 
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);
