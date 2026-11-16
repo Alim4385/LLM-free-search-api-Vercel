@@ -5,6 +5,7 @@ import { selectRelevantParagraphs, tokenize } from "../../../lib/rank.js";
 import { matchWeather, fetchWeather, weatherToText } from "../../../lib/weather.js";
 import { matchTime, fetchTime, timeToText } from "../../../lib/time.js";
 import { matchCurrency, fetchCBAR, currencyToText } from "../../../lib/currency.js";
+import { classifyType, officialBoost, wantsFresh } from "../../../lib/router.js";
 import { scoreResult, diversifyByDomain, extractQuotedPhrases, containsPhrase, isSpamDomain, hostMatches, computeConfidence, isNewsQuery } from "../../../lib/score.js";
 import { cleanContent, cutWord, dedupeSnippet, detectQueryLanguage, isBoilerplateOnly } from "../../../lib/clean.js";
 import { expandQuery, isMetaQuery, stripMetaInstructions, rewriteSearchIntentAz } from "../../../lib/expand.js";
@@ -15,7 +16,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 61; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 62; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -172,6 +173,8 @@ async function handleSearch(body, req) {
     if (cleaned) searchQuery = cleaned;
   }
   const normQuery = rewriteSearchIntentAz(searchQuery) || searchQuery;
+  // v39: tip-üzrə router (count / date / list / howto / az-context)
+  const qType = classifyType(normQuery);
 
   const hasStructured = intentExact && (
     (intentName === "weather" && weather) ||
@@ -216,6 +219,19 @@ async function handleSearch(body, req) {
   results = results.filter(r => !isSpamDomain(r.url));
   let scored = results.map(r => ({ ...r, score: scoreResult(r, qTerms, qLang, normQuery) }));
   scored = scored.filter(r => r.score >= 1.5 && (r.snippet || "").trim().length >= 10);
+
+  // v39: AZ kontekstli sualda rəsmi mənbələr (e-qanun, edu.gov.az, stat.gov.az…) önə
+  if (qType.azContext) {
+    const fresh = wantsFresh(normQuery);
+    scored = scored.map(r => {
+      let bonus = officialBoost(r.url);
+      if (fresh && r.published_at) {
+        const y = String(r.published_at).slice(0, 4);
+        if (y === "2026" || y === "2025") bonus += 1.0;
+      }
+      return bonus ? { ...r, score: r.score + bonus } : r;
+    });
+  }
 
   let usedFallback = false;
   if (!scored.length && results.length) { usedFallback = true; }
@@ -268,6 +284,22 @@ async function handleSearch(body, req) {
           for (const r of extra) if (!seen.has(r.url)) scored.push(r);
           scored.sort((a, b) => b.score - a.score);
         }
+      }
+    } catch {}
+  }
+
+  // v39: AZ kontekstli sualda rəsmi mənbə heç gəlməyibsə → sayt-hədəfli bir cəhd
+  if (qType.siteHint && !scored.some(r => officialBoost(r.url)) && Date.now() - started < 2600) {
+    try {
+      const coreQ = `${tokenize(normQuery).slice(0, 5).join(" ")} site:${qType.siteHint}`;
+      const rs = await withTimeout(searchAll(coreQ, maxResults, { freshness, excludeDomains }), 2500, "site hint timeout");
+      const tS = [...new Set([...qTerms, ...tokenize(rs.anchorQuery || "")])];
+      const extraS = rs.results.filter(r => !isSpamDomain(r.url)).map(r => ({ ...r, score: scoreResult(r, tS, qLang, normQuery) })).filter(r => r.score >= 1.5);
+      if (extraS.length) {
+        degradedStages.push("site_hint");
+        const seen2 = new Set(scored.map(r => r.url));
+        for (const r of extraS) if (!seen2.has(r.url)) scored.push(r);
+        scored.sort((a, b) => b.score - a.score);
       }
     } catch {}
   }
