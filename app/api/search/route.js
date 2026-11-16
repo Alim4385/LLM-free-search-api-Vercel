@@ -16,7 +16,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 66; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 67; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -311,7 +311,7 @@ async function handleSearch(body, req) {
   let filtered = diversifyByDomain(scored, maxResults, 1, 2);
   const filteredCount = scored.length;
 
-  const toFetch = filtered.slice(0, maxResults);
+  const toFetch = filtered.slice(0, maxResults + 2); // v39.4: 2 ehtiyat namizəd (zibil səhifə düşsə əvəzlənsin)
   const searchTookMs = Date.now() - started;
   // v15: 3500ms -> 5500ms (mənbə gecikəndə tam məqalə oxunuşunu yarıda kəsməsin)
   const skipFetch = format === "simple" || searchTookMs > 5500;
@@ -385,6 +385,13 @@ async function handleSearch(body, req) {
       ? ex.meta_description
       : (base.snippet || (ex && ex.meta_description) || "");
     const rawSnippet = cutWord(cleanContent(rawSnipSource), 220);
+    // v39.4: nə content, nə snippet məzmun daşımırsa (yalnız "© Copyright" / "Həmçinin bax")
+    // → nəticəni göstərmə, ehtiyat namizədlə əvəzlə
+    if (isBoilerplateOnly(clippedContent) && isBoilerplateOnly(rawSnippet)) {
+      degradedStages.push("junk_page_skipped");
+      continue;
+    }
+    if (finalResults.length >= maxResults) break;
     const out = {
       id: finalResults.length + 1,
       title,
