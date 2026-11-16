@@ -6,7 +6,7 @@ import { matchWeather, fetchWeather, weatherToText } from "../../../lib/weather.
 import { matchTime, fetchTime, timeToText } from "../../../lib/time.js";
 import { matchCurrency, fetchCBAR, currencyToText } from "../../../lib/currency.js";
 import { leadAnswerSentence } from "../../../lib/rank.js";
-import { classifyType, officialBoost, wantsFresh } from "../../../lib/router.js";
+import { classifyType, officialBoost, wantsFresh, sameDayCue } from "../../../lib/router.js";
 import { scoreResult, diversifyByDomain, extractQuotedPhrases, containsPhrase, isSpamDomain, hostMatches, computeConfidence, isNewsQuery } from "../../../lib/score.js";
 import { cleanContent, cutWord, dedupeSnippet, detectQueryLanguage, isBoilerplateOnly, stripBoilerplateHead } from "../../../lib/clean.js";
 import { expandQuery, isMetaQuery, stripMetaInstructions, rewriteSearchIntentAz } from "../../../lib/expand.js";
@@ -17,7 +17,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 75; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 77; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -127,7 +127,9 @@ async function handleSearch(body, req) {
   const fmt = (typeof body.format === "string" ? body.format : "json").toLowerCase();
   const format = ["json", "jsonl", "simple"].includes(fmt) ? fmt : "json";
   const fr = (typeof body.freshness === "string" ? body.freshness : "").toLowerCase();
-  const freshness = ["day","week","month","year"].includes(fr) ? fr : null;
+  // v41.4: "bu gün / live / son dəqiqə" → provayderə avtomatik günlük təzəlik filtri
+  const autoFresh = !["day","week","month","year"].includes(fr) && sameDayCue(query) ? "day" : null;
+  const freshness = ["day","week","month","year"].includes(fr) ? fr : autoFresh;
   const excludeDomains = Array.isArray(body.exclude_domains) ? body.exclude_domains.filter(d => typeof d === "string").map(d => d.toLowerCase().replace(/^www\./, "")).slice(0, 20) : [];
   const qLang = detectQueryLanguage(rewriteSearchIntentAz(query) || query);
   const reqLang = typeof body.lang === "string" && ["az", "tr", "en", "ru"].includes(body.lang.toLowerCase()) ? body.lang.toLowerCase() : qLang;
@@ -226,6 +228,16 @@ async function handleSearch(body, req) {
   scored = scored.map(r => isBoilerplateOnly(r.snippet) ? { ...r, score: r.score - 3, junk_content: true } : r);
 
   // v39: AZ kontekstli sualda rəsmi mənbələr (e-qanun, edu.gov.az, stat.gov.az…) önə
+  // v41.4: tarix/nəticə sualında təzə səhifə önə ("Champions League results" → 1996-97 yox!)
+  if (qType.type === "date" && wantsFresh(normQuery)) {
+    scored = scored.map(r => {
+      const t = Date.parse(r.published_at || "");
+      if (Number.isNaN(t)) return r;
+      const days = (Date.now() - t) / 86400000;
+      const bonus = days <= 30 ? 1.6 : days <= 365 ? 0.8 : 0;
+      return bonus ? { ...r, score: r.score + bonus } : r;
+    });
+  }
   if (qType.azContext) {
     const fresh = wantsFresh(normQuery);
     scored = scored.map(r => {
