@@ -283,9 +283,7 @@
   "expect": {
    "any": [
     "korutin",
-    "coroutine"
-   ],
-   "any2": [
+    "coroutine",
     "kotlin"
    ],
    "page": [

@@ -93,10 +93,15 @@ const http = { http_429: 0, http_other: 0, empty_results: 0, api_error: 0 };
 const items = JSON.parse(readFileSync(file, "utf8"));
 
 // page_ok: gözlənilən səhifə (domen və ya başlıq/snippet açar sözü) gəldi?
-function pageOk(domains, hay, item) {
+// v37: page_ok — domen VƏ YA URL/title açar sözü (əvvəl sırf domen idi → retrieval_ok ilə eyni idi)
+function pageOk(domains, hay, item, urls = []) {
   const pages = (item.expect && item.expect.page) || [];
-  if (pages.length) return pages.some((d) => domains.some((h) => h === d || h.endsWith("." + d)));
-  return false;
+  if (!pages.length) return false;
+  const urlsFolded = urls.map(fold).join(" ");
+  return pages.some((d) => {
+    if (d.includes("/") || d.includes(" ")) return urlsFolded.includes(fold(d)) || hay.includes(fold(d));
+    return domains.some((h) => h === d || h.endsWith("." + d));
+  });
 }
 
 async function runOne(item) {
@@ -115,7 +120,7 @@ async function runOne(item) {
     const retrieval = (item.sources || []).some((d) => domains.some((h) => h === d || h.endsWith("." + d)));
     const verdict = checkAnswer(hay, item.expect || {});
     if (!results.length) http.empty_results++;
-    return { answer: verdict.ok, retrieval, page: pageOk(domains, hay, item), why: verdict.why, ms: Date.now() - t0,
+    return { answer: verdict.ok, retrieval, page: pageOk(domains, hay, item, results.map((x) => x.url || "")), why: verdict.why, ms: Date.now() - t0,
       cached: !!(j.meta && j.meta.cached), degraded: (j.meta && j.meta.degraded_stages) || [],
       providers: (j.meta && j.meta.providers_used) || [], top: (results[0] && results[0].title || "").slice(0, 40) };
   } catch (e) {
