@@ -13,7 +13,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
-const FILTER_VERSION = 20; // v16: danışıq AZ orfoqrafiyası + niyyət düzəlişi, az-news rəsmi RSS, Brave təmiz DOM, fonetik/təkrar təmizliyi, səhifədən real tarix çıxarma və date_info təravət etiketi
+const FILTER_VERSION = 21; // v16.1: Wikipedia Wayback/Arxivləşdirilib dipnot demote + BBC WhatsApp promo təmizliyi
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
