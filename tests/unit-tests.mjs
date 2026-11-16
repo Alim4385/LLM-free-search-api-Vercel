@@ -11,6 +11,7 @@ import { sanitizeQuery, checkRateLimit } from "../lib/ratelimit.js";
 import { scoreResult, isSpamDomain, hostMatches, diversifyByDomain, isJunkDomain, computeConfidence } from "../lib/score.js";
 import { cleanContent, pickAnswer, cutWord, dedupeSnippet, normalizeColloquialAz, detectQueryLanguage, acceptLanguageHeader, wikiExtractUrl, restoreAsciiAz } from "../lib/clean.js";
 import { normalizeUrl, decodeEntities, stripQuestionWords } from "../lib/search.js";
+import { parseJinaMarkdown } from "../lib/extract.js";
 import { expandQuery, expandQueryAsync, rewriteSearchIntentAz, stripMetaInstructions, isMetaQuery } from "../lib/expand.js";
 import { isLongAzQuery, detectContentLanguage } from "../lib/translate.js";
 import { isBlockedIp, assertPublicUrl, extractCacheGet, extractCacheSet, extractPageDates, buildDateInfo } from "../lib/extract.js";
@@ -560,6 +561,27 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
   assert("v18 türkcə dil aşkarlaması: 'turkce dizi izle' → tr", detectQueryLanguage(normalizeColloquialAz("turkce dizi izle")) === "tr", detectQueryLanguage(normalizeColloquialAz("turkce dizi izle")));
   const ra = restoreAsciiAz("best website list");
   assert("v18 ingilis sorğusunda bərpa işə düşmür", ra.restored === false && ra.text === "best website list", JSON.stringify(ra));
+
+  // === v18.1: r.jina.ai ehtiyat qatı (yalnız saf parser test olunur, şəbəkə yoxdur) ===
+  const jinaRaw = [
+    "Title: SEPAH Bəhreydə ABŞ radar stansiyasına zərbə",
+    "URL Source: https://azertag.az/xeber/test-4510356",
+    "Published Time: 2026-11-15T10:20:00Z",
+    "Markdown Content:",
+    "Azərbaycan Dövlət İnformasiya Agentliyi",
+    "*   [AZ](https://azertag.az/)",
+    "*   [RU](https://azertag.az/ru)",
+    "*   [SİYASƏT](https://azertag.az/bolme/politics)",
+    "İran İslam İnqilabı Keşikçiləri Korpusu Bəhreydə yerləşən Riffa hava bazasındakı ABŞ radar stansiyasına altı hücum pilotsuz uçuş aparatı buraxdığını açıqlayıb.",
+    "Bu barədə “Əl-Cəzirə” telekanalı məlumat yayıb."
+  ].join("\n");
+  const jp = parseJinaMarkdown(jinaRaw, "https://azertag.az/xeber/test-4510356");
+  assert("v18.1 jina: başlıq header-dən oxunur", jp.title === "SEPAH Bəhreydə ABŞ radar stansiyasına zərbə", jp.title);
+  assert("v18.1 jina: menyu sətirləri (AZ/RU/SİYASƏT) kəsilir", !/\[AZ\]|SİYASƏT\(/.test(jp.text) && !/^RU$/m.test(jp.text), jp.text.slice(0, 120));
+  assert("v18.1 jina: məqalə mətni saxlanılır", jp.text.includes("Riffa hava bazası"), jp.text.slice(0, 120));
+  assert("v18.1 jina: real nəşr tarixi götürülür", jp.published_at === "2026-11-15T10:20:00.000Z", String(jp.published_at));
+  const jpWiki = parseJinaMarkdown(jinaRaw, "https://az.wikipedia.org/wiki/Tərcümə");
+  assert("v18.1 jina: Vikipediya redaktə tarixi published_at yazılmır", jpWiki.published_at === null, String(jpWiki.published_at));
 }
 
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);
