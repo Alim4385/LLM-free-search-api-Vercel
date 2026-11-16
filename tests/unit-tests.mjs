@@ -661,6 +661,18 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
   const oldRace = s21({ title: "2017 Azərbaycan Qran prisi", url: "https://az.wikipedia.org/wiki/2017_Azərbaycan_Qran_prisi", snippet: "2017-ci ildə keçirilib", source: "wikipedia" }, "Formula 1 Azərbaycan Qran Prisi nə vaxt keçiriləcək");
   const nextRace = s21({ title: "2026 Azərbaycan Qran Prisi", url: "https://en.wikipedia.org/wiki/2026_Azerbaijan_Grand_Prix", snippet: "26 sentyabr 2026-cı ildə keçiriləcək", source: "wikipedia" }, "Formula 1 Azərbaycan Qran Prisi nə vaxt keçiriləcək");
   assert("v21 gələcək zaman: köhnə il cəzalanır, cari/gələcək il bonus alır", oldRace < nextRace, `old=${oldRace} next=${nextRace}`);
+
+  // === v23.3: 500 xətası qaytarılmasın (TDZ) + say sualında xəbər cəzası ===
+  let crashed = null;
+  let countScore = null;
+  try {
+    countScore = scoreResult({ title: "Mənsur Yavaşın CHP-dən çıxması", url: "https://news.google.com/rss/articles/x", snippet: "Ankaranın rayon bələdiyyə sədrləri", source: "google-news" }, tokenize("Ankarada neçə ilçə var"), "az", "Ankarada neçə ilçə var");
+  } catch (e) { crashed = e.message; }
+  assert("v23 say sualı: scoreResult partlamır (TDZ yoxdur)", crashed === null, String(crashed));
+  assert("v23 say sualı: xəbər mənbəyi mənfi bal alır", typeof countScore === "number" && countScore < 0, String(countScore));
+  const rayonHit = scoreResult({ title: "Ankaranın rayonları", url: "https://tr.wikipedia.org/wiki/Ankaranın_rayonları", snippet: "Ankara vilayətində 25 rayon var", source: "brave" }, tokenize("Ankarada neçə ilçə var"), "az", "Ankarada neçə ilçə var");
+  const genHit = scoreResult({ title: "Türkiyə ilçələri", url: "https://az.wikipedia.org/wiki/Türkiyə_ilçələri", snippet: "İlçe — Türkiyənin inzibati vahidi", source: "wikipedia" }, tokenize("Ankarada neçə ilçə var"), "az", "Ankarada neçə ilçə var");
+  assert("v23 sinonım: 'Ankaranın rayonları' ümumi 'Türkiyə ilçələri' səhifəsindən yuxarı", rayonHit > genHit, `rayon=${rayonHit} gen=${genHit}`);
 }
 
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);
