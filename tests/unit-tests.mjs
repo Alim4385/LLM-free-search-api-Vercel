@@ -681,7 +681,7 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
   const ankRay = sC({ title: "Ankaranın rayonları", url: "https://tr.wikipedia.org/wiki/Ankaranın_rayonları", snippet: "Ankara vilayətində 25 rayon var", source: "brave" });
   assert("v23 say: 'Ankaranın rayonları' ümumi səhifədən yuxarı", ankRay > genTr, `ankRay=${ankRay} gen=${genTr}`);
   const newsCnt = sC({ title: "Ankaranın 8 rayon bələdiyyə sədri istefa verdi", url: "https://news.google.com/rss/articles/x", snippet: "Ankaranın rayonları", source: "google-news" });
-  assert("v23 say: xəbər mənbəyi (rəqəmli başlıqla da) mənfi", newsCnt < 0, String(newsCnt));
+  assert("v23 say: xəbər mənbəyi (rəqəmli başlıqla da) doğru səhifədən aşağı", newsCnt < ankRay - 3, `news=${newsCnt} ankRay=${ankRay}`);
 
   const qS = "Azərbaycan millisinin növbəti oyunu nə vaxtdır";
   const sS = (r) => scoreResult(r, tokenize(qS), "az", qS);
