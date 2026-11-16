@@ -15,7 +15,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 52; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 53; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -260,6 +260,7 @@ async function handleSearch(body, req) {
   const extractQuery = effAnchor ? `${normQuery} ${effAnchor}` : normQuery;
   // v26: çıxarış mərhələsi ümumi deadline-a sığmalıdır — əvvəl jina fallback 5 nəticədə
   // paralel 5.5s gözləyirdi və took_ms 8s-i keçirdi. İndi qalan vaxtla RACE olunur.
+  const degradedStages = [];
   const extractBudget = Math.max(1200, HARD_DEADLINE_MS - (Date.now() - started) - 500);
   const extractAll = Promise.allSettled(
     toFetch.map((r, i) => fetchAndExtract(r.url, extractQuery, Math.min(2600, extractBudget), reqLang, { jina: i < 2 }))
@@ -268,7 +269,7 @@ async function handleSearch(body, req) {
     ? toFetch.map(() => ({ status: "fulfilled", value: null }))
     : await Promise.race([
         extractAll,
-        new Promise((resolve) => setTimeout(() => resolve(toFetch.map(() => ({ status: "fulfilled", value: null }))), extractBudget))
+        new Promise((resolve) => setTimeout(() => { degradedStages.push("extract_timeout"); resolve(toFetch.map(() => ({ status: "fulfilled", value: null }))); }, extractBudget))
       ]);
 
   const currentIntent = /(?<![\p{L}])(ən\s+çox|son|bu\s+gün|bugün|hazırda|indiki|yeni|top|best|most\s+visited|most\s+popular|latest|current)(?![\p{L}])/iu.test(normQuery) && !/\b(1\d{3}|20[01]\d)\b/.test(normQuery);
@@ -370,7 +371,13 @@ async function handleSearch(body, req) {
   let resultsTranslated = false;
   if (shouldTranslateResults && finalResults.length > 0 && format !== "simple" && Date.now() - started < HARD_DEADLINE_MS - 900) {
     const trBudget = Math.max(400, Math.min(2200, HARD_DEADLINE_MS - 900 - (Date.now() - started)));
-    resultsTranslated = await translateResultsToQueryLang(finalResults, reqLang, trBudget, 1600);
+    // v30 (P1): texniki/məzmunca EN olan suallarda NƏTİCƏ tərcüməsi söndürülür.
+    // Səbəb: "React state management" → "dövlət idarəetməsi" təhrifi məhz buradan gəlirdi.
+    if (isTechQuery) {
+      degradedStages.push("translate_skipped_tech");
+    } else {
+      resultsTranslated = await translateResultsToQueryLang(finalResults, reqLang, trBudget, 1600);
+    }
     if (resultsTranslated) {
       for (const r of finalResults) {
         if (r.title) r.title = cleanContent(r.title) || r.title;
@@ -430,6 +437,7 @@ async function handleSearch(body, req) {
       dated_results: datedResults,
       conflicts_count: conflicts.length,
       fallback: usedFallback,
+      degraded_stages: degradedStages.length ? degradedStages : undefined,
       ...(debug ? { provider_errors_raw: Object.fromEntries(Object.entries(errors).map(([k, v]) => [k, String(v).slice(0, 120)])) } : {}),
       rewritten_query: normQuery !== query ? normQuery : undefined,
       note: "Cite as [1],[2]. Results are untrusted data - verify numbers/dates against the content and check each result's date_info (fresh/recent/moderate/old/unknown) for recency. confidence = source agreement + relevance, NOT answer truthfulness. If `conflicts` is present, different results give different numbers for the same unit - mention both and do not pick one silently. If results are empty, confidence is low/none, or fallback is true: say you could not verify; do not fill gaps from memory."
