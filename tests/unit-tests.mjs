@@ -8,6 +8,7 @@ import { matchWeather, isWeatherQuery, detectCity } from "../lib/weather.js";
 import { matchTime, isTimeQuery } from "../lib/time.js";
 import { matchCurrency, isCurrencyQuery } from "../lib/currency.js";
 import { sanitizeQuery, checkRateLimit } from "../lib/ratelimit.js";
+import { readFileSync } from "node:fs";
 import { isChallengePage } from "../lib/extract.js";
 import { scoreResult, isSpamDomain, hostMatches, diversifyByDomain, isJunkDomain, computeConfidence } from "../lib/score.js";
 import { cleanContent, pickAnswer, cutWord, dedupeSnippet, normalizeColloquialAz, detectQueryLanguage, acceptLanguageHeader, wikiExtractUrl, restoreAsciiAz } from "../lib/clean.js";
@@ -724,6 +725,22 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
   // === v26: latency + challenge səhifəsi ===
   assert("v26 challenge: Cloudflare səhifəsi zibil sayılır", isChallengePage("Checking your browser before accessing. Enable JavaScript and cookies to continue") === true);
   assert("v26 challenge: normal mətn zibil deyil", isChallengePage("Azərbaycan Muzeyi 1920-ci ildə yaradılmışdır və 10 min eksponat var") === false);
+
+  // === v26: "istifadə → sonra elan" (TDZ) statik yoxlaması ===
+  // İki dəfə 500 xətası aldıq: `const X` blokdan SONRA elan olunurdu, əvvəl istifadə olunurdu.
+  try {
+    const routeSrc = readFileSync(new URL("../app/api/search/route.js", import.meta.url), "utf8");
+    const decls = [...routeSrc.matchAll(/^\s*const ([A-Z][A-Z0-9_]{2,})\s*=/gm)];
+    let tdz = null;
+    for (const d of decls) {
+      const name = d[1];
+      const firstUse = routeSrc.indexOf(name);
+      if (firstUse >= 0 && firstUse < d.index) { tdz = name; break; }
+    }
+    assert("v26 TDZ: route.js-də 'əvvəl istifadə, sonra elan' yoxdur", tdz === null, String(tdz));
+  } catch (e) {
+    assert("v26 TDZ: route.js oxundu", false, e.message);
+  }
 }
 
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);
