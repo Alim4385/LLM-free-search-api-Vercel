@@ -17,7 +17,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 84; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 85; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -337,8 +337,14 @@ async function handleSearch(body, req) {
   // v41.5: 1 nəticə = pis siqnal — zəif namizədləri geri qat ki, seçim olsun
   if (scored.length < 3) {
     const seenU = new Set(scored.map(r => r.url));
-    const weak = results
-      .filter(r => !isSpamDomain(r.url) && !seenU.has(r.url))
+    const siteLocked = /site:([a-z0-9.-]+\.[a-z]{2,})/i.test(query) || /"([^"]+)"/.test(query);
+    const weak = (siteLocked ? [] : results)
+      .filter(r => !isSpamDomain(r.url) && !seenU.has(r.url) && !ERR_PAGE.test(String(r.title || "").trim()))
+      .filter(r => {
+        if (!/wikipedia\.org/.test(r.url || "")) return true;  // v39.5 filtrini təkrarla
+        const t = String(r.title || "").toLowerCase();
+        return qTerms.some(x => x.length >= 4 && t.includes(String(x).slice(0, Math.max(4, x.length - 3)).toLowerCase()));
+      })
       .map(r => ({ ...r, score: scoreResult(r, qTerms, qLang, normQuery) }))
       .filter(r => r.score >= 0.4)
       .sort((a, b) => b.score - a.score);
@@ -361,7 +367,7 @@ async function handleSearch(body, req) {
     if (byRaw.length) scored = byRaw;
   }
 
-  let filtered = diversifyByDomain(scored, maxResults, 1, 2);
+  let filtered = diversifyByDomain(scored, maxResults + 2, 1, 2); // v43: 2 ehtiyat səhifə həqiqətən saxlanılır
   const filteredCount = scored.length;
 
   const toFetch = filtered.slice(0, maxResults + 2); // v39.4: 2 ehtiyat namizəd (zibil səhifə düşsə əvəzlənsin)
@@ -488,6 +494,20 @@ async function handleSearch(body, req) {
   if (!finalResults.length && junkPool.length) {
     degradedStages.push("junk_restored");
     for (const o of junkPool.slice(0, 2)) { o.id = finalResults.length + 1; finalResults.push(o); }
+  }
+
+  // v43: istifadəçi "son 1 gün/həftə" istəyibsə, çıxarışdan sonra REAL tarixi yoxla
+  if (freshness && finalResults.length > 2) {
+    const days = freshness === "day" ? 2 : freshness === "week" ? 9 : freshness === "month" ? 40 : 400;
+    const kept = finalResults.filter(r => {
+      const t = Date.parse(r.published_at || "");
+      return Number.isNaN(t) || (Date.now() - t) / 86400000 <= days;
+    });
+    if (kept.length >= 2 && kept.length < finalResults.length) {
+      degradedStages.push("freshness_filter");
+      finalResults.length = 0;
+      kept.forEach((r, idx) => { r.id = idx + 1; finalResults.push(r); });
+    }
   }
 
   // Səhifə tarixindən sonra köhnə mənbə cəzalandırılıbsa, sıralamanı yenilə və həddən aşağı düşənləri çıxar
