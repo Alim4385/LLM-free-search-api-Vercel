@@ -9,6 +9,7 @@ import { matchTime, isTimeQuery } from "../lib/time.js";
 import { matchCurrency, isCurrencyQuery } from "../lib/currency.js";
 import { sanitizeQuery, checkRateLimit } from "../lib/ratelimit.js";
 import { readFileSync } from "node:fs";
+import { protectTokens, restoreTokens } from "../lib/translate.js";
 import { detectConflicts, parseNum } from "../lib/conflict.js";
 import { isChallengePage } from "../lib/extract.js";
 import { scoreResult, isSpamDomain, hostMatches, diversifyByDomain, isJunkDomain, computeConfidence } from "../lib/score.js";
@@ -775,6 +776,16 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
   } catch (e) {
     assert("v29 sources/conflicts: route.js oxundu", false, e.message);
   }
+
+  // === v31 (P1 bağlanışı): token qorunması + bütövlük yoxlaması ===
+  const pr = protectTokens("React useEffect and Promise.all with 362,9 min ton");
+  assert("v31 protect: camelCase/token placeholder oldu", /ZXQ\d+ZXQ/.test(pr.txt), pr.txt);
+  assert("v31 protect: 'Promise.all' qorundu", pr.keep.some(k => k.includes("Promise.all")), JSON.stringify(pr.keep));
+  const okRestore = restoreTokens(pr.txt, pr.keep);
+  assert("v31 restore: tam bərpa → orijinal mətn", okRestore === "React useEffect and Promise.all with 362,9 min ton", String(okRestore));
+  assert("v31 restore: token itibsə → null (səssiz itki yox)", restoreTokens("tərcümə mətni placeholder-siz", ["React"]) === null, String(restoreTokens("tərcümə mətni placeholder-siz", ["React"])));
+  const noTok = protectTokens("sadə azərbaycan mətni");
+  assert("v31 protect: tokensiz mətn toxunulmur", noTok.txt === "sadə azərbaycan mətni" && noTok.keep.length === 0, noTok.txt);
 }
 
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);
