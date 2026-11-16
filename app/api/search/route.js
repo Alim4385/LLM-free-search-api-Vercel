@@ -6,7 +6,7 @@ import { matchWeather, fetchWeather, weatherToText } from "../../../lib/weather.
 import { matchTime, fetchTime, timeToText } from "../../../lib/time.js";
 import { matchCurrency, fetchCBAR, currencyToText } from "../../../lib/currency.js";
 import { scoreResult, diversifyByDomain, extractQuotedPhrases, containsPhrase, isSpamDomain, hostMatches, computeConfidence, isNewsQuery } from "../../../lib/score.js";
-import { cleanContent, cutWord, dedupeSnippet, detectQueryLanguage } from "../../../lib/clean.js";
+import { cleanContent, cutWord, dedupeSnippet, detectQueryLanguage, isBoilerplateOnly } from "../../../lib/clean.js";
 import { expandQuery, isMetaQuery, stripMetaInstructions, rewriteSearchIntentAz } from "../../../lib/expand.js";
 import { translateResultsToQueryLang } from "../../../lib/translate.js";
 import { cacheGet, cacheSet, cacheKey } from "../../../lib/cache.js";
@@ -15,7 +15,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 60; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 61; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -97,6 +97,7 @@ function jsonlResponse(results, meta, extraHeaders = {}) {
 
 async function handleSearch(body, req) {
   const started = Date.now();
+  const degradedStages = [];
   const ip = getClientIp(req);
   const requestId = Math.random().toString(36).slice(2, 10);
   if (!body || typeof body !== "object" || Array.isArray(body)) {
@@ -250,6 +251,27 @@ async function handleSearch(body, req) {
 
   // v15 (Claude #3 fix): ümumi saytlarda maxPerDomain=1, rəsmi sənəd/ensiklopediya
   // domenlərində yüksək skorlu (score>=3.5) 2 fərqli səhifəyə icazə verilir
+  // v38: provayderlər düşəndə 1-2 nəticə qalır (kripto, bərpa olunan enerji) →
+  // sadələşdirilmiş nüvə sorğusu ilə BİR dəfə ehtiyat axtarış
+  if (scored.length < 3) {
+    try {
+      const core = tokenize(query).slice(0, 3).join(" ");
+      if (core && core !== normQuery) {
+        const retry2 = await withTimeout(searchAll(core, maxResults, { freshness, excludeDomains }), 2500, "retry2 timeout");
+        const t2 = [...new Set([...qTerms, ...tokenize(retry2.anchorQuery || "")])];
+        const extra = retry2.results.filter(r => !isSpamDomain(r.url))
+          .map(r => ({ ...r, score: scoreResult(r, t2, qLang, core) }))
+          .filter(r => r.score >= 1.5);
+        if (extra.length) {
+          degradedStages.push("retry_simplified");
+          const seen = new Set(scored.map(r => r.url));
+          for (const r of extra) if (!seen.has(r.url)) scored.push(r);
+          scored.sort((a, b) => b.score - a.score);
+        }
+      }
+    } catch {}
+  }
+
   let filtered = diversifyByDomain(scored, maxResults, 1, 2);
   const filteredCount = scored.length;
 
@@ -261,7 +283,6 @@ async function handleSearch(body, req) {
   const extractQuery = effAnchor ? `${normQuery} ${effAnchor}` : normQuery;
   // v26: çıxarış mərhələsi ümumi deadline-a sığmalıdır — əvvəl jina fallback 5 nəticədə
   // paralel 5.5s gözləyirdi və took_ms 8s-i keçirdi. İndi qalan vaxtla RACE olunur.
-  const degradedStages = [];
   const extractBudget = Math.max(1200, HARD_DEADLINE_MS - (Date.now() - started) - 500);
   const extractAll = Promise.allSettled(
     toFetch.map((r, i) => fetchAndExtract(r.url, extractQuery, Math.min(2600, extractBudget), reqLang, { jina: i < 2 }))
@@ -298,6 +319,8 @@ async function handleSearch(body, req) {
       content = base.snippet || "";
     }
     content = cleanContent(content);
+    // v38: yalnız "Həmçinin bax / ©" qalan content faydasızdır → snippet-ə qayıt
+    if (isBoilerplateOnly(content)) content = cleanContent(base.snippet || "").trim() || content;
     if (!content.trim()) content = cleanContent(base.snippet || "").trim();
     if (totalChars + content.length > maxChars && finalResults.length >= 2) {
       content = content.slice(0, Math.max(0, maxChars - totalChars));
