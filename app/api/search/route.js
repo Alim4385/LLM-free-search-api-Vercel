@@ -13,7 +13,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
-const FILTER_VERSION = 45; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 46; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -253,9 +253,18 @@ async function handleSearch(body, req) {
   const skipFetch = format === "simple" || searchTookMs > 5500;
   // v15/v17: həm normallaşmış sual, həm də ingilis tərcüməsi ilə abzas seçimi + saytı sorğu dilində aç!
   const extractQuery = effAnchor ? `${normQuery} ${effAnchor}` : normQuery;
+  // v26: çıxarış mərhələsi ümumi deadline-a sığmalıdır — əvvəl jina fallback 5 nəticədə
+  // paralel 5.5s gözləyirdi və took_ms 8s-i keçirdi. İndi qalan vaxtla RACE olunur.
+  const extractBudget = Math.max(1200, HARD_DEADLINE_MS - (Date.now() - started) - 500);
+  const extractAll = Promise.allSettled(
+    toFetch.map((r, i) => fetchAndExtract(r.url, extractQuery, Math.min(2600, extractBudget), reqLang, { jina: i < 2 }))
+  );
   const extracted = skipFetch
     ? toFetch.map(() => ({ status: "fulfilled", value: null }))
-    : await Promise.allSettled(toFetch.map(r => fetchAndExtract(r.url, extractQuery, 2600, reqLang)));
+    : await Promise.race([
+        extractAll,
+        new Promise((resolve) => setTimeout(() => resolve(toFetch.map(() => ({ status: "fulfilled", value: null }))), extractBudget))
+      ]);
 
   const currentIntent = /(?<![\p{L}])(ən\s+çox|son|bu\s+gün|bugün|hazırda|indiki|yeni|top|best|most\s+visited|most\s+popular|latest|current)(?![\p{L}])/iu.test(normQuery) && !/\b(1\d{3}|20[01]\d)\b/.test(normQuery);
   const finalResults = [];

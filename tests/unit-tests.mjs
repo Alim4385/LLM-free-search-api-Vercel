@@ -8,6 +8,7 @@ import { matchWeather, isWeatherQuery, detectCity } from "../lib/weather.js";
 import { matchTime, isTimeQuery } from "../lib/time.js";
 import { matchCurrency, isCurrencyQuery } from "../lib/currency.js";
 import { sanitizeQuery, checkRateLimit } from "../lib/ratelimit.js";
+import { isChallengePage } from "../lib/extract.js";
 import { scoreResult, isSpamDomain, hostMatches, diversifyByDomain, isJunkDomain, computeConfidence } from "../lib/score.js";
 import { cleanContent, pickAnswer, cutWord, dedupeSnippet, normalizeColloquialAz, detectQueryLanguage, acceptLanguageHeader, wikiExtractUrl, restoreAsciiAz } from "../lib/clean.js";
 import { normalizeUrl, decodeEntities, stripQuestionWords } from "../lib/search.js";
@@ -719,6 +720,10 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
   const http2 = sH({ title: "HTTP/2", url: "https://az.wikipedia.org/wiki/HTTP/2", snippet: "HTTP/1.1 və SPDY arasındakı ən böyük fərq ondan ibarət idi", source: "wikipedia" });
   const cmpPage = sH({ title: "HTTP vs HTTPS — fərq nədir", url: "https://www.cloudflare.com/learning/ssl/why-is-http-not-secure/", snippet: "HTTP və HTTPS arasındakı əsas fərq şifrələmədir. HTTPS = HTTP + TLS", source: "brave" });
   assert("v25 müqayisə: 'HTTP vs HTTPS fərq' səhifəsi HTTP/2-dən yuxarı", cmpPage > http2, `cmp=${cmpPage} http2=${http2}`);
+
+  // === v26: latency + challenge səhifəsi ===
+  assert("v26 challenge: Cloudflare səhifəsi zibil sayılır", isChallengePage("Checking your browser before accessing. Enable JavaScript and cookies to continue") === true);
+  assert("v26 challenge: normal mətn zibil deyil", isChallengePage("Azərbaycan Muzeyi 1920-ci ildə yaradılmışdır və 10 min eksponat var") === false);
 }
 
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);
