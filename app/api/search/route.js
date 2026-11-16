@@ -13,7 +13,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
-const FILTER_VERSION = 43; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 44; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -194,12 +194,15 @@ async function handleSearch(body, req) {
   // skorlamada 0 alıb atılmasın!
   const exp = expandQuery(normQuery);
   const effAnchor = searchResult.anchorQuery || null;
+  // v24.2: AZ say sualında ("neçə ilçə") İNGİLİSCƏ anchor terminləri zəhər kimi işləyir:
+  // "districts" termini "Çankaya District" kimi səhifələri önə çıxarır, doğru TR səhifəni basdırır.
+  const isAzCount = /(?<![\p{L}])(neçə|nece|sayı|sayi|nə\s+qədər|ne\s+qeder)(?![\p{L}])/iu.test(normQuery);
   const qTerms = [...new Set([
     ...tokenize(query),
     ...tokenize(normQuery),
     ...tokenize(exp.expanded || ""),
-    ...tokenize(exp.english || ""),
-    ...tokenize(effAnchor || "")
+    ...(isAzCount ? [] : tokenize(exp.english || "")),
+    ...(isAzCount ? [] : tokenize(effAnchor || ""))
   ])];
 
   const rawCount = results.length;
