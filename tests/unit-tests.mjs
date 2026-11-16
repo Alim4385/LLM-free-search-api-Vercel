@@ -710,6 +710,15 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
   const disamb = sD({ title: "Doker", url: "https://az.wikipedia.org/wiki/Doker", snippet: "Docker ən çox istinad edir: Liman işçisi, gəmilərin yüklənməsi", source: "wikipedia" });
   const dockerPage = sD({ title: "Docker (proqram təminatı)", url: "https://az.wikipedia.org/wiki/Docker_(proqram_təminatı)", snippet: "Docker proqram təminatını konteynerlər adlanan paketlərdə çatdırmaq üçün", source: "wikipedia" });
   assert("v24 məna ayrımı: 'Doker' səhifəsi Docker məqaləsindən aşağı", dockerPage > disamb, `page=${dockerPage} dis=${disamb}`);
+
+  // === v25: weather intent səhv pozitiv + "fərq" müqayisə regex-i ===
+  assert("v25 weather: 'Günəş sistemində neçə planet var' hava deyil", matchWeather("Günəş sistemində neçə planet var").hit === false, JSON.stringify(matchWeather("Günəş sistemində neçə planet var")));
+  assert("v25 weather: 'Bakıda hava necədir' hava qalır", matchWeather("Bakıda hava necədir").hit === true, JSON.stringify(matchWeather("Bakıda hava necədir")));
+  const qH = "HTTP ilə HTTPS arasındakı fərq nədir";
+  const sH = (r) => scoreResult(r, tokenize(qH), "az", qH);
+  const http2 = sH({ title: "HTTP/2", url: "https://az.wikipedia.org/wiki/HTTP/2", snippet: "HTTP/1.1 və SPDY arasındakı ən böyük fərq ondan ibarət idi", source: "wikipedia" });
+  const cmpPage = sH({ title: "HTTP vs HTTPS — fərq nədir", url: "https://www.cloudflare.com/learning/ssl/why-is-http-not-secure/", snippet: "HTTP və HTTPS arasındakı əsas fərq şifrələmədir. HTTPS = HTTP + TLS", source: "brave" });
+  assert("v25 müqayisə: 'HTTP vs HTTPS fərq' səhifəsi HTTP/2-dən yuxarı", cmpPage > http2, `cmp=${cmpPage} http2=${http2}`);
 }
 
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);
