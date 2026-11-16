@@ -9,7 +9,7 @@ import { matchTime, isTimeQuery } from "../lib/time.js";
 import { matchCurrency, isCurrencyQuery } from "../lib/currency.js";
 import { sanitizeQuery, checkRateLimit } from "../lib/ratelimit.js";
 import { scoreResult, isSpamDomain, hostMatches, diversifyByDomain, isJunkDomain, computeConfidence } from "../lib/score.js";
-import { cleanContent, pickAnswer, cutWord, dedupeSnippet, normalizeColloquialAz, detectQueryLanguage, acceptLanguageHeader, wikiExtractUrl } from "../lib/clean.js";
+import { cleanContent, pickAnswer, cutWord, dedupeSnippet, normalizeColloquialAz, detectQueryLanguage, acceptLanguageHeader, wikiExtractUrl, restoreAsciiAz } from "../lib/clean.js";
 import { normalizeUrl, decodeEntities, stripQuestionWords } from "../lib/search.js";
 import { expandQuery, expandQueryAsync, rewriteSearchIntentAz, stripMetaInstructions, isMetaQuery } from "../lib/expand.js";
 import { isLongAzQuery, detectContentLanguage } from "../lib/translate.js";
@@ -538,6 +538,28 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     "Ən yaxşı film saytları"
   );
   assert("v17.1 saytlar niyyəti: 'film saytları' sualında film mükafatı məqaləsi score=0 alır", awardScore === 0, String(awardScore));
+
+  // === v18: diakritiksiz (ASCII) azərbaycanca yazılışın bərpası ===
+  const asciiCases = [
+    ["qaqa gozel bir sheher harda var", "qaqa gözəl bir şəhər harada var"],
+    ["en gozel sheherler", "ən gözəl şəhərlər"],
+    ["cox isdifade edilen saytlar hansilardi", "çox istifadə edilən saytlar hansılardır"],
+    ["yaxshi melumat haqqinda", "yaxşı məlumat haqqında"],
+    ["sheherlerde hava necedir", "şəhərlərdə hava necədir"],
+    ["azerbaycanda en boyuk saytlar", "Azərbaycanda ən böyük saytlar"]
+  ];
+  for (const [raw, want] of asciiCases) {
+    const got = normalizeColloquialAz(raw);
+    assert(`v18 diakritik bərpası: "${raw}" → "${want}"`, got === want, got);
+  }
+  assert("v18 dil aşkarlaması: 'gozel sheher' sorğusu 'en' yox, 'az' sayılır", detectQueryLanguage("en gozel sheherler") === "az", detectQueryLanguage("en gozel sheherler"));
+  assert("v18 qoruyucu: 'chicago weather' ingiliscə qalır", detectQueryLanguage(normalizeColloquialAz("chicago weather")) === "en", normalizeColloquialAz("chicago weather"));
+  assert("v18 qoruyucu: 'show me the money' korlanmır", normalizeColloquialAz("show me the money") === "show me the money", normalizeColloquialAz("show me the money"));
+  assert("v18 qoruyucu: 'cash back offer' korlanmır", normalizeColloquialAz("cash back offer") === "cash back offer", normalizeColloquialAz("cash back offer"));
+  assert("v18 türkcə qorunur: 'en iyi filmler' azərbaycancaya çevrilmir", normalizeColloquialAz("en iyi filmler") === "en iyi filmler", normalizeColloquialAz("en iyi filmler"));
+  assert("v18 türkcə dil aşkarlaması: 'turkce dizi izle' → tr", detectQueryLanguage(normalizeColloquialAz("turkce dizi izle")) === "tr", detectQueryLanguage(normalizeColloquialAz("turkce dizi izle")));
+  const ra = restoreAsciiAz("best website list");
+  assert("v18 ingilis sorğusunda bərpa işə düşmür", ra.restored === false && ra.text === "best website list", JSON.stringify(ra));
 }
 
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);
