@@ -17,7 +17,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 77; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 78; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -228,6 +228,16 @@ async function handleSearch(body, req) {
   scored = scored.map(r => isBoilerplateOnly(r.snippet) ? { ...r, score: r.score - 3, junk_content: true } : r);
 
   // v39: AZ kontekstli sualda rəsmi mənbələr (e-qanun, edu.gov.az, stat.gov.az…) önə
+  // v41.5: Vikipediya "səhv uyğunluq"ları — başlıqda sorğunun BİR sözü də yoxdursa at
+  // ("saç bakımı ipuçları" → "John Romero", "cildə qulluq" → "Şaqun Şarma")
+  const laxEq = (a, b) => String(a || "").toLowerCase().includes(String(b || "").toLowerCase());
+  scored = scored.filter(r => {
+    if (!/wikipedia\.org/.test(r.url || "")) return true;
+    const t = String(r.title || "").toLowerCase();
+    const hit = qTerms.some(x => x.length >= 4 && t.includes(String(x).slice(0, Math.max(4, x.length - 3)).toLowerCase()));
+    return hit;
+  });
+
   // v41.4: tarix/nəticə sualında təzə səhifə önə ("Champions League results" → 1996-97 yox!)
   if (qType.type === "date" && wantsFresh(normQuery)) {
     scored = scored.map(r => {
@@ -319,6 +329,21 @@ async function handleSearch(body, req) {
         scored.sort((a, b) => b.score - a.score);
       }
     } catch {}
+  }
+
+  // v41.5: 1 nəticə = pis siqnal — zəif namizədləri geri qat ki, seçim olsun
+  if (scored.length < 3) {
+    const seenU = new Set(scored.map(r => r.url));
+    const weak = results
+      .filter(r => !isSpamDomain(r.url) && !seenU.has(r.url))
+      .map(r => ({ ...r, score: scoreResult(r, qTerms, qLang, normQuery) }))
+      .filter(r => r.score >= 0.4)
+      .sort((a, b) => b.score - a.score);
+    if (weak.length) {
+      degradedStages.push("gate_relaxed");
+      for (const r of weak) { scored.push(r); if (scored.length >= 5) break; }
+      scored.sort((a, b) => b.score - a.score);
+    }
   }
 
   let filtered = diversifyByDomain(scored, maxResults, 1, 2);

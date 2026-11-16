@@ -52,7 +52,8 @@ const expLang = (q) => {
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 const rows = [];
-for (const it of items.filter(x => x.i >= from && x.i <= to)) {
+const ONLY = process.env.ONLY ? new Set(process.env.ONLY.split(",").map(Number)) : null;
+for (const it of items.filter(x => (ONLY ? ONLY.has(x.i) : (x.i >= from && x.i <= to)))) {
   const t0 = Date.now();
   let j = null, err = null;
   try {
@@ -68,8 +69,18 @@ for (const it of items.filter(x => x.i >= from && x.i <= to)) {
   const boiler = res.filter(x => BOIL.test(x.content || "") || !(x.content || "").trim()).length;
   const exp = expLang(q);
   const langOfRes = (x) => langOf(`${x.title} ${(x.content || "").slice(0, 400)}`);
-  const compat = (a, b) => a === b || (["az","tr"].includes(a) && ["az","tr"].includes(b));
-  const langOk = res.length ? res.some(x => compat(langOfRes(x), exp)) : false;
+  const compat = (a, b) => a === b || (["az","tr"].includes(a) && ["az","tr"].includes(b))
+    || (["es","fr","de","pt"].includes(b) && a === b);
+  const diac = { es: /[ñáéíóú¿¡]/i, fr: /[éèêàâûôîœç]/i, de: /[ßäöü]/i, pt: /[ãõç]/i };
+  const tldOf = (h) => (String(h || "").match(/\.([a-z]{2,3})$/) || [])[1];
+  const langOk = res.length ? res.some(x => {
+    if (compat(langOfRes(x), exp)) return true;
+    const blob = `${x.title} ${(x.content || "").slice(0, 200)}`;
+    if (diac[exp] && diac[exp].test(blob)) return true;
+    const h = (() => { try { return new URL(x.url).hostname; } catch { return ""; } })();
+    if (tldOf(h) === exp) return true;
+    return false;
+  }) : false;
   const wikiTop = res.length && /wikipedia\.org/.test(res[0].url || "");
   const isNews = /xəbər|news|noticias|haberler|actualités|nachrichten|новости|headlines|son dəqiqə/i.test(q) || it.cat === "XƏBƏR";
   const newsWiki = isNews && wikiTop;
