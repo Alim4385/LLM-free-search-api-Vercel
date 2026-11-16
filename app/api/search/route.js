@@ -17,7 +17,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 81; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 82; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -425,6 +425,12 @@ async function handleSearch(body, req) {
       }
     }
 
+    // v42.3: abzas seçimi zibil qaytardısa (GeeksforGeeks/Commerce kimi səhifələr),
+    // səhifənin təmizlənmiş mətninin başından götür — boş content qalmasın
+    if (ex && ex.text && isBoilerplateOnly(content)) {
+      const rawHead = stripBoilerplateHead(cleanContent(ex.text)).slice(0, Math.max(400, Math.round(itemBudget * 0.7)));
+      if (rawHead && !isBoilerplateOnly(rawHead)) { content = rawHead; degradedStages.push("raw_text_fallback"); }
+    }
     const clippedContent = content.slice(0, itemBudget);
     // Əgər axtarış motorunun snippet-i kəsik/xətalıdırsa ("url_to_copy Sorry!..."), saytın rəsmi yerli ön-izləməsini (meta_description) götür
     const rawSnipSource = (ex && ex.meta_description && (!base.snippet || base.snippet.length < 35 || /url_to_copy|requires a keyboard/i.test(base.snippet)))
