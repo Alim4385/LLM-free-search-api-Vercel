@@ -673,6 +673,22 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
   const rayonHit = scoreResult({ title: "Ankaranın rayonları", url: "https://tr.wikipedia.org/wiki/Ankaranın_rayonları", snippet: "Ankara vilayətində 25 rayon var", source: "brave" }, tokenize("Ankarada neçə ilçə var"), "az", "Ankarada neçə ilçə var");
   const genHit = scoreResult({ title: "Türkiyə ilçələri", url: "https://az.wikipedia.org/wiki/Türkiyə_ilçələri", snippet: "İlçe — Türkiyənin inzibati vahidi", source: "wikipedia" }, tokenize("Ankarada neçə ilçə var"), "az", "Ankarada neçə ilçə var");
   assert("v23 sinonım: 'Ankaranın rayonları' ümumi 'Türkiyə ilçələri' səhifəsindən yuxarı", rayonHit > genHit, `rayon=${rayonHit} gen=${genHit}`);
+
+  // === v23.4: say sualında subyekt başlıqda + xəbər cəzası; idman növü/tarix ===
+  const qC = "Ankarada neçə ilçə var";
+  const sC = (r) => scoreResult(r, tokenize(qC), "az", qC);
+  const genTr = sC({ title: "Türkiyə ilçələri", url: "https://az.wikipedia.org/wiki/Türkiyə_ilçələri", snippet: "İlçe — Türkiyənin inzibati vahidi", source: "wikipedia" });
+  const ankRay = sC({ title: "Ankaranın rayonları", url: "https://tr.wikipedia.org/wiki/Ankaranın_rayonları", snippet: "Ankara vilayətində 25 rayon var", source: "brave" });
+  assert("v23 say: 'Ankaranın rayonları' ümumi səhifədən yuxarı", ankRay > genTr, `ankRay=${ankRay} gen=${genTr}`);
+  const newsCnt = sC({ title: "Ankaranın 8 rayon bələdiyyə sədri istefa verdi", url: "https://news.google.com/rss/articles/x", snippet: "Ankaranın rayonları", source: "google-news" });
+  assert("v23 say: xəbər mənbəyi (rəqəmli başlıqla da) mənfi", newsCnt < 0, String(newsCnt));
+
+  const qS = "Azərbaycan millisinin növbəti oyunu nə vaxtdır";
+  const sS = (r) => scoreResult(r, tokenize(qS), "az", qS);
+  const hock = sS({ title: "Azərbaycanın kişilərdən ibarət xokkey yığma komandası", url: "https://az.wikipedia.org/wiki/Xokkey", snippet: "milli komanda 1927-ci ildə", source: "wikipedia" });
+  const matchToday = sS({ title: "Futbol üzrə Azərbaycan millisi bu gün Andorra ilə yoldaşlıq görüşünə çıxır", url: "https://apa.az/x", snippet: "16 noyabr 2026 10:41 növbəti oyununu keçirəcək", source: "brave" });
+  assert("v23 idman: başqa idman növü (xokkey) kəsilir", hock <= 0, String(hock));
+  assert("v23 idman: 'bu gün ... 16 noyabr' matçı xəbərdən yuxarı", matchToday > 0, String(matchToday));
 }
 
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);
