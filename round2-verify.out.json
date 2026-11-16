@@ -1,0 +1,549 @@
+[
+  {
+    "q": "Azərbaycan himninin sözləri kimindir",
+    "ms": 2106,
+    "intent": "general",
+    "lang": "az",
+    "conf": "high",
+    "fallback": false,
+    "providers": [
+      "bing",
+      "wikipedia",
+      "google-news",
+      "brave"
+    ],
+    "results": [
+      {
+        "title": "Azərbaycan Respublikasının Dövlət Himni",
+        "url": "https://en.wikipedia.org/wiki/State_Anthem_of_the_Republic_of_Azerbaijan",
+        "source": "wikipedia",
+        "score": 9.5,
+        "content": "Rəsmi adı Azərbaycan Respublikasının Dövlət Himni olan \"Azərbaycan marşı\" Azərbaycanın dövlət himnidir. Musiqini musiqişünas, Azərbaycan klassik musiqisinin görkəmli nümayəndəsi Üzeyir Hacıbəyov bəstələyib. 1919-cu ildə yazılmış mahnının sözləri əsasən şair Əhməd Cavada aiddir; lakin sözlər şair və maarifçi Cəmo bəy Cəbrayılbəyliyə də aid edilmişdir. 1992-ci ildə Sovet İttifaqının süqutundan sonra Azərbaycan hökuməti rəsmi olaraq “Azərbaycan Marşı”nı dövlət himni kimi qəbul edib.\nAzərbaycan hökuməti də dövlət himnini rəsmi olaraq “Azərbaycan dövlətinin, onun müstəqilliyinin və birliyinin müqəddəs simvolu” elan edib.\n2006-cı ildən 5 manatlıq əskinasın üz hissəsində mahnının mətninin bir hissə"
+      },
+      {
+        "title": "Azərbaycan himni",
+        "url": "https://az.wikipedia.org/wiki/Az%C9%99rbaycan_himni",
+        "source": "wikipedia",
+        "score": 9.3,
+        "content": "Azərbaycan marşı — Azərbaycan Respublikasının rəsmi dövlət himni.\nBəzi mənbələrdə Azərbaycan Respublikasının Dövlət himninin mətninin Azərbaycan şairi Əhməd Cavada məxsus olduğu iddia edilir.\nTənqidlər\n2018-ci ildə Vəhdət Partiyasının sədri, deputat Tahir Kərimli Milli Məclisin plenar iclasında himn mövzusunu yenidən gündəmə gətirib. O deyib ki, himndə iki yerdə nəqarat var, onları dəyişməklə 1 dəqiqə uda bilərik: \"Mən ahəngi ilə maraqlanıram, demirəm ki, sözləri dəyişdirilsin. Bizim himnimiz dünyanın ən uzun himnlərindən biridir, 4 dəqiqə çəkir. Başqa himnlər 2,5 dəqiqədən çox olmur. Dəfələrlə xaricdə, daxildə hamıdan eşidirsən ki, bu himn çox uzundur. Yəni bunu qısaltmaq imkanları var. Söz"
+      },
+      {
+        "title": "Azərbaycan Sovet Sosialist Respublikası himni",
+        "url": "https://az.wikipedia.org/wiki/Az%C9%99rbaycan_Sovet_Sosialist_Respublikas%C4%B1_himni",
+        "source": "brave",
+        "score": 8,
+        "content": "Azərbaycan Sovet Sosialist Respublikası himni — 1944–1992-ci illərdə Azərbaycan SSR-nin dövlət himni.\nÜmumi məlumat\nHimnin musiqisi Üzeyir Hacıbəyova, sözləri isə Səməd Vurğun , Süleyman Rüstəm və Hüseyn Arifə məxsusdur. 1978-ci ildə himnin sözlərində müəyyən dəyişikliklər edilmiş, həmçinin İosif Stalin haqdakı sözlər mətndən çıxarılmışdır.\nBəstəkar: Üzeyir Hacıbəyov\nSözlərin müəllifi: Səməd Vurğun,Süleyman Rüstəm,Hüseyn Arif\nTəsdiqi: 1944\nLəğvi: 1992\nAzərbaycan SSR himni (instrumental, 1977): Azərbaycan SSR himni (instrumental, 1977)\nLatın əlifbasıyla — Kiril əlifbasıyla"
+      }
+    ]
+  },
+  {
+    "q": "docker compose vs docker run fərqi",
+    "ms": 3469,
+    "intent": "general",
+    "lang": "az",
+    "conf": "medium",
+    "fallback": false,
+    "providers": [
+      "arxiv",
+      "bing",
+      "stackoverflow",
+      "wikipedia",
+      "hacker-news",
+      "github",
+      "google-news",
+      "brave"
+    ],
+    "results": [
+      {
+        "title": "Docker run vs Docker Compose: fərq nədir?",
+        "url": "https://www.theserverside.com/blog/Coffee-Talk-Java-News-Stories-and-Opinions/Docker-run-vs-docker-compose-Whats-the-difference/",
+        "source": "brave",
+        "score": 14.1,
+        "content": "Docker run vs Docker Compose: Hansından istifadə etməlisiniz?\nTək konteynerli və çox konteynerli tətbiqlər üçün təkrarlanan Tərtib konfiqurasiyası ilə birdəfəlik docker run əmrlərini müqayisə edin.\nHəm docker run, həm də docker compose Docker konteynerlərini yarada və işə sala bilər, lakin onlar müxtəlif iş axınları üçün nəzərdə tutulub.\nDocker run vs Docker Compose bir baxışda\nDocker run vs Docker Compose: qərar"
+      },
+      {
+        "title": "Raspberry Pi-də mürəkkəb multikonteyner proqramlarını idarə etmək üçün Docker Compose-dan necə istifadə etməli · Partlayıcı maddələrlə ARMed Docker Pirates",
+        "url": "http://blog.hypriot.com/post/docker-compose-nodejs-haproxy/",
+        "source": "hacker-news",
+        "score": 10.1,
+        "content": "Bazar ertəsi, 6 aprel 2015-ci il Bu bloq yazısında biz sizə Docker Compose ilə başlamaq üçün lazım olan müxtəlif addımlar vasitəsilə sizə məlumat verəcəyik və ondan necə istifadə edəcəyinizi göstərəcəyik.\nDocker Compose-un üstünlüklərini nümayiş etdirmək üçün biz üç Docker Node.js konteynerində işləyəcək sadə Node.js “Salam Dünya” tətbiqini yaradacağıq.\nBu veb serverlərin daha çoxunu işə salmaq üçün biz indi HAProxy yük balanslaşdırıcısının arxasında işləyən veb serverlər fermasını yaratmaq üçün Docker Compose-dan istifadə edirik.\nMissiyamız Docker və onun alətlər dəstini ARM-də əlçatan etmək olduğundan biz Raspberry Pi-də işləməyə hazır olan docker-compose binar yaratdıq.\nBütün lazımi hissə"
+      },
+      {
+        "title": "GitHub - tərtib edin: Docker ilə çox konteynerli proqramları müəyyənləşdirin və işlədin",
+        "url": "https://github.com/docker/compose",
+        "source": "github",
+        "score": 7.1,
+        "content": "Docker Compose, Docker-də çox konteynerli proqramları işə salmaq üçün bir vasitədir\ntək komanda: docker tərtib edir.\nDocker Swarm əvvəllər köhnə tərtib fayl formatına etibar edirdi, lakin tərtib spesifikasiyasını qəbul etmədi\nDocker-bəstələmək və onu $HOME/.docker/cli-plugins-ə köçürmək üçün ƏS-niz üçün müvafiq binarın adını dəyişin\nNəhayət, docker compose up-ı işə salın və Compose bütün proqramınızı işə salacaq və işlədəcəkdir"
+      }
+    ]
+  },
+  {
+    "q": "what is the difference between let and const in javascript",
+    "ms": 2234,
+    "intent": "general",
+    "lang": "en",
+    "conf": "medium",
+    "fallback": false,
+    "providers": [
+      "bing",
+      "wikipedia",
+      "google-news",
+      "brave",
+      "github"
+    ],
+    "results": [
+      {
+        "title": "JavaScript var let and const",
+        "url": "https://www.w3schools.com/js/js_varletconst.asp",
+        "source": "brave",
+        "score": 10.6,
+        "content": "Difference Between var, let and const\nThe primary difference between var, let,\nand const lies in scoping mechanisms, reassignment rules, and how JavaScript handles\nVariables declared with let and const are also hoisted,\nUsing a let or const variable before it is declared will"
+      },
+      {
+        "title": "Var, Let, and Const – What's the Difference?",
+        "url": "https://www.freecodecamp.org/news/var-let-and-const-whats-the-difference/",
+        "source": "brave",
+        "score": 6.8,
+        "content": "A lot of shiny new features came out with ES2015 (ES6). And now, since it's 2020, it's assumed that a lot of JavaScript developers have become familiar with and have started using these features.\nOne of the features that came with ES6 is the addition of let and const, which can be used for variable declaration. The question is, what makes them different from good ol' var which we've been using? If you are still not clear about this, then this article is for you.\nIn this article, we'll discuss var, let and const with respect to their scope, use, and hoisting. As you read, take note of the differences between them that I'll point out.\nHere's an Interactive Scrim of Var, Let, and Const\nVariable"
+      },
+      {
+        "title": "Percentage Difference Calculator",
+        "url": "https://www.calculatorsoup.com/calculators/algebra/percent-difference-calculator.php",
+        "source": "bing",
+        "score": 5.6,
+        "content": "The Percentage Difference Calculator (% difference calculator) will find the percent difference between two positive numbers greater than 0. Percentage difference is usually calculated when you want to know the difference in percentage between two numbers. For this calculator, the order of the numbers does not matter as we are simply dividing the difference between two numbers by the average of the two numbers. To calculate the difference relatively, from an old number to a new number, you would\nWhat is the percentage difference between 5 and 7?\nLet V1 = 5 and V2 = 7 and plug numbers into our formula\nNote that if we let V1 = 7 and V2 = 5 we would still have a difference of 33.33% because we "
+      }
+    ]
+  },
+  {
+    "q": "İstanbulda neçə körpü var",
+    "ms": 2719,
+    "intent": "general",
+    "lang": "az",
+    "conf": "high",
+    "fallback": false,
+    "providers": [
+      "bing",
+      "wikipedia",
+      "google-news",
+      "brave"
+    ],
+    "results": [
+      {
+        "title": "İstanbul",
+        "url": "https://az.wikipedia.org/wiki/%C4%B0stanbul",
+        "source": "wikipedia",
+        "score": 7.3,
+        "content": "İstanbul (köhnə Azərbaycandilli mənbələrdə İstambul) — Türkiyənin iqtisadi, mədəni və tarixi mərkəzini təşkil edən ən böyük şəhəri və ölkənin 81 ilindən biridir. İstanbul ilinin mərkəzidir. İqtisadi böyüklüyünə görə dünyada 34-cü, əhalisinə görə Avropada birinci, dünyada isə altıncı sırada yer alır.\nİstanbul Türkiyənin şimal-qərbində, Mərmərə dənizi və Bosfor sahili boyunca salınmış şəhərdir. Qitələrarası şəhər olan İstanbulun Avropa hissəsinə Avrupa yakası, Asiyadakı hissəsinə isə Anadolu Yakası deyilir. Üç tərəfi su sahəsi — Mərmərə dənizi, Bosfor və Haliç ilə əhatə olunmuş yarımada üzərində qurulan İstanbulun qərb sərhədi Konstantinopol qala divarlarını meydana gətirir. Şəhərin böyümə və "
+      },
+      {
+        "title": "İstanbul körpüsü qəzalı vəziyyətdədir",
+        "url": "https://az.trend.az/other/world/2028813.html",
+        "source": "brave",
+        "score": 6,
+        "content": "Azərbaycan, Bakı, 22 may / Trend, müxbir A.Tağıyeva /\nİstanbulda \"Qızıl buynuz\" körfəzinin üzərindən keçən dörd körpüdən biri olan Halic körpüsündə çərşənbə axşamı zədə aşkar olunub. Trend-in məlumatına görə, bu barədə \"Sabah\" qəzeti xəbər verir.\nKörpünün bölmələrindən birinin uçması təhlükəsi səbəbindən orada hərəkət dayandırılıb. İndi hadisə yerində körpünün möhkəmləndirilməsi üçün tədbirləri müəyyənləşdirmək məqsədilə mütəxəssislər çalışır.\n\"Qızıl buynuz\" körfəzi üzərindən dörd körpü keçir: Qalat, Köhnə Qalat köprüsü (istismar olunmur), Atatürk körpüsü və Halic körpüsü. Beləliklə, hazırda İstanbulun iki hissəsi arasında körfəzin hər iki tərəfinə gediş-gəliş cəmi iki körpü vasitəsilə həyat"
+      },
+      {
+        "title": "Bosfor",
+        "url": "https://az.wikipedia.org/wiki/Bosfor",
+        "source": "wikipedia",
+        "score": 5,
+        "content": "Beynəlxalq dəniz nəqliyyatının həyata keçirilə biləcəyi ən dar keçid xüsusiyyətinə sahib olan Bosfor boğazının üzərində 15 iyul Şəhidlər, Fateh Sultan Mehmet və Yavuz Sultan Səlim adlı asma körpülər mövcuddur. Bu körpülər İstanbulun hər iki tərəfini əlaqələndirir, həmçinin Avropa tərəfi və Asiya tərəfi arasında keçid nöqtəsi yaradır. İstanbul xalq nəqliyyatının əsas nöqtələrindən biri olan Bosfor boğazında qitələrarası nəqliyyat dəniz avtobusları, yük, maşın və sərnişin aparan bərələr, şəhər xətləri dəniz paroxodları və sərnişin motosiklləri ilə əlaqələndirilir.\nRespublika dövründə sürətli sənayeləşmə prosesinə girən İstanbula daxili köç davamlı şəkildə artdı. Maddi baxımdan daha yaxşı olanl"
+      }
+    ]
+  },
+  {
+    "q": "Türkiyədə seçkilər nə vaxt keçirilib",
+    "ms": 848,
+    "intent": "general",
+    "lang": "az",
+    "conf": "medium",
+    "fallback": false,
+    "providers": [
+      "bing",
+      "wikipedia",
+      "brave",
+      "google-news"
+    ],
+    "results": [
+      {
+        "title": "Türkiyədə parlament seçkiləri (2023)",
+        "url": "https://az.wikipedia.org/wiki/T%C3%BCrkiy%C9%99d%C9%99_parlament_se%C3%A7kil%C9%99ri_(2023)",
+        "source": "brave",
+        "score": 9.2,
+        "content": "2023-cü il Türkiyə parlament seçkiləri — 2023-cü il mayın 14-də keçirilib və Türkiyə Böyük Millət Məclisinin 28-ci dövrünün 600 yeni üzvünü müəyyən edib. 2023-cü il Türkiyə prezident seçkilərinin birinci turu ilə eyni gündə keçirilib. Prezident Rəcəb Tayyib Ərdoğan çıxışında 1950-ci ilin seçkilərinə istinad edərək seçkilərin 14 may 2023-cü ildə keçiriləcəyini elan edib və bəzi müxalifət partiyaları tərəfindən bu tarix seçki günü kimi qəbul edilmişdir. Prezident Rəcəb Tayyib Ərdoğanın 2023-cü il martın 10-da imzaladığı fərmanla seçkilərin yenilənməsi qərara alınıb. Həmin gün Ali Seçki Şurası Parlament seçkilərin birinci turunun və Prezident seçkilərini mayın 14-də, Prezident seçkilərinin ikin"
+      },
+      {
+        "title": "Türkiyədə prezident seçkiləri (1973)",
+        "url": "https://az.wikipedia.org/wiki/T%C3%BCrkiy%C9%99d%C9%99_prezident_se%C3%A7kil%C9%99ri_(1973)",
+        "source": "wikipedia",
+        "score": 9.2,
+        "content": "1973-cü il Türkiyə prezident seçkiləri — 1973-cü il martın 13-dən aprelin 6-dək Türkiyədə keçirilən Prezident seçkiləri. Seçkilər 1973-cü il martın 13-dən aprelin 6-dək keçirilib. 15-ci turda səsverməyə 635 millət vəkilindən 557-si qatılıb və Respublikaçı senator Fəxri Qorutürk 365 səslə prezident seçilmişdir.\nımi səs çoxluğunu qazanaraq 365 səslə Türkiyə Böyük Millət Məclisi tərəfindən Türkiyənin altıncı prezident seçildi.\nHəmçinin bax\nTürkiyə Prezidenti\nTürkiyədə Prezident seçkiləri"
+      },
+      {
+        "title": "2015 Türkiyə ümumi seçkiləri",
+        "url": "https://en.wikipedia.org/wiki/2015_Turkish_general_election",
+        "source": "wikipedia",
+        "score": 7.5,
+        "content": "2015-ci ildə Türkiyədə iki ümumi seçki keçirildi. Birincisi 7 İyun 2015-də, ikincisi isə 1 Noyabr 2015-də, əvvəlkindən bəri asılmış bir məclis çıxarıldı."
+      }
+    ]
+  },
+  {
+    "q": "pandas dataframe groupby example",
+    "ms": 1416,
+    "intent": "general",
+    "lang": "en",
+    "conf": "medium",
+    "fallback": false,
+    "providers": [
+      "bing",
+      "brave",
+      "google-news",
+      "wikipedia"
+    ],
+    "results": [
+      {
+        "title": "pandas.DataFrame.groupby — pandas 3.1.1 documentation",
+        "url": "https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.groupby.html",
+        "source": "brave",
+        "score": 6.8,
+        "content": "DataFrame.groupby(by=None, level=None, *, as_index=True, sort=True, group_keys=True, observed=True, dropna=True)[source]#\nGroup DataFrame using a mapper or by a Series of columns.\nA groupby operation involves some combination of splitting the\npandas.api.typing.DataFrameGroupByReturns a groupby object that contains information about the groups.\nAn exception to this is that pandas has special handling of NA values:"
+      },
+      {
+        "title": "Apache Spark",
+        "url": "https://en.wikipedia.org/wiki/Apache_Spark",
+        "source": "wikipedia",
+        "score": 3.8,
+        "content": "Maintenance releases and EOL\nFeature release branches will, generally, be maintained with bug fix releases for a period of 18 months. For example, branch 2.3.x is no longer considered maintained as of September 2019, 18 months after the release of 2.3.0 in February 2018. No more 2.3.x releases should be expected after that point, even for bug fixes.\nThe last minor release within a major a release will typically be maintained for longer as an “LTS” release. For example, 2.4.0 was released on November 2, 2018, and had been maintained for 31 months until 2.4.8 was released in May 2021. 2.4.8 is the last release and no more 2.4.x releases should be expected even for bug fixes."
+      },
+      {
+        "title": "Dask (software)",
+        "url": "https://en.wikipedia.org/wiki/Dask_(software)",
+        "source": "wikipedia",
+        "score": 3.8,
+        "content": "High-level\nDask Array: Parallel NumPy arrays\nDask Bag: Parallel Python lists\nDask DataFrame: Parallel Pandas DataFrames\nMachine Learning: Parallel scikit-learn\nOthers from external projects, like Xarray\nHigh-level collections\nDask's high-level collections are the natural entry point for users who are interested in scaling up their pandas, NumPy or scikit-learn workload. Dask's DataFrame, Array and Dask-ML are alternatives to Pandas DataFrame, Numpy Array and scikit-learn respectively with slight variations to the original interfaces.\nDask DataFrame\nDask DataFrame is a high-level collection that parallelizes DataFrame based workloads. A Dask DataFrame comprises many smaller Pandas DataFrames "
+      }
+    ]
+  },
+  {
+    "q": "Azərbaycanın iqtisadiyyatı neçə milyard dollardır",
+    "ms": 1838,
+    "intent": "general",
+    "lang": "az",
+    "conf": "medium",
+    "fallback": false,
+    "providers": [
+      "bing",
+      "brave",
+      "wikipedia",
+      "google-news"
+    ],
+    "results": [
+      {
+        "title": "Azərbaycanın iqtisadi gücü - 105 ölkəni geridə qoyduq",
+        "url": "https://az.trend.az/other/world/4240314.html",
+        "source": "brave",
+        "score": 8,
+        "content": "ilin yekunlarına dair proqnoza əsasən, 89,18 milyard dollara\niqtisadiyyatının ümumi həcmi 128 trilyon dolları ötəcək. Reytinqdə\nAzərbaycan iqtisadiyyatının nominal ÜDM-i 89,18 milyard dollar\n26,69 milyard dollar, Tacikistanın isə 21,11 milyard dollar\nÖzbəkistan 178,17 milyard dollarla 60-cı, Belarus 108,11 milyard"
+      },
+      {
+        "title": "Azərbaycan iqtisadiyyatı",
+        "url": "https://az.wikipedia.org/wiki/Az%C9%99rbaycan_iqtisadiyyat%C4%B1",
+        "source": "brave",
+        "score": 8,
+        "content": "Müstəqillik dönəmi Azərbaycan iqtisadiyyatı\n1992-ci ildə tamamilə maliyyə baxımından taqətdən salınmış, xəzinəsinə süpürgə çəkilmiş bir ölkədə Dövlət Ləl-Cəvahirat Fondu yaradıldı. Bir ildə fonda 1.5 ton qızıl və digər qiymətli metallar toplandı. [mənbə göstərilməlidir]1993-cü il iyun ayının 1-nə qədər Azərbaycan Respublikasının Mərkəzi Bankında valyuta ehtiyatı 1992-ci ilin uyğun dövrünə nisbətən 100 dəfədən çox artaraq 156 milyon ABŞ dollara çatdı.[mənbə göstərilməlidir]\n1995-ci ildən Azərbaycanda keçid dövrünün yeni mərhələsi – bərpa dövrü başlandı. 1995–2003-cü illər ərzində ümumi daxili məhsul 90,1%, dövlət büdcəsinin gəlirləri 3 dəfə, ölkənin valyuta ehtiyatları 85 dəfə, sənaye məhsulu"
+      },
+      {
+        "title": "ABŞ dolları",
+        "url": "https://en.wikipedia.org/wiki/United_States_dollar",
+        "source": "wikipedia",
+        "score": 6.3,
+        "content": "Ondalık vahidlər\nİspan frezelenmiş dollarından fərqli olaraq, Kontinental Konqres və Sikkə Aktı vahid dollarla birlikdə aşağıdakı kimi vahidlərin onluq sistemini təyin etdi: dəyirman və ya dolların mində biri; sent və ya dolların yüzdə biri; və disme və ya dime, yaxud dolların onda biri. Bu vahidlərin cari aktuallığı:\nEyni sikkələmə aktı da qartalın dəyərini 10 dollar, dolları isə 1⁄10 qartal olaraq təyin etdi. Burada 1, 1⁄2, 1⁄4, 1⁄10 və 1⁄20 dollar nominalında gümüş sikkələr, həmçinin 1, 1⁄2 və 1⁄4 qartal nominalında qızıl sikkələr tələb olunurdu. Dolların tərkibində olan qızıl və ya gümüşün dəyəri daha sonra malların alqı-satqısı üçün iqtisadiyyatda nisbi dəyərə çevrildi. Bu, qızıl və güm"
+      }
+    ]
+  },
+  {
+    "q": "süni intellekt nə vaxt yarandı",
+    "ms": 2901,
+    "intent": "general",
+    "lang": "az",
+    "conf": "medium",
+    "fallback": false,
+    "providers": [
+      "bing",
+      "wikipedia",
+      "brave",
+      "google-news"
+    ],
+    "results": [
+      {
+        "title": "Süni intellekt",
+        "url": "https://az.wikipedia.org/wiki/S%C3%BCni_intellekt",
+        "source": "brave",
+        "score": 8.2,
+        "content": "Məqsədlər\nBurada simulyasiyanın ümumi problemi alt problemlərə bölünmüşdür. Bu problemlərin həlli isə, tədqiqatçıların ağıllı sistemin gələcəkdə nümayiş etdirməsini gözlədikləri xüsusiyyətlərindən və ya qabiliyyətlərindən ibarətdir. Aşağıda təsvir edilən əlamətlər isə ən çox diqqət çəkən və süni intellekt üzrə tədqiqatların əhatə dairəsini əhatə etmişdir.\nHəmçinin bax\nSüni intellektin ekzistensial riski\nSüni intellektin hallüsinasiyası\nSüni intellekt etikası\nSüni intellekt fəlsəfəsi\nBeynəlxalq Süni İntellekt Olimpiadası (IOAI)\n2028-ci il Qlobal İntellekt Böhranı\nAktor-tənqidçi alqoritmi"
+      },
+      {
+        "title": "Süni ümumi intellekt",
+        "url": "https://en.wikipedia.org/wiki/Artificial_general_intelligence",
+        "source": "wikipedia",
+        "score": 7.3,
+        "content": "Süni ümumi intellekt (AGI) əksər və ya bütün koqnitiv tapşırıqlar üzrə insan imkanlarına uyğun gələn və ya onları üstələyən hipotetik süni intellekt növüdür. Bacarıqları dəqiq müəyyən edilmiş tapşırıqlarla məhdudlaşan süni dar intellektdən (ANI) fərqli olaraq, AGI sistemi tapşırıq üçün xüsusi yenidən proqramlaşdırma olmadan bilikləri ümumiləşdirə, domenlər arasında bacarıqları ötürə və yeni problemləri həll edə bilər.\nAGI yaratmaq OpenAI, Google, SpaceXAI və Meta kimi texnologiya şirkətlərinin bəyan edilmiş məqsədidir. 2020-ci il sorğusu 37 ölkədə 72 aktiv AGI tədqiqat və inkişaf layihəsini müəyyənləşdirdi.\nAGI elmi fantastika və fyuçers tədqiqatlarında ümumi mövzudur.\nAGI-nin ekzistensial r"
+      },
+      {
+        "title": "Holness Yamaykaya süni intellekt infrastrukturu gətirmək planlarını açıqladı - Caribbean National Weekly",
+        "url": "https://news.google.com/rss/articles/CBMixwFBVV95cUxNWHZqd2pPVkR4S0ZVQ1lxb0R1ejRpOXViSms2dllUVjlWNlVORDZKdy1uLU5KbUZyZEphXzhMRHVrTHBSUVAyTkhuelo1SHRULVczRDJqYkY2WnJQSzhOWFZfTzVWb0loVl80b0xLaEw1RXZ5NWdsRVFfZFpma1JxMWM2cDVhZDV0Y1VFMF9PZlk5T0lwWkVJcFI1a0xudWZ0MlpxMlB4MllZS2ZGWDB6Z0pzTGRpTHlWeUd6SWRBYmZGejJuaDBv?oc=5",
+        "source": "google-news",
+        "score": 5.1,
+        "content": "Holness, Yamayka Karib Milli Həftəliyinə süni intellekt infrastrukturu gətirmək planlarını açıqladı"
+      }
+    ]
+  },
+  {
+    "q": "BMT-yə üzv ölkələrin sayı neçədir",
+    "ms": 2497,
+    "intent": "general",
+    "lang": "az",
+    "conf": "medium",
+    "fallback": false,
+    "providers": [
+      "wikipedia",
+      "bing",
+      "brave",
+      "google-news"
+    ],
+    "results": [
+      {
+        "title": "Birləşmiş Millətlər Təşkilatının sülhməramlılarının sayına görə ölkələrin siyahısı",
+        "url": "https://en.wikipedia.org/wiki/List_of_countries_by_number_of_United_Nations_peacekeepers_contributed",
+        "source": "wikipedia",
+        "score": 7.3,
+        "content": "Bu, Birləşmiş Millətlər Təşkilatının 31 Oktyabr 2025-ci il tarixinə olan hesabatına əsasən Birləşmiş Millətlər Təşkilatının əməliyyatlarına töhfə vermiş sülhməramlıların ümumi sayına görə ölkələrin siyahısıdır.\nHərbi və hərbiləşdirilmiş heyətin sayına görə ölkələrin siyahısı\nRütbə - Ölkə - Sülhməramlılar\nCəmi — Kişi — Qadın — Bir milyon əhaliyə\n2 — Ruanda — 5880 — 5186 — 694\n3 — Banqladeş — 5568 — 5202 — 366\n5 — Pakistan — 2662 — 2515 — 147\n7 — İndoneziya — 2461 — 2256 — 205\n9 — Tanzaniya — 1531 — 1348 — 183\n10 — Efiopiya — 1527 — 1363 — 164\n13 — Kamerun — 1116 — 968 — 148\n14 — Seneqal — 1115 — 930 — 185"
+      },
+      {
+        "title": "BMT üzvü olan ölkələr",
+        "url": "https://az.wikipedia.org/wiki/BMT_%C3%BCzv%C3%BC_olan_%C3%B6lk%C9%99l%C9%99r",
+        "source": "brave",
+        "score": 5.2,
+        "content": "BMT üzvü olan dövlətlər — 193 dövlət Birləşmiş Millətlər Təşkilatının (BMT) üzvüdür.\nBMT üzvü olan ölkələr BMT saytı\nBMT-nin 1945-cildən üzvlərinin artması BMT saytı\nBMT-nin ixtisaslaşmış qurumlarında üzvlük\nRegional qrupların üzvləri BMT saytı\nÖlkə — Qəbul olunduğu gün və ay — Qəbul olunduğu il\nAlbaniya — 14 dekabr — 1955\nAlmaniya — 18 sentyabr — 1973\nAmerika Birləşmiş Ştatları — 24 oktyabr — 1945\nAndorra — 28 iyul — 1993\nAnqola — 1 dekabr — 1976\nAntiqua və Barbuda — 11 noyabr — 1981\nArgentina — 24 oktyabr — 1945\nAvstraliya — 1 noyabr — 1945\nAvstriya — 14 dekabr — 1955\nAzərbaycan — 2 mart — 1992\nBaham adaları — 18 sentyabr — 1973\nBanqladeş — 17 sentyabr — 1974\nBarbados — 9 dekabr — 1966\nBel"
+      },
+      {
+        "title": "Dünya ölkələrinin siyahısı",
+        "url": "https://az.wikipedia.org/wiki/D%C3%BCnya_%C3%B6lk%C9%99l%C9%99rinin_siyah%C4%B1s%C4%B1",
+        "source": "brave",
+        "score": 5.2,
+        "content": "№ — Ölkə vəqeyri formal (q.f.) qurumlar — Ölkənin vəqeyri formal (q.f.) qurumların rəsmi adı (Qeyd) — Ölkənin kodu\n1 — q.f. Abxaziya — Abxaziya Respublikası (Gürcüstan ərazisi)\n2 — Akrotiri və Dekeliya — Akrotiri və Dekeliyanın Suveren Baza Rayonları (Böyük Britaniyanın xarici ərazisi)\n3 — Aland adaları — Aland adaları (Finlandiyanın muxtar əyaləti) — ALA\n4 — Albaniya — Albaniya Respublikası — ALB\n5 — Almaniya — Almaniya Federativ Respublikası — DEU\n6 — Amerika Samoası — Amerikan Samoası Ərazisi (ABŞ ərazisi) — ASM\n7 — Andorra — Andorra Knyazlığı — AND\n8 — Angilya — Angilya (Böyük Britaniyanın xarici ərazisi) — AIA\n9 — Anqola — Anqola Respublikası — AGO\n10 — Antiqua və Barbuda — Antiqua və B"
+      }
+    ]
+  },
+  {
+    "q": "Marsa ilk dəfə hansı ölkə çatıb",
+    "ms": 4246,
+    "intent": "general",
+    "lang": "az",
+    "conf": "medium",
+    "fallback": false,
+    "providers": [
+      "bing",
+      "wikipedia",
+      "google-news"
+    ],
+    "results": [
+      {
+        "title": "Mars",
+        "url": "https://en.wikipedia.org/wiki/Mars",
+        "source": "wikipedia",
+        "score": 6.3,
+        "content": "Yer səmasında çılpaq gözlə görünən qırmızı gəzən ulduz kimi Mars tarix boyu müxtəlif mədəniyyətlərdə müxtəlif assosiasiyalar əldə edərək müşahidə edilmişdir. 1963-cü ildə Mars 1 ilə Marsa ilk uçuş həyata keçirildi, lakin yolda əlaqə kəsildi. Marsın ilk uğurlu uçuş kəşfi 1965-ci ildə Mariner 4 ilə həyata keçirilmişdir. 1971-ci ildə Mariner 9 Ay, Günəş və ya Yerdən başqa hər hansı cismi orbitə çıxaran ilk kosmik gəmi olmaqla Marsın orbitinə çıxdı; eyni ildə Marsa ilk nəzarətsiz zərbə (Mars 2) və ilk uğurlu eniş (Mars 3) baş verdi. Zondlar 1997-ci ildən bəri Marsda davamlı olaraq fəaliyyət göstərir. Bəzən ondan çox zond eyni vaxtda orbitdə və ya səthdə fəaliyyət göstərir ki, bu da Yerdən kənard"
+      },
+      {
+        "title": "Marsa missiya",
+        "url": "https://en.wikipedia.org/wiki/Mission_to_Mars",
+        "source": "wikipedia",
+        "score": 6.3,
+        "content": "Missiya to Marsa — 2000-ci ildə Brian De Palmanın rejissorluğu ilə çəkilmiş, Cim və Con Tomas və Qrem Yost tərəfindən yazılmış və Disneyin eyniadlı əyləncə parkı attraksionu tərəfindən təklif edilən 2000-ci il Amerika elmi fantastika macəra filmidir.\nFilm ilk ekipajlı Marsın kəşfiyyat missiyasının uğursuzluğunu təsvir edir; Amerikalı astronavt Jim McConnell (Gary Sinise) həmkarı üçün xilasetmə missiyasını əlaqələndirməyə kömək edir. Filmdə həmçinin Tim Robbins, Don Cheadle, Connie Nielsen, Jerry O'Connell və Kim Delaney çəkilib. 10 mart 2000-ci ildə Touchstone Pictures vasitəsilə Buena Vista Pictures Distribution tərəfindən teatra buraxılan film həm tənqidi, həm də kommersiya xarakterli bir "
+      },
+      {
+        "title": "Azərbaycanda reklam bazarı",
+        "url": "https://az.wikipedia.org/wiki/Az%C9%99rbaycanda_reklam_bazar%C4%B1",
+        "source": "wikipedia",
+        "score": 1.8,
+        "content": "Azərbaycanda reklam bazarı — Azərbaycanda reklamın yaradılması, istehsalı və mediada yerləşdirilməsi üzrə xidmətlər bazarı. Dövlət Statistika Komitəsinin (DSK) məlumatına görə, ölkədə reklam fəaliyyətindən əldə olunan gəlir 2025-ci ildə 292,4 milyon manat təşkil edib; bu göstərici 2020-ci ildəki 75,6 milyon manatla müqayisədə təxminən 3,9 dəfə çoxdur. DSK-nın göstəricisi reklamın yerləşdirilməsi ilə yanaşı, onun yaradılması və istehsalından əldə olunan gəlirləri də əhatə edir. Rəsmi statistika ilə sənaye birliklərinin qiymətləndirmələri bir-birindən xeyli fərqlənir: məsələn, 2023-cü il üçün DSK 201 milyon manat göstərdiyi halda, \"İKT bazarı iştirakçıları\" İctimai Birliyi bazarın həcmini təxm"
+      }
+    ]
+  },
+  {
+    "q": "Formula 1 Azərbaycan Qran Prisi nə vaxt keçiriləcək",
+    "ms": 2091,
+    "intent": "general",
+    "lang": "az",
+    "conf": "medium",
+    "fallback": false,
+    "providers": [
+      "bing",
+      "wikipedia",
+      "google-news"
+    ],
+    "results": [
+      {
+        "title": "2026 Azərbaycan Qran Prisi",
+        "url": "https://en.wikipedia.org/wiki/2026_Azerbaijan_Grand_Prix",
+        "source": "wikipedia",
+        "score": 14.5,
+        "content": "2026-cı il Azərbaycan Qran Prisi (rəsmi adı ilə Formula 1 Qatar Airways Azərbaycan Qran Prisi 2026) 26 sentyabr 2026-cı ildə Bakı şəhəri, Azərbaycanda Bakı Şəhər Halqasında keçirilən Formula 1 motoryürüşüdür. Bu, 2026 Formula 1 Dünya Çempionatının on beşinci turu idi.\nCorc Rassel (Mercedes) Çarlz Lekler (Ferrari) və Oskar Piastrini (McLaren) qabaqlayaraq poul mövqeyini tutdu, çempionatın lideri Kimi Antonelli isə təsnifat mərhələsində qəzaya uğrayaraq on altıncı vəsiqə qazandı. Rassel 0,196 saniyəlik qalibiyyət fərqi ilə Maks Ferstappen və İsak Hadjarı (hər ikisi Red Bull) qabaqlayaraq yarışın qalibi olub. Bu, onun mövsümdə üçüncü, Formula 1 karyerasında isə səkkizinci qələbəsi idi. Həm də h"
+      },
+      {
+        "title": "2017 Azərbaycan Qran prisi",
+        "url": "https://az.wikipedia.org/wiki/2017_Az%C9%99rbaycan_Qran_prisi",
+        "source": "wikipedia",
+        "score": 11.7,
+        "content": "2017 Formula 1 Azərbaycan Qran-Prisi (ing. 2017 Formula 1 Azerbaijan Grand Prix)\nBeynəlxalq Avtomobil Federasiyasının (FIA) Vyanada baş tutmuş Baş Assambleyasında qərar verildikdən sonra 2016-cı ildə Azərbaycanda keçirilən Formula-1 üzrə Avropa Qran-Prisinin adı və tarixi dəyişdirilib. Mötəbər yarış bundan sonra Avropa deyil, Azərbaycan Qran-Prisi adlandırılıb. Azərbaycan Qran-Prisi 23–25 iyun 2017-ci il tarixlərində baş tutub. Yarış Bakı Şəhər Halqası motor yarışması dairəsində keçirilib . Azərbaycan Qran-Prisi Formula-1 dünya çempionatının yenə də 8-ci mərhələsində yer alıb. Yarışın tarixini bir həftə sonraya keçirilməsində əsas məqsəd ötən yay eyni tarixdə baş tutan 24 saatlıq \"Le Man\" ya"
+      },
+      {
+        "title": "2024 Azərbaycan Qran Prisi",
+        "url": "https://en.wikipedia.org/wiki/2024_Azerbaijan_Grand_Prix",
+        "source": "wikipedia",
+        "score": 10,
+        "content": "Fon\nTədbir daha əvvəl 2016-cı ildə Avropa Qran Prisinin bir buraxılışını keçirmiş, 13-15 sentyabr həftəsonu dövrə tarixində səkkizinci dəfə Bakı Şəhər Halqasında keçirilmişdir. İyun ayında keçirilmiş yuxarıda adı çəkilən Avropa Qran Prisi də daxil olmaqla, bu, sentyabr-noyabr ayları arasında ənənəvi cədvəlindən aprelə keçən Yaponiya Qran Prisinin yerini tutaraq, sentyabr ayında keçiriləcək ilk Azərbaycan Qran Prisi idi; yarışın əvvəlki nəşrləri mövsümün ilk yarısında, aprel və iyun ayları arasında keçirildi. Bu addım Azərbaycan Qran Prisini Avropa yarışlarından sonra ilk tur kimi planlaşdıran Formula 1-in regionallaşdırma səylərinin bir hissəsi idi. Qran Pri 2024-cü ildə Formula 1 üzrə dünya"
+      }
+    ]
+  },
+  {
+    "q": "css grid vs flexbox",
+    "ms": 654,
+    "intent": "general",
+    "lang": "en",
+    "conf": "medium",
+    "fallback": false,
+    "providers": [
+      "bing",
+      "wikipedia",
+      "google-news"
+    ],
+    "results": [
+      {
+        "title": "Page layout",
+        "url": "https://en.wikipedia.org/wiki/Page_layout",
+        "source": "wikipedia",
+        "score": 3.6,
+        "content": "Web page layout\nWhile page layout has traditionally referred to print media such as books and magazines, the concept also applies to digital environments. Early web pages often used table-based layouts to position text and images, but this approach created accessibility and maintenance issues and has since been replaced by CSS-based layouts.\nModern web page layout relies on technologies such as CSS Flexbox and CSS Grid, which provide greater flexibility and semantic structure. These techniques support responsive web design, allowing layouts to adapt across devices and screen sizes.\nDesign guidelines for digital layouts often emphasize usability and accessibility. For example, the World Wide "
+      },
+      {
+        "title": "Flexbox or CSS Grid? How to Make Layout Decisions that Make Sense - SitePoint",
+        "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTE15MmpYS24zb1RvbHdxUVgwWkI5MV9qY3ZFZGl1VElaTnBEc2tCWGluM2tyQzJGazdMTjZEbnhBYkc5NTVLMjQwQm5oV010VGlNUG52a0ROd05ySW1mSlU1ZXlTd0JoNlE?oc=5",
+        "source": "google-news",
+        "score": 3.2,
+        "content": "Flexbox or CSS Grid? How to Make Layout Decisions that Make Sense SitePoint"
+      }
+    ]
+  },
+  {
+    "q": "fransız inqilabı nə vaxt baş verdi",
+    "ms": 2062,
+    "intent": "general",
+    "lang": "az",
+    "conf": "medium",
+    "fallback": false,
+    "providers": [
+      "bing",
+      "wikipedia",
+      "google-news"
+    ],
+    "results": [
+      {
+        "title": "Oktyabr inqilabı",
+        "url": "https://az.wikipedia.org/wiki/Oktyabr_inqilab%C4%B1",
+        "source": "wikipedia",
+        "score": 7,
+        "content": "Oktyabr inqilabı, Böyük oktyabr sosialist inqilabı və ya Oktyabr çevrilişi (rus. Октябрьская революция; SSRİ-də rəsmi adı — Böyük Oktyabr Sosialist inqilabı) – Yulian təqvimi ilə 1917-ci ilin 25 oktyabrında Rusiyada baş vermiş, tarixdəki ən önəmli hadisələrdən biri adlandırılan və Sovet İttifaqının qurulmasına təməl atmış böyük inqilab.\nİnqilab zamanı Vladimir İliç Lenin, Lev Trotski, Yakov Sverdlov, Dıbenko və b. təşkilatçılığı ilə baş vermiş silahlı üsyan nəticəsində Müvəqqəti hökumət devrilmiş, hakimiyyətə bolşeviklər və onların müttəfiqi sol eserlərdən ibarət Fəhlə və əsgər deputatları soveti gəlmişdir. Üsyanları Petroqrad sovetinin hərbi-inqilabi komitəsi istiqamətləndirmişdir.\nEser-men"
+      },
+      {
+        "title": "Fransada inqilab haqqında düşüncələr",
+        "url": "https://en.wikipedia.org/wiki/Reflections_on_the_Revolution_in_France",
+        "source": "wikipedia",
+        "score": 6.3,
+        "content": "Uelsdə Burkun işi ikidilli kanallar vasitəsilə geniş yayılırdı. \"Swinish çoxluğu\" termini Uels dilində \"Y Geirgrawn\" (1796) əsərində \"lliaws mochaidd\" (çoxlu donuz) kimi ortaya çıxdı və William Richards'ın İngilis-Uels lüğəti onu \"y fochaidd werin\" (kəndli donuz) kimi təqdim etdi, eyni zamanda Burke \"yersiz\" kimi tənqid edildi. Tərcümə və leksikoqrafiya vasitəsilə Fransada İnqilab haqqında Düşüncələrin (və digər əsərlərin) erkən Uels tərəfindən qəbul edilməsinin sübutu Hywel Davies kimi alimlər tərəfindən 1790-cı illərin müasir Uels siyasətinə və şəxsiyyətinə birbaşa təsir edən Fransız İnqilabına qarşı mübahisə etmək üçün istifadə edilmişdir. Daha doğrusu, Davies bildirir ki, Reflections kim"
+      },
+      {
+        "title": "Sənaye inqilabı",
+        "url": "https://az.wikipedia.org/wiki/S%C9%99naye_inqilab%C4%B1",
+        "source": "wikipedia",
+        "score": 6,
+        "content": "-Sürətli əhalli artımı 16-cı yüzillikdən başlayaraq Avropada sürətli əhali artımı baş verdi.\n-Fransız İnqilabı sənaye cəmiyyətinə uyğun bir siyasi quruluşun təməlini atmaq."
+      }
+    ]
+  },
+  {
+    "q": "Bakıda hansı muzeylər var",
+    "ms": 2134,
+    "intent": "general",
+    "lang": "az",
+    "conf": "medium",
+    "fallback": false,
+    "providers": [
+      "bing",
+      "wikipedia",
+      "google-news"
+    ],
+    "results": [
+      {
+        "title": "Bakı",
+        "url": "https://en.wikipedia.org/wiki/Baku",
+        "source": "wikipedia",
+        "score": 6.3,
+        "content": "Bakı (Bakı) Azərbaycanın paytaxtı və ən böyük şəhəri, o cümlədən Xəzər dənizində və Qafqaz regionunda ən böyük şəhərdir. Bakı dəniz səviyyəsindən 28 metr (92 fut) aşağıda yerləşir ki, bu da onu dünyanın ən alçaq milli paytaxtı və dəniz səviyyəsindən aşağıda dünyanın ən böyük şəhəri edir. Bakı Abşeron yarımadasının cənub sahilində, Bakı körfəzi boyunca yerləşir. Bakının şəhər əhalisinin iki milyon nəfərdən çox olduğu təxmin edilir. Bakı Azərbaycanın ilkin şəhəridir. O, ölkənin yeganə metropoludur və ölkənin bütün sakinlərinin təxminən 25%-i Bakının metropoliten ərazisində yaşayır.\nSovet hakimiyyəti illərində şəhər kiril əlifbası ilə azərbaycanca “Bakı” kimi yazılırdı (hələ rus yazısı “Baku”, "
+      },
+      {
+        "title": "Azərbaycandakı açıq səma altında muzeylərinin siyahısı",
+        "url": "https://az.wikipedia.org/wiki/Az%C9%99rbaycandak%C4%B1_a%C3%A7%C4%B1q_s%C9%99ma_alt%C4%B1nda_muzeyl%C9%99rinin_siyah%C4%B1s%C4%B1",
+        "source": "wikipedia",
+        "score": 5,
+        "content": "Açıq səma altında muzeylər (ing. open-air museums, bəzən outdoor museums) — tarix, etnoqrafiya, arxeologiya və ya sənət əsərlərinin onların təbii və ya orijinal yerləşmə mühitində nümayiş etdirildiyi xüsusi muzey formatıdır.\nÜmumi mənada, sərgisi — açıq havada (səmada) nümayiş olunan hər hansı bir muzey nəzərdə tutulur."
+      },
+      {
+        "title": "Bakının Atəşgahı",
+        "url": "https://en.wikipedia.org/wiki/Ateshgah_of_Baku",
+        "source": "wikipedia",
+        "score": 4.7,
+        "content": "Bakının Atəşgahı (fars. آتشگاه, romanlaşdırılmış: Atəşgah, orta Pəhləvi: Ātaš-kadag, \"od yeri və ya evi\"), azərbaycanca: Atəşgah), tez-tez \"Bakının Od məbədi\" adlanan, Suraxanı şəhərində (Suraxanı rayonunda) sinkretik məbəddir.\nSara Aşurbəyli qeyd edir ki, Atş təhrif olunmuş Atəşdir (“atəş”), Atşi-Baguan isə Bakıya istinad edərək “Baquan odları” deməkdir. Baguan sözü qədim farsca \"Tanrı\" mənasını verən Baqa və Bhaqa sözündəndir.\nBakı adını Baqavan/Baqavan/Baguan/Bhaqavandan almışdır. Sasanilərin hakimiyyəti dövründə (224-651) Baqavan adlanırdı.\nBakı Atəşgahı həm də məşhur “Böyük magistral yol” vasitəsilə Xəzəryanı ərazilərlə ticarətlə məşğul olan Hindistanın şimal-qərbindəki zərdüştilərin zi"
+      }
+    ]
+  },
+  {
+    "q": "Azərbaycan dilində neçə söz var",
+    "ms": 908,
+    "intent": "general",
+    "lang": "az",
+    "conf": "medium",
+    "fallback": false,
+    "providers": [
+      "wikipedia",
+      "bing",
+      "google-news"
+    ],
+    "results": [
+      {
+        "title": "Söz",
+        "url": "https://az.wikipedia.org/wiki/S%C3%B6z",
+        "source": "wikipedia",
+        "score": 7,
+        "content": "Söz — hərflərdən meydana gələn və məna kəsb edən kəlmənin sinonimidir. Daha geniş desək, söz səslərdən əmələ gələn, müəyyən məna və ya hiss-həyəcan bildirən səsbirləşməsidir.\nGünümüz sözlərinin də, günümüz dövlətləri və millətləri kimi mütləq köhnə bir keçmişi vardır sözlər, bir çox dövr içində şəkillənərək günümüzə qədər çatarlar.\nAzərbaycan dilində ən uzun söz 34 hərfli \"elektrikləşdiricilərimizdənsinizmi\" sözüdür. Daha bir neçə uzun söz var, məsələn \"Azərbaycanlılaşdırılmamışlardansınızmı\" 38 hərf var.\nSöz dilin sematik yarısının əsas vahidi, təfəkkürdəki anlayışların işarəsi, ifadəçisidir. Dilin əsas funksiyalarından olan nominativ funksiya məhz sözlər əsasında reallaşır. Dil nə quru qra"
+      },
+      {
+        "title": "Azərbaycan dili",
+        "url": "https://en.wikipedia.org/wiki/Azerbaijani_language",
+        "source": "wikipedia",
+        "score": 6.1,
+        "content": "Azərbaycan dilinin tarixi inkişafını iki böyük dövrə bölmək olar: erkən (təxminən 14-18-ci əsrlər) və müasir (18-ci əsrdən indiyədək). Erkən Azərbaycan dili öz nəslindən onunla fərqlənir ki, orada daha çox fars və ərəb alınma sözləri, söz birləşmələri və sintaktik elementlər var idi. Azərbaycan dilindəki ilk yazılar da oğuz və qıpçaq elementləri arasında bir çox aspektlərdə (əvəzlik, hal sonluğu, iştirakçı və s.) linqvistik dəyişkənlik nümayiş etdirir. Azərbaycan dili tədricən sadəcə epik və lirik şeir dili olmaqdan həm publisistika və elmi araşdırmalar dilinə çevrildikcə, onun ədəbi variantı Azərbaycan xalqı arasında populyarlıq qazana bilməyən bir çox arxaik türk ünsürlərinin, köklü irançı"
+      },
+      {
+        "title": "Azərbaycan İranın pilotsuz təyyarəsi ilə bağlı insidentdən sonra sakitcə hərbçiləri səfərbər edir - Eurasianet",
+        "url": "https://news.google.com/rss/articles/CBMimAFBVV95cUxQZ0JGQ1JkVjNlTFQwa3J2a2pYX1d5VndTcXdKZmxQQVNyQ2ZaamJaQ05Yd1Y2dHhqWW5wNGNZQ2VuR1Q4UmNiQ3RCVjE4QnhNaE5RQkZIeHJSZEdpc0xqUFdnb1JGQXNPUEdXTkRtTXlzeC15QVhtcmVURmFxdnp5NjlCNVkzcm5rWG55N2JSM3ZxWlRyNkN4MA?oc=5",
+        "source": "google-news",
+        "score": 1.9,
+        "content": "Eurasianet İranın pilotsuz təyyarəsi ilə bağlı insidentdən sonra Azərbaycan sakitcə hərbçiləri səfərbər edir"
+      }
+    ]
+  }
+]

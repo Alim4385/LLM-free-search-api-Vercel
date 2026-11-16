@@ -1,0 +1,549 @@
+[
+  {
+    "q": "Azərbaycanın dövlət bayrağı hansı ildə qəbul olunub",
+    "ms": 4340,
+    "intent": "general",
+    "lang": "az",
+    "conf": "high",
+    "fallback": false,
+    "providers": [
+      "bing",
+      "wikipedia",
+      "google-news",
+      "brave"
+    ],
+    "results": [
+      {
+        "title": "Dövlət Bayrağı Günü (Azərbaycan)",
+        "url": "https://az.wikipedia.org/wiki/D%C3%B6vl%C9%99t_Bayra%C4%9F%C4%B1_G%C3%BCn%C3%BC_(Az%C9%99rbaycan)",
+        "source": "wikipedia",
+        "score": 11.3,
+        "content": "Azərbaycan Respublikasının Dövlət Bayrağı Günü — Azərbaycan Respublikasının rəsmi dövlət bayramı. 2009-cu ildən etibarən noyabr ayının 9-da qeyd olunur. Qeyd olunma tarixi isə 1918-ci ilin 9 noyabrında AXC tərəfindən Azərbaycan bayrağının dövlət bayrağı kimi qəbul edilməsi əsasında təyin edilmişdir.\nBu bayraq ağ rəngli aypara və səkkizguşəli ulduz təsviri olan qırmızı rəngli dövlət bayrağı idi. Daha sonra Azərbaycan bayrağının dəyişməsi məsələsi qaldırıldı. 1918-ci il noyabrın 9-da Fətəli xan Xoyskinin hesabatı əsasında Azərbaycan Xalq Cümhuriyyətinin bayrağı haqqında qərar qəbul edildi:\nQeyd edilməsi\nİlham Əliyevin 2009-cu il noyabrın 18-də imzaladığı sərəncamla 9 noyabr tarixi Dövlət Bayra"
+      },
+      {
+        "title": "Azərbaycan bayrağı",
+        "url": "https://en.wikipedia.org/wiki/Flag_of_Azerbaijan",
+        "source": "wikipedia",
+        "score": 9.5,
+        "content": "Hüquqi müdafiə\nAzərbaycanda bayrağın təhqir edilməsi cinayət sayılır. Azərbaycan Cinayət Məcəlləsinin 324-cü maddəsinə əsasən “Azərbaycan Respublikasının Dövlət bayrağını və ya Dövlət gerbini təhqir etmə” iki ilədək müddətə azadlığın məhdudlaşdırılması və ya bir ilədək müddətə azadlıqdan məhrum etmə ilə cəzalandırılır. Təhqir, 16 yaşdan yuxarı şəxslər tərəfindən bayrağa qarşı hörmətsiz münasibəti, məsələn, onun məhv edilməsi, zədələnməsi və ya kinli təsvirlər və ya yazılar göstərilməsini göstərən müxtəlif fəal ictimai hərəkətlər komissiyasında ifadə edilə bilər.\nTəsir\nRəsulzadənin ifadəsi (azərbaycanca: “Bir kərə yüksələn bayraq, bir daha enməz!”; “Bir kərə yüksələn bayraq, bir daha enməz!”)"
+      },
+      {
+        "title": "Azərbaycan bayrağı",
+        "url": "https://az.wikipedia.org/wiki/Az%C9%99rbaycan_bayra%C4%9F%C4%B1",
+        "source": "brave",
+        "score": 9,
+        "content": "Azərbaycan bayrağı və ya üçrəngli bayraq — Azərbaycanın rəsmi simvollarından (himn və gerblə birlikdə) biri. Bayraq ilk dəfə 9 noyabr 1918-ci ildə Azərbaycan Xalq Cümhuriyyəti Nazirlər Şurası tərəfindən təsdiq edilmişdir. 5 fevral 1991-ci ildə bayraq həmin il müstəqilliyini elan etmiş Azərbaycan Respublikası tərəfindən təsdiq edilmişdir.\nAzərbaycan Prezidenti İlham Əliyevin sərəncamı ilə 2009-cu ildən etibarən hər il noyabr ayının 9-u Azərbaycanda Dövlət Bayrağı Günü kimi qeyd olunur.\nAzərbaycan Respublikasının Konstitusiyasının 23-cü maddəsində Dövlət Bayrağının təsviri:\nRəng kodları\n\"Azərbaycan Respublikasının dövlət bayrağının istifadə qaydası\" haqqında sərəncamda dövlət bayrağının dəqiq "
+      }
+    ]
+  },
+  {
+    "q": "Nizami Gəncəvi hansı əsəri yazıb",
+    "ms": 3417,
+    "intent": "general",
+    "lang": "az",
+    "conf": "high",
+    "fallback": false,
+    "providers": [
+      "wikipedia",
+      "bing",
+      "google-news",
+      "brave"
+    ],
+    "results": [
+      {
+        "title": "Nizami Gəncəvi",
+        "url": "https://az.wikipedia.org/wiki/Nizami_G%C9%99nc%C9%99vi",
+        "source": "wikipedia",
+        "score": 9.3,
+        "content": "Xosrov və Şirin Nizami Gəncəvinin ikinci poemasıdır. Əsər 1180-ci ildə fars dilində yazılmışdır. Nizami Gəncəvi, bu əsəri Atabəy Şəmsəddin Məhəmməd Cahan Pəhləvan Eldəgizə (1173–1186) ithaf etmişdir. Əsərdə Cahan Pəhləvandan başqa, Toğrul ibn-Arslan Səlcuqi (1178–1194) və Qızıl Arslanın (1186–1191) da adları çəkilir.\nLeyli və Məcnun Nizami Gəncəvinin üçüncü poemadır. \"Leyli və Məcnun\" mövzusunda məsnəvi yazmağı 1188-ci ildə Nizami Gəncəviyə XXI Şirvanşah olan I Axsitan məktub göndərməklə sifariş etmişdi. Ç. Sasanian I Axsitanın pomadan narazı qalmasını düşünür və yazır: \"Leyli və Məcnun poemasında Axsitanı razı salmayan cəhət, həmən \"türki sifətlər\" və \"köhnə sözlər\"dir ki, hökmdar məktubund"
+      },
+      {
+        "title": "Nizami (opera)",
+        "url": "https://en.wikipedia.org/wiki/Nizami_(opera)",
+        "source": "wikipedia",
+        "score": 7.3,
+        "content": "Nizaminin yaradıcılığı tanınmış filosoflar, ədəbiyyat və incəsənət tarixçiləri, elm və dövlət xadimləri tərəfindən yüksək qiymətləndirilir. Əsərləri və həyatı əsasında onun şəxsiyyətinə həsr olunmuş çoxsaylı romanlar, müxtəlif mövzularda pyeslər, şeirlər yazılmışdır.\nNizami Gəncəvinin həyat və yaradıcılığının əsas tədqiqatçılarından biri olan Səadət Abdullayeva qeyd edir ki, “bəstəkarlar, təbii ki, Nizaminin yüksək ideyalı əsərlərinə biganə qala bilməzdilər.Bunu şairin şeirləri əsasında klassik musiqinin demək olar ki, bütün janrlarında – opera, balet, simfoniya, poemonik, simfonik və simfonik janrlarda yazdığı əsərlər göstərir”.\nNizami Gəncəvinin həyat və yaradıcılığının əsas tədqiqatçıları"
+      },
+      {
+        "title": "Azərbaycan şairi Nizami (Rəsulzadə)",
+        "url": "https://az.wikipedia.org/wiki/Az%C9%99rbaycan_%C5%9Fairi_Nizami_(R%C9%99sulzad%C9%99)",
+        "source": "wikipedia",
+        "score": 7,
+        "content": "\"Azərbaycan şairi Nizami\" (türk. Azerbaycan Şairi Nizami) — Məhəmməd Əmin Rəsulzadənin Nizami Gəncəvinin 800 illik yubileyi münasibətilə 1941-ci ildə yazdığı, ilk dəfə 1951-ci ildə Ankarada nəşr olunan əsəri.\nM.Ə.Rəsulzadənin Nizami haqqında bu kitabı mühacirət ədəbi fikrinin, xüsusilə nizamişünaslığın ən dəyərli uğurlarından biri hesab edilir.\nM.Ə.Rəsulzadənin Nizami haqqında geniş araşdırmalara əsaslanan əsərini yazması İkinci Dünya müharibəsinin başlanmasından (1939-cu il, sentyabr) sonraya təsadüf edir. Məhəmməd Əmin Rəsulzadə monoqrafiyanı 1941-ci ildə Nizami Gəncəvinin anadan olmasının 800 illiyi münasibətilə yazıb, İkinci Dünya müharibəsi və həyatının çətinlikləri səbəbilə ilk dəfə 19"
+      }
+    ]
+  },
+  {
+    "q": "React useEffect nə üçündür",
+    "ms": 3609,
+    "intent": "general",
+    "lang": "az",
+    "conf": "high",
+    "fallback": false,
+    "providers": [
+      "bing",
+      "wikipedia",
+      "github",
+      "google-news",
+      "brave"
+    ],
+    "results": [
+      {
+        "title": "useEffect - Reaksiya",
+        "url": "https://react.dev/reference/react/useEffect",
+        "source": "bing",
+        "score": 8,
+        "content": "useEffect, komponenti xarici system.useEffect (quraşdırma, asılılıqlar?) ilə sinxronlaşdırmağa imkan verən React Hook-dur.\nimport { useState, useEffect } 'react';import { createConnection} from './chat.js';function ChatRoom({ roomId }) {const [serverUrl, setServerUrl] = useState('https://localhost:1234');useEffect connection( =>Uconnection( =>Uconnection, createer) roomId);connection.connect ;return => {connection.disconnect ;};}, [serverUrl, roomId]);// ...}\n'reaksiyadan' import { useRef, useEffect};\n'reaksiyadan' import { useState, useEffect};"
+      },
+      {
+        "title": "Reaksiya (proqram təminatı)",
+        "url": "https://en.wikipedia.org/wiki/React_(software)",
+        "source": "wikipedia",
+        "score": 7.5,
+        "content": "Deklarativ\nReaksiya deklarativ proqramlaşdırma paradiqmasına riayət edir. Tərtibatçılar tətbiqin hər bir vəziyyəti üçün görünüşlər hazırlayır və React məlumat dəyişdikdə komponentləri yeniləyir və təqdim edir. Bu, imperativ proqramlaşdırma ilə ziddiyyət təşkil edir.\nReaksiya Qarmaqları\n16 fevral 2019-cu ildə React Hooks təqdim edən React 16.8 ictimaiyyətə təqdim edildi. Qarmaqlar tərtibatçılara funksiya komponentlərindən Reaksiya vəziyyəti və həyat dövrü xüsusiyyətlərinə \"qoşulmağa\" imkan verən funksiyalardır. Qeyd edək ki, Hooks siniflər daxilində işləmir – onlar tərtibatçılara React-in daha çox xüsusiyyətlərindən dərslər olmadan istifadə etməyə imkan verir.\nReact, useState, useContext, use"
+      },
+      {
+        "title": "Doğma reaksiya verin",
+        "url": "https://en.wikipedia.org/wiki/React_Native",
+        "source": "wikipedia",
+        "score": 6.5,
+        "content": "React Native, Meta Platforms (keçmiş Facebook Inc.) tərəfindən hazırlanmış açıq mənbəli UI proqram çərçivəsidir. O, Android, Android TV, iOS, macOS, tvOS, Vega OS, Web, Windows və UWP üçün proqramlar hazırlamaq üçün istifadə olunur və tərtibatçılara yerli platforma imkanları ilə yanaşı React çərçivəsini istifadə etməyə imkan verir. O, Facebook, Microsoft (əvvəllər: Shopify) şirkətlərində Android və iOS proqramlarını inkişaf etdirmək üçün istifadə olunur, baxmayaraq ki, sonuncu istifadəsini dayandırır. Oculus-da virtual reallıq proqramlarının hazırlanmasında da istifadə olunur.\n\"Salam, Dünya!\" misal\n\"Salam, Dünya!\" React Native-də proqram belə görünür:\nEisenman, Bonnie (2016). React Native öy"
+      }
+    ]
+  },
+  {
+    "q": "how to center a div with flexbox",
+    "ms": 7115,
+    "intent": "general",
+    "lang": "en",
+    "conf": "medium",
+    "fallback": false,
+    "providers": [
+      "bing",
+      "google-news",
+      "wikipedia",
+      "brave"
+    ],
+    "results": [
+      {
+        "title": "How to center a &lt;div&gt; using Flexbox property of CSS ? - GeeksforGeeks",
+        "url": "https://www.geeksforgeeks.org/css/how-to-center-a-div-using-flexbox-property-of-css/",
+        "source": "brave",
+        "score": 6.1,
+        "content": "How to center a <div> using Flexbox property of CSS ?\nCentering elements on a webpage is a common task in web development, and CSS Flexbox provides an efficient and straightforward way to achieve this. In this article, we will learn how to center a <div> element both horizontally and vertically using Flexbox.\nCentering a <div> Element Horizontally Using Flexbox\nTo center a <div> element horizontally using Flexbox, follow these steps:\nCentering a <div> Element Horizontally and Vertically Using Flexbox"
+      },
+      {
+        "title": "Center a Div with Flexbox justify-content and align-items",
+        "url": "https://modern-css.com/centering-elements-with-flexbox/",
+        "source": "brave",
+        "score": 5.6,
+        "content": "Center a div using display: flex with justify-content: center and align-items: center. An alternative to grid place-items with explicit axes."
+      },
+      {
+        "title": "How to Center a Div Horizontally and Vertically in CSS - Built In",
+        "url": "https://news.google.com/rss/articles/CBMidkFVX3lxTE1pTVVaTy1zYUliakpfeXhXTnFnSGo0cDcwUzFJMTJaREJ2eVFIZzh4SEVLMkdlcEdudVBQeTJ4MzRtTmo5a08wdHM5TE9vVHRvR21NcFN6NHFNV2JOMzR1U1Aydkd3YlRFaFozX2x3WFR4VTc4dVE?oc=5",
+        "source": "google-news",
+        "score": 2.4,
+        "content": "How to Center a Div Horizontally and Vertically in CSS Built In"
+      }
+    ]
+  },
+  {
+    "q": "Türkiyənin paytaxtı harasıdır",
+    "ms": 3743,
+    "intent": "general",
+    "lang": "az",
+    "conf": "medium",
+    "fallback": false,
+    "providers": [
+      "bing",
+      "wikipedia",
+      "google-news"
+    ],
+    "results": [
+      {
+        "title": "Türkiyədə ölüm cəzası",
+        "url": "https://en.wikipedia.org/wiki/Capital_punishment_in_Turkey",
+        "source": "wikipedia",
+        "score": 7.3,
+        "content": "Türkiyədə edam cəzası 2004-cü ildə ləğv edilib və 1984-cü ilin oktyabrından indiyədək heç bir məhbus edam edilməyib. Bundan əvvəl edam cəzasına məhkum edilmiş 500-dən çox məhkum edam edilib. Edam üsulu asma idi. 2016-cı ilin iyulunda Türkiyədə dövlət çevrilişi cəhdindən sonra Avropa Birliyi və Avropa Şurası Türkiyəyə xəbərdarlıq etmişdi ki, ölüm cəzasını bərpa edərsə, onun Aİ-yə üzvlük danışıqları və Avropa Şurasına üzvlük ləğv olunacaq.\nTəklif olunan bərpa\n2016-cı ildə uğursuz dövlət çevrilişindən sonra bəzi siyasətçilər ölüm hökmünün bərpasından danışıblar. 2014-cü ildən Türkiyə prezidenti olan Rəcəb Tayyib Ərdoğan 29 oktyabr 2016-cı ildə hökumətin edam cəzasını bərpa edən qanun layihəsini"
+      },
+      {
+        "title": "Ankara",
+        "url": "https://en.wikipedia.org/wiki/Ankara",
+        "source": "wikipedia",
+        "score": 5.3,
+        "content": "Ankara Türkiyənin paytaxtıdır. Anadolunun mərkəzi hissəsində yerləşən bu şəhər, Ankara vilayətindəki 6 milyon sakindən şəhər mərkəzində 5,3 milyondan çox sakin yaşayır. Ankara Türkiyənin İstanbuldan sonra əhalisinə görə ikinci ən böyük şəhəridir.\nAnkara tarixən Ankira və Anqora kimi tanınırdı. Qədim Kelt dövlətinin Qalatiya (e.ə. 280-64), daha sonra isə eyni adlı Roma vilayətinin (e.ə. 25-7-ci əsr) paytaxtı kimi xidmət edən Ankarada müxtəlif Hatti, Hetit, Lidiya, Frigiya, Qalat, Yunan, Fars, Roma, Bizans və Osmanlı arxeoloji abidələri var. Osmanlılar şəhəri Anadolu Eyaletinin (1393 - 15-ci əsrin sonu), Anqora Əyalətinin (1827-1864) və Anqora Vilayətinin (1867-1922) paytaxtı etdi. 23 aprel 19"
+      },
+      {
+        "title": "Səudiyyənin Paytaxtı, Türkiyənin Gücü: Ər-Riyadın Türkiyədə Artan Leverage - Yaxın Şərq Forumu",
+        "url": "https://news.google.com/rss/articles/CBMioAFBVV95cUxQVGpLSkVCSTZfVF93NklEWkl0QjVaUXBYbGVETzctWDVFNF92ai1KeWNYRGZDYVdLaE91YUZLaFJVT0ZFMk5Ddi02NWJJRkRuN2k0Y3lIS0xDQUtXNjgxQ0REMl96YkpIVkM0Yk9kZ2VkeVZPV1VCUU9iYmg3WWx1eWcyZUdDSlkyUkVaMjNCd0ttZzlKSk5jcGtYOWJLU3ZU?oc=5",
+        "source": "google-news",
+        "score": 5.1,
+        "content": "Səudiyyənin Paytaxtı, Türkiyənin Gücü: Ər-Riyadın Türkiyədə Artan Leverage Orta Şərq Forumu"
+      }
+    ]
+  },
+  {
+    "q": "Bakı metrosunda neçə stansiya var",
+    "ms": 3871,
+    "intent": "general",
+    "lang": "az",
+    "conf": "high",
+    "fallback": false,
+    "providers": [
+      "bing",
+      "wikipedia",
+      "google-news",
+      "brave"
+    ],
+    "results": [
+      {
+        "title": "Bakı metrosu",
+        "url": "https://az.wikipedia.org/wiki/Bak%C4%B1_metrosu",
+        "source": "wikipedia",
+        "score": 10.3,
+        "content": "Bakı metrosu — Azərbaycanın paytaxtı Bakı şəhərində yeraltı metropoliten xətlərini birləşdirən nəqliyyat sistemi, Türk ölkələri arasında və Yaxın Şərqdə qurulan ilk metropoliten.\nMetropoliten ümumi uzunluğu təxminən 40 km olan 3 xəttdən, 27 işləyən və dörd tikilən stansiyadan ibarətdir, həmin stansiyaların 11-nin vestibülü vardır. Stansiyaların yeddisi böyük dərinlikdə yerləşir. Metropolitendə pilləkan zolağının ümumi uzunluğu 4,000 metrdən artıq olan beş tipli 39 eskalator işə salınmışdır. Tunel tikililərinin ümumi uzunluğu 17.1 kilometrdən artıqdır. Bakı metrosunun nadirliyi bundan ibarətdir ki, onun xətləri təpəlik ərazidə yerləşən şəhərin bir-biri ilə kəsişən relyefi üzrə salınmışdır, bu"
+      },
+      {
+        "title": "Bakı Metropoliteni",
+        "url": "https://en.wikipedia.org/wiki/Baku_Metro",
+        "source": "wikipedia",
+        "score": 8.3,
+        "content": "Bilet satışı\n2025-ci il oktyabrın 1-də baş verən bahalaşmadan sonra sistem bir gediş üçün 60 qəpik (0,60 AZN) tariflə işləyir. Bəzi Bakı sakinlərinin metro infrastrukturunun köhnə olduğunu əsas gətirərək qiymət artımından narazı olduqları bildirilir. 2006-cı ilə qədər metro istifadəçiləri stansiyalara turniketlərə yerləşdirilən metal (sonradan plastik) jetonlarla daxil olurdular. 2006-cı ildə Bakı Metropoliteni təkrar doldurulan gediş haqqı kartlarından istifadə edən RFID kart sistemini tətbiq edib ki, bunun üçün 2 manatlıq depozit tələb olunur (üstəlik səyahət krediti).\nBakuCard Bakı Metropoliteni və BakuBus-da ödəniş üçün vahid Smart Kartdır. Şəhərlərarası avtobuslar və metrolar bu növ kar"
+      },
+      {
+        "title": "Bakı Metropoliteninin Qırmızı və Yaşıl xətləri əsas 28 May layihəsində ayrılacaq - AzerNews",
+        "url": "https://news.google.com/rss/articles/CBMiVEFVX3lxTE94NndnbE5WU1BBb3o5VUxRNl9qZ2w3MmNoTW8wQmpYbTQ0akxzbWtDZl82cFUydjMzdXo5eTZBeGNINV90V1Fubjh2Y2pXRjktZG56UQ?oc=5",
+        "source": "google-news",
+        "score": 5.1,
+        "content": "Bakı Metropoliteninin Qırmızı və Yaşıl xətləri əsas 28 May Layihəsində ayrılacaq AzerNews"
+      }
+    ]
+  },
+  {
+    "q": "Python list sort reverse",
+    "ms": 1190,
+    "intent": "general",
+    "lang": "en",
+    "conf": "medium",
+    "fallback": false,
+    "providers": [
+      "stackoverflow",
+      "wikipedia",
+      "bing",
+      "github",
+      "google-news",
+      "arxiv",
+      "brave"
+    ],
+    "results": [
+      {
+        "title": "Python list sort reverse order",
+        "url": "https://stackoverflow.com/questions/51912909/python-list-sort-reverse-order",
+        "source": "stackoverflow",
+        "score": 11.3,
+        "content": "sort = open(results,'r')\nnewsort = sorted(sort,key=operator.itemgetter(1), reverse = True)\nrows = csv.reader(sort)\nnewsort = sorted(rows,key=operator.itemgetter(1), reverse = True)\nrows = ((name, int(num), thing) for (name, num, thing) in csv.reader(sort))\nnewsort = sorted(rows, key=lambda: int(row ), reverse = True)\nFirst, a generator expression is just a lazy version of a list comprehension—it produces the same values, but it produces them on demand, instead of building a list of them. And the equivalent list comprehension is the same thing, but with square brackets:"
+      },
+      {
+        "title": "Sorting Techniques",
+        "url": "https://docs.python.org/3/howto/sorting.html",
+        "source": "brave",
+        "score": 6.8,
+        "content": "Python lists have a built-in list.sort method that modifies the list\nYou can also use the list.sort method. It modifies the list\nBoth list.sort and sorted accept a reverse parameter with a\n... xs.sort(key=attrgetter(key), reverse=reverse)"
+      },
+      {
+        "title": "Bubble sort",
+        "url": "https://en.wikipedia.org/wiki/Bubble_sort",
+        "source": "wikipedia",
+        "score": 4.8,
+        "content": "Bubble sort, sometimes referred to as sinking sort, is a simple sorting algorithm that repeatedly steps through the input list element by element, comparing the current element with the one after it, swapping their values if needed. These passes through the list are repeated until no swaps have to be performed during a pass, meaning that the list has become fully sorted. The algorithm, which is a comparison sort, is named for the way the larger elements \"bubble\" up to the top of the list.\nIt performs poorly in real-world use and is used primarily as an educational tool. More efficient algorithms such as quicksort, timsort, or merge sort are used by the sorting libraries built into popular pr"
+      }
+    ]
+  },
+  {
+    "q": "Azərbaycanda neçə universitet var",
+    "ms": 3952,
+    "intent": "general",
+    "lang": "az",
+    "conf": "medium",
+    "fallback": false,
+    "providers": [
+      "bing",
+      "wikipedia",
+      "google-news"
+    ],
+    "results": [
+      {
+        "title": "Azərbaycanda islam",
+        "url": "https://en.wikipedia.org/wiki/Islam_in_Azerbaijan",
+        "source": "wikipedia",
+        "score": 5.3,
+        "content": "1806-cı ildə Rusiya-Fars müharibəsi (1804-1813) zamanı Qacar ​​İranı işğal etdiyi üçün Azərbaycan Rusiya imperiyası tərəfindən işğal olundu. Bundan sonra İran 1813-cü il Gülüstan müqaviləsinə əsasən, demək olar ki, bütün Azərbaycanı Rusiyaya verməyə məcbur oldu. Lakin bütün bunlar yalnız Rusiya ilə İran arasında baş vermiş növbəti və sonuncu müharibədən, Rusiya-Fars müharibəsindən (1826-1828) və nəticədə 1828-ci il Türkmənçay müqaviləsindən sonra öz təsdiqini tapdı. 1918-ci ildə Azərbaycan Rusiyadan müstəqilliyini elan etdi və Azərbaycan Xalq Cümhuriyyəti yaratdı, lakin onun rəhbərlik etdiyi Müsavat Partiyasının tərkibində Azərbaycan Xalq Cümhuriyyəti yaradıldı20.\nSovet hakimiyyəti qurulmazd"
+      },
+      {
+        "title": "Universitet",
+        "url": "https://az.wikipedia.org/wiki/Universitet",
+        "source": "wikipedia",
+        "score": 5,
+        "content": "İlk universitetlər\nYarandığı dövrdən fəaliyyət göstərən ən qədim universitet 859-cu ildə Mərakeşin Fəs şəhərində yaranan Əl-Qarauin Universitetidir.\nMüasir dövrdə universitet təhsili\nXIX əsrdə Avropada baş verən sənayeləşmə prosesi ərəfəsində yeni məktəblərin, əsasən isə ali texniki məktəblərin açılması vüsət alır. Azərbaycanda ilk universiteti 1919-cu ildə Azərbaycan Xalq Respublikasının rəhbərliyi təşkil edilir. Yeni ali məktəblərin yaradılması prosesi XX əsrdə Rusiya və əhatəsində olan başqa dövlətlərdə sosialist inqilabından sonra daha genişlənir. SSRİ dövründə yüzlərcə yeni ali məktəblər yaradılır. Bu məktəblərin əksəriyyətinə SSRİ dağıldıqdan sonra Uuiversitet status verilir. XX əsrin "
+      },
+      {
+        "title": "Dünya universitetləri reytinqində yüksələn və yüksək qiymətə malik Azərbaycan beynəlxalq tələbələrə təklifini gücləndirir - ICEF Monitor",
+        "url": "https://news.google.com/rss/articles/CBMi7wFBVV95cUxOTEZmUFRWdmI4SUN0aGtscXhNRU1QTVVzb2E0cGozZDZGelJHLVZJeXNGOUV4UU1DMDVLZ254QlhUZjRyaWhwT055RTVIZFNLbkpXVmxFUF93SWdJZ3pxTjZ6TFF3YWZudWgtVkM5YWd0SGFMdUlfblNCeDgxNWFNRzA5NDhtRXFQaEUxWEVxbUViQlc4NUdfbUQ0MEhnTHRCLU5oU0NoTkltQi12V1E2a09Ja3JSdUdHeGNFQmhDd3IxSHBvX096aWNyZF9Zb2pWU0R2bnJSRmxjZXVZalVwY2ZGbGtQY2tTYXFwbXhGZw?oc=5",
+        "source": "google-news",
+        "score": 1.9,
+        "content": "Dünya universitetləri reytinqində yüksələn və yüksək qiymətə malik Azərbaycan beynəlxalq tələbələrə təklifini gücləndirir ICEF Monitor"
+      }
+    ]
+  },
+  {
+    "q": "dünyanın ən uzun çayı hansıdır",
+    "ms": 2645,
+    "intent": "general",
+    "lang": "az",
+    "conf": "high",
+    "fallback": false,
+    "providers": [
+      "bing",
+      "wikipedia",
+      "google-news"
+    ],
+    "results": [
+      {
+        "title": "Uzunluğa görə çay sistemlərinin siyahısı",
+        "url": "https://en.wikipedia.org/wiki/List_of_river_systems_by_length",
+        "source": "bing",
+        "score": 8.1,
+        "content": "Bu, yer üzündəki ən uzun çayların siyahısıdır. Buraya uzunluğu 1000 kilometrdən (620 mil) çox olan çay sistemləri daxildir.\n“Çay uzunluğu”nun dəqiq mənasını müəyyən edən mənbənin müəyyən edilməsi, mənbənin müəyyən edilməsi və ya təyin edilməsi, mənbə ilə mənsəb arasındakı çay uzunluğunun ölçü miqyası kimi bir çox amillər var. Nəticədə, bir çox çayların uzunluq ölçüləri yalnız təxminidir (həmçinin sahil xətti paradoksuna baxın). Xüsusilə, Nil və ya Amazonun dünyanın ən uzun çayı olması ilə bağlı fikir ayrılığı var. Nil ənənəvi olaraq daha uzun hesab olunurdu, lakin 2007 və 2008-ci illərdə bəzi elm adamları Amazonun çayı və ona bitişik Para estuarını və ən uzun birləşdirən gelgit kanalını ölçm"
+      },
+      {
+        "title": "Amazon çayı",
+        "url": "https://en.wikipedia.org/wiki/Amazon_River",
+        "source": "wikipedia",
+        "score": 7.3,
+        "content": "Cənubi Amerikadakı Amazon çayı suyun axıdılması həcminə görə dünyanın ən böyük çayıdır və dünyanın ikinci ən uzun və ya ən uzun çay sistemidir, adı Nil ilə mübahisəlidir.\nAmazon və ya Nilin dünyanın ən uzun çayı olub-olmaması ilə bağlı mübahisələr uzun illərdir davam etsə də, coğrafi orqanların tarixi konsensusu Amazonu dünyanın ikinci ən uzun çayı, Nil isə ən uzun çay hesab etməkdən ibarətdir. Bununla belə, Amazonun 6,275 km (3,899 mil) ilə 6,992 km (4,345 mil) uzunluğunda olduğu bildirildi. Tez-tez onun \"ən azı\" 6,400 km (4,000 mil) uzunluğunda olduğu deyilir. Nil çayının 5,499 ilə 7,088 km (3,417 ilə 4,404 mi) arasında olduğu bildirilir. Çox vaxt uzunluğunun \"təxminən\" 6,650 km (4,130 mil"
+      },
+      {
+        "title": "Nil səyahəti | Dünyanın ən uzun çayı - Britannica",
+        "url": "https://news.google.com/rss/articles/CBMic0FVX3lxTFBXUWZ3U2ZOOE5XajlMLWFzTGNTMzBLclluTFNsbEV4YXBDV1NrWDVDcElHM2xyZl9vX3hnOXlIcUxlR3hGN0dMM0pfS2QtamJPR21KQmE1MEwyU2tLQTFLS3RrYVltNXZ6Qk96eUU1TWIwRm8?oc=5",
+        "source": "google-news",
+        "score": 7.1,
+        "content": "Nil səyahəti | Dünyanın ən uzun çayı Britannica"
+      }
+    ]
+  },
+  {
+    "q": "NATO-ya üzv ölkələr hansılardır",
+    "ms": 3542,
+    "intent": "general",
+    "lang": "az",
+    "conf": "medium",
+    "fallback": false,
+    "providers": [
+      "bing",
+      "wikipedia",
+      "google-news"
+    ],
+    "results": [
+      {
+        "title": "Azərbaycan–NATO münasibətləri",
+        "url": "https://az.wikipedia.org/wiki/Az%C9%99rbaycan%E2%80%93NATO_m%C3%BCnasib%C9%99tl%C9%99ri",
+        "source": "wikipedia",
+        "score": 8,
+        "content": "Azərbaycan 2002-ci ilin noyabrında NATO PA-nın qərarı ilə assosiativ üzv oldu və 2004-cü ilin martında NATO Əməliyyat İmkanları Konsepsiyasına qoşuldu. 28 iyun 2004-cü ildə İstanbul Zirvəsində Qafqaz bölgəsi müzakirə edildi və üzv dövlətlər Qafqaz və Orta Asiya üzrə nümayəndə vəzifəsi yaratmaq qərarına gəldilər. Sentyabrın 15-də NATO baş katibinin Qafqaz üzrə ilk xüsusi nümayəndəsi təyin edildi.\nNATO-ya üzv ölkələr 28-29 noyabr 2006-cı ildə Riqada keçirilən Şimali Atlantika Şurası toplantısında, 2-4 aprel 2008-ci ildə Buxarestdə keçirilən NATO/EAPC və ISAF və 3-4 aprel 2009-cu ildə Strasburqda keçirilən zirvələrdə verilən bəyannamələr çərçivəsində Azərbaycanın ərazi bütövlüyünü dəstəklədi. A"
+      },
+      {
+        "title": "NATO-ya üzv dövlətlər",
+        "url": "https://en.wikipedia.org/wiki/Member_states_of_NATO",
+        "source": "wikipedia",
+        "score": 7.3,
+        "content": "Şimali Atlantika Müqaviləsi Təşkilatı (NATO) Avropa və Şimali Amerikadan olan 32 üzv dövlətdən ibarət beynəlxalq hərbi ittifaqdır. O, 4 aprel 1949-cu ildə Şimali Atlantika Müqaviləsi imzalanarkən yaradılmışdır. 32 üzv ölkədən 30-u Avropada, 2-si isə Şimali Amerikadadır. 1994-1997-ci illər arasında NATO və onun qonşuları arasında regional əməkdaşlıq üçün daha geniş forumlar, o cümlədən Sülh Naminə Tərəfdaşlıq, Aralıq dənizi Dialoqu təşəbbüsü və Avro-Atlantik Tərəfdaşlıq Şurası yaradılmışdır. NATO üzvlərinin əksəriyyəti həm də Avropa Birliyinin üzvü olan dövlətlərdir.\nNATO Bosniya və Herseqovinanı, Gürcüstanı və Ukraynanı Açıq Qapı genişlənmə siyasətinin bir hissəsi kimi üzv olmaq istəyənlər k"
+      },
+      {
+        "title": "NATO",
+        "url": "https://az.wikipedia.org/wiki/NATO",
+        "source": "wikipedia",
+        "score": 7,
+        "content": "Azərbaycanın xarici siyasətində də əsas vəzifələrdən biri Avroatlantik məkana inteqrasiyadır. Ölkə 1994-cü ildən NATO-nun \"Sülh naminə tərəfdaşlıq\", 2004-cü ildən isə \"Fərdi tərəfdaşlıq\" proqramlarına qoşulub, 1999-cu ildə NATO PA-ya müşahidəçi, 2002-ci ildən isə assosiativ üzv qəbul edilib. Azərbaycan Silahlı Qüvvələrinin birləşmələri müxtəlif vaxtlarda Kosovo, İraq və Əfqanıstanda sülhməramlı qoşunların tərkibində iştirak edib. 2018-ci ilin yanvar ayından Azərbaycan NATO-nun Əfqanıstanda keçirdiyi \"Qətiyyətli Dəstək\" missiyası üzrə Azərbaycan Ordusunun Sülhməramlı kontingentinin şəxsi heyətinin sayı 120 nəfərə çatdırılıb.\nSovet İttifaqı 1954-cü ildə Avropada sülhü qorumaq üçün NATO-ya daxi"
+      }
+    ]
+  },
+  {
+    "q": "James Webb teleskopu nə kəşf edib",
+    "ms": 2911,
+    "intent": "general",
+    "lang": "az",
+    "conf": "medium",
+    "fallback": false,
+    "providers": [
+      "bing",
+      "wikipedia",
+      "google-news"
+    ],
+    "results": [
+      {
+        "title": "James Webb Kosmik Teleskopu",
+        "url": "https://en.wikipedia.org/wiki/James_Webb_Space_Telescope",
+        "source": "wikipedia",
+        "score": 9.3,
+        "content": "James Webb Kosmik Teleskopu (JWST) infraqırmızı astronomiya aparmaq üçün nəzərdə tutulmuş kosmik teleskopdur. O, kosmosdakı ən böyük teleskopdur və Hubble Kosmik Teleskopu üçün çox köhnə, uzaq və ya zəif obyektlərə baxmaq imkanı verən yüksək ayırdetmə qabiliyyətinə malik və yüksək həssaslığa malik alətlərlə təchiz edilmişdir. Bu, ilk ulduzların müşahidəsi və ilk qalaktikaların əmələ gəlməsi kimi astronomiya və kosmologiyanın bir çox sahələrində araşdırmalar aparmağa imkan verir və potensial yaşayış üçün əlverişli ekzoplanetlərin ətraflı atmosfer xarakteristikası.\nTeleskop 1961-1968-ci illərdə Merkuri, Əkizlər və Apollon proqramları zamanı NASA-nın idarəçisi olmuş Ceyms E. Uebbin şərəfinə adl"
+      },
+      {
+        "title": "James E. Webb",
+        "url": "https://en.wikipedia.org/wiki/James_E._Webb",
+        "source": "wikipedia",
+        "score": 8.3,
+        "content": "James Edwin Webb (7 oktyabr 1906 - 27 mart 1992) 1949-1952-ci illərdə Dövlət Katibinin müşaviri vəzifəsində çalışmış Amerika hökumət rəsmisi idi. O, 14 fevral 1961-ci ildən 7 oktyabr 1968-ci ilə qədər NASA-nın ikinci idarəçisi idi. administrasiya, beləliklə, ilk Apollon missiyasının başlamasına günlər qalmışa qədər Merkuri və Əkizlər proqramları boyunca kritik ilk ekipaj missiyalarının hər birinə nəzarət etdi. O, həmçinin Apollon 1 yanğını ilə də məşğul olub. O, hökumət islahatlarının öyrənilməsi üçün əsas mərkəz olan Milli Dövlət İdarəçilik Akademiyasının yaradılmasına kömək etmişdir.\n2002-ci ildə Yeni Nəsil Kosmik Teleskopu Uebbin şərəfinə James Webb Kosmik Teleskopu adlandırıldı.\nMiras\nUe"
+      },
+      {
+        "title": "Astronomlar James Webb Kosmik Teleskopu qara dəliklə işləyən ən erkən cüt kvazarları kəşf etdikdən sonra heyrətə gəldilər - Kosmos",
+        "url": "https://news.google.com/rss/articles/CBMi6gFBVV95cUxNQndfd0d1T0hQNG1QZEF5WWx2Tm56Nmo3ai1QWU9tZmktSnpvbWhqZHZnMlFQemVCZm5jcjQxQXlHTGYxMV9WeU53bHBiNlBHakRBOGF6OTJKcVAxS2N4d0J2VVNiRkJ6SktVQkhiVE8tRWQ0OUk5R2UtNFNoWl9nOWh4R1dDSk1MOFk5X0FGbGw4YkFZenhsWDV0a0oyWk5nMWJuWWM2Wko0djF2OGlQWjFoYWJoS0RzQkt2OTM0cENYbFpBMGtvUWw4Y2RXVHU3TERTQ3VDeE11VmNlX3A3QzljeV9xRXRhS1E?oc=5",
+        "source": "google-news",
+        "score": 8.1,
+        "content": "James Webb Kosmik Teleskopu Kosmosda qara dəliklə işləyən ən erkən cüt kvazarları kəşf etdikdən sonra astronomlar heyrətə gəldilər."
+      }
+    ]
+  },
+  {
+    "q": "Azərbaycan Premyer Liqası cədvəli",
+    "ms": 4489,
+    "intent": "general",
+    "lang": "az",
+    "conf": "medium",
+    "fallback": false,
+    "providers": [
+      "bing",
+      "wikipedia",
+      "google-news"
+    ],
+    "results": [
+      {
+        "title": "Azərbaycan Premyer Liqası",
+        "url": "https://en.wikipedia.org/wiki/Azerbaijan_Premier_League",
+        "source": "wikipedia",
+        "score": 12,
+        "content": "Azərbaycan Premyer Liqası (azərbaycanca: Azərbaycan Premyer Liqası), həmçinin sponsorluq səbəbi ilə Misli Premyer Liqası kimi tanınan Azərbaycanda peşəkar futbol liqası və Azərbaycan futbol liqası sisteminin ən yüksək səviyyəsidir. On iki klub mübarizə aparır.\nMövsümlər avqustdan may ayına qədər davam edir, komandalar hər biri 33 oyun keçirir (liqada hər komanda üç dəfə oynayır, üçüncü tur üçün ev meydançaları püşkatma ilə müəyyən edilir). Premyer Liqa çempionu UEFA Çempionlar Liqasının birinci təsnifat mərhələsində oynamaq hüququnu təmin edir. İkinci və 3-cü yerin qalibi ikinci təsnifat mərhələsindən başlayaraq UEFA Konfrans Liqasında oynamaq hüququnu təmin edir.\n1992-ci ildən indiyədək ümu"
+      },
+      {
+        "title": "2010–11 Azerbaijan Premier League",
+        "url": "https://en.wikipedia.org/wiki/2010%E2%80%9311_Azerbaijan_Premier_League",
+        "source": "wikipedia",
+        "score": 11.3,
+        "content": "2010-11 Azərbaycan Premyer Liqası (sponsorluq səbəbi ilə Unibank Premyer Liqası kimi tanınır) 1992-ci ildə yarandığı gündən bəri yüksək səviyyəli Azərbaycan Premyer Liqasının on doqquzuncu mövsümü idi. Təqvimlər 29 iyul 2010-cu ildə açıqlandı; mövsüm 2010-cu il avqustun 7-də başlayıb və 28 may 2011-ci ildə başa çatıb. \"Neftçi Bakı\" 2005-ci ildən sonra ilk Azərbaycan çempionluğunu qazanaraq, son çempion olub.\nThe league was competed over two stages. Birinci mərhələ, hər komanda üçün ümumilikdə 22 matçdan ibarət müntəzəm ev-səfər dairəvi cədvəlindən ibarət idi. Müsabiqə daha sonra yarıya bölündü, birincidən altıncıya qədər olan komandalar çempionluq və Avropa vəsiqələrini oynayarkən, sonuncu a"
+      },
+      {
+        "title": "Azərbaycan Premyer Liqasında 13-cü turun təqvimi açıqlanıb - AzerNews",
+        "url": "https://news.google.com/rss/articles/CBMiVEFVX3lxTE9hUzdOTEdYSXRjTTEweDFLdmNCajVBMGNYWFczN0E1TG5oMVBweHB1RF9wUVgxajhFVnBVZDFwSGVhVXFGVEVhLXN2S3RvQXAxV2dRTA?oc=5",
+        "source": "google-news",
+        "score": 9.1,
+        "content": "Azərbaycan Premyer Liqasında 13-cü turun təqvimi açıqlanıb AzerNews"
+      }
+    ]
+  },
+  {
+    "q": "sql join növləri",
+    "ms": 2935,
+    "intent": "general",
+    "lang": "az",
+    "conf": "medium",
+    "fallback": false,
+    "providers": [
+      "stackoverflow",
+      "bing",
+      "wikipedia",
+      "hacker-news",
+      "google-news",
+      "github",
+      "arxiv"
+    ],
+    "results": [
+      {
+        "title": "SQL JOIN nədir və müxtəlif növləri hansılardır?",
+        "url": "https://stackoverflow.com/questions/17946221/what-is-a-sql-join-and-what-are-the-different-types",
+        "source": "stackoverflow",
+        "score": 9.3,
+        "content": "SQL JOIN iki və ya daha çox verilənlər bazası cədvəlindən məlumat əldə etmək üsuludur.\nFərqli SQL JOIN-lar hansılardır?\nJOIN bəndi üçün istifadə olunan operatordan asılı olaraq iki növ JOIN ola bilər. Onlar\nSQL narahatlığına və irəliləyişinə görə, 3 növ birləşmə var və bütün RDBMS birləşmələri bu növ birləşmələrdən istifadə etməklə əldə edilə bilər.\nOUTER-JOIN: O, iki cədvəldən uyğun sətirləri və NULL dəyərləri olan uyğunsuz sətirləri birləşdirir (və ya birləşdirir). Bununla belə, uyğun olmayan cərgələrin seçimini fərdiləşdirə bilər, məsələn, birinci cədvəldən və ya ikinci cədvəldən alt növlər üzrə uyğunsuz cərgə seçmək: SOL KARŞI QOŞULMA və SAĞ XARİCİ QOŞULMA."
+      },
+      {
+        "title": "Vizuallarda izah edilən SQL qoşulma növləri",
+        "url": "https://dataschool.com/how-to-teach-people-sql/sql-join-types-explained-visually/",
+        "source": "hacker-news",
+        "score": 8.3,
+        "content": "Vizuallarda izah edilən SQL qoşulma növləri — 152 xal, Hacker News-da 53 şərh"
+      },
+      {
+        "title": "Qoşulmaq (SQL)",
+        "url": "https://en.wikipedia.org/wiki/Join_(SQL)",
+        "source": "wikipedia",
+        "score": 7.3,
+        "content": "Strukturlaşdırılmış Sorğu Dilində (SQL) birləşmə bəndi bir və ya bir neçə cədvəldəki sütunları yeni cədvəldə birləşdirir. Əməliyyat əlaqə cəbrində birləşmə əməliyyatına uyğundur. Qeyri-rəsmi olaraq birləşmə iki cədvəli birləşdirir və uyğun sahələrlə eyni sıra qeydlərini qoyur. JOIN-in bir neçə variantı var: DAXİLİ, SOL XARİCİ, RIGHT OUTER, FULL OUTER, CROSS və s.\nNümunə cədvəllər\nQoşulma növlərini izah etmək üçün bu məqalənin qalan hissəsi aşağıdakı cədvəllərdən istifadə edir:\nEqui-join-dəki sütunlar eyni ada malikdirsə, SQL-92 İSTİFADƏ konstruksiyasından istifadə edərək bərabər birləşmələri ifadə etmək üçün əlavə stenoqramma qeydini təqdim edir:\nXarici birləşmə\nBirləşdirilmiş cədvəl hər cər"
+      }
+    ]
+  },
+  {
+    "q": "kahve nasıl yapılır",
+    "ms": 2168,
+    "intent": "general",
+    "lang": "tr",
+    "conf": "medium",
+    "fallback": false,
+    "providers": [
+      "bing",
+      "wikipedia",
+      "google-news"
+    ],
+    "results": [
+      {
+        "title": "Kamp Kahvesi",
+        "url": "https://en.wikipedia.org/wiki/Camp_Coffee",
+        "source": "wikipedia",
+        "score": 6.3,
+        "content": "Camp Coffee, Birleşik Krallık'tan bir kahve ve hindiba şurubu markasıdır. Başlangıçta içme amaçlı kahve yapmak için seyreltilebilen bir konsantre olarak tasarlanmıştı, o zamandan beri öncelikle pişirmede kullanıldı. İlk kez 1876 yılında Paterson & Sons Ltd. tarafından Glasgow'da üretildi.\n1974 yılında Dennis Jenks, Paterson Jenks plc'yi oluşturmak için işini Paterson ile birleştirdi. 1984 yılında Paterson Jenks plc, McCormick & Company tarafından satın alındı. McCormick UK Ltd, Paterson Jenks'i Schwartz markasına asimile etti. Camp Paisley, Renfrewshire'da üretilmektedir.\nAçıklama\nCamp Chicory & Coffee'nin içeriğinde şeker, su, hindiba özü (%25) ve kurutulmuş kahve özü (%4) bulunur.\nCamp koy"
+      },
+      {
+        "title": "Mükemmel Kahve Nasıl Yapılır (Resimlerle Adım Adım)",
+        "url": "https://www.wikihow.com/Make-Perfect-Coffee",
+        "source": "bing",
+        "score": 6.3,
+        "content": "Kahve uzmanı Lem Butler, sabahları mükemmel bir fincan kahve hazırlamak için yapmanız gerekenleri açıklıyor\nKahve uzmanı Lem Butler, mükemmel bir fincan kahve hazırlamak için kahveyi öğütmek için el değirmeni kullanmanız gerektiğini söylüyor. Kahveyi kahve fincanınızın üzerindeki kahve filtresine koyun. Daha sonra üzerine dökmek için yavaş bir damlatıcı kullanın. Dökülme, suyun öğütülmüş kahvenizin üzerine dökülmesi ve yer çekiminin suyu çekmesidir.\nMükemmel fincanınızı bulma konusunda ciddiyseniz, kendi fasulyenizi kızartmayı öğrenin. Biraz pratik yaptıktan sonra, kavurma derecesi üzerinde mükemmel kontrol sağlayarak mümkün olan en taze kahveyi hazırlayabilirsiniz.\nFrench press veya soğuk d"
+      },
+      {
+        "title": "Kahve",
+        "url": "https://tr.wikipedia.org/wiki/Kahve",
+        "source": "wikipedia",
+        "score": 6,
+        "content": "Kahve, kökboyasıgiller (Rubiaceae) familyasının Coffea cinsinde yer alan bir ağaç ve bu ağacın meyve çekirdeklerinin kavrulup öğütülmesi ile elde edilen tozun su ya da süt ile karıştırılmasıyla yapılan içecektir. Günlük tüketimi 2024'te 2 milyar fincan olarak tahmin edilmiştir.\nEtimoloji\nKahve sözcüğü, Türkçeye Arapçadaki kahve (قهوة) sözcüğünden geçmiştir. Öte yandan bu tabirin Arapçada ilk kez hangi tarihte kullanıldığı hâlen bilinmemektedir. Arapçadaki bu sözcüğün etimolojisi şüphelidir. Büyük olasılıkla bu kelime Arapçada \"iştahı kesildi\" anlamındaki kahiye fiilinden türetilmiştir. Bu anlam, kahve sözcüğünün Arapçada ilk kez, içenlerin iştahını kesen bir tür şarapla ilişkilendirilmesiyle"
+      }
+    ]
+  },
+  {
+    "q": "Bakıda ən yaxşı restoranlar",
+    "ms": 3321,
+    "intent": "general",
+    "lang": "az",
+    "conf": "medium",
+    "fallback": false,
+    "providers": [
+      "wikipedia",
+      "bing",
+      "google-news"
+    ],
+    "results": [
+      {
+        "title": "Azərbaycana Epikür Bələdçisi: Bakının 6 Ən Yaxşı Restoranı - Forbes",
+        "url": "https://news.google.com/rss/articles/CBMisgFBVV95cUxNSmZvZ3h4dmhpcURQWGN1N212UzFRanoxb2ZsMmFpb1g3WVVueUNoMWhMRUFEa1hYR1BOY2pSX1dBVlMtV2M3MHNDYkg4UlRvM0JneVNrRFQ2REJDMkpPYWFJcVJGRVRCcG5pLWVjWDNfUU5TX2Rmb2s5NXk5YXVHc0tvOXNnZWxCdDJHbXEyWnJnXzJfTXU2Ri1YX2tqNHlDaXBaMGFsb1cycWw2Vy1iVDFn?oc=5",
+        "source": "google-news",
+        "score": 7.1,
+        "content": "Azərbaycana Epikür Bələdçisi: Bakının 6 Ən Yaxşı Restoranı Forbes"
+      },
+      {
+        "title": "İçərişəhər",
+        "url": "https://az.wikipedia.org/wiki/%C4%B0%C3%A7%C9%99ri%C5%9F%C9%99h%C9%99r",
+        "source": "wikipedia",
+        "score": 5,
+        "content": "1220-ci ildə Sərab və Beyləqanı işğal edən monqollar Şamaxını qarət edərək Dərbənd keçidi vasitəsilə Azərbaycanı tərk edirlər. 1231-ci ildə monqolların ikinci yürüşü baş verir və bu yürüşdən sonra Gəncə, Bərdə, Beyləqan, Şabran kimi böyük şəhərlər uzun müddət əvvəlki gücünü bərpa edə bilmirlər. XV əsr Azərbaycan coğrafiyaçısı Bakuvi bildirir ki, monqollar uzun müddət güclü müdafiə olunan Bakını ələ keçirə bilmirlər və şəhər əhalisinin müqaviməti ilə üzləşirlər. Yalnız bütün ölkənin işğalından sonra Bakı təslim olmağa məcbur olur."
+      }
+    ]
+  }
+]
