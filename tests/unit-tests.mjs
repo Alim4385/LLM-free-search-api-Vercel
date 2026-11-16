@@ -689,6 +689,27 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
   const matchToday = sS({ title: "Futbol üzrə Azərbaycan millisi bu gün Andorra ilə yoldaşlıq görüşünə çıxır", url: "https://apa.az/x", snippet: "16 noyabr 2026 10:41 növbəti oyununu keçirəcək", source: "brave" });
   assert("v23 idman: başqa idman növü (xokkey) kəsilir", hock <= 0, String(hock));
   assert("v23 idman: 'bu gün ... 16 noyabr' matçı xəbərdən yuxarı", matchToday > 0, String(matchToday));
+
+  // === v24: stem qüsuru (Fransa→frans) + prefiks uyğunluğu + əhali təzəliyi + disambiguation ===
+  const stemPairs = [["Fransa", "Fransanın"], ["Ankara", "Ankaranın"]];
+  for (const [a, b] of stemPairs) {
+    assert(`v24 stem: "${a}" və "${b}" eyni kökə düşür`, tokenize(a).join() === tokenize(b).join(), `${tokenize(a)} vs ${tokenize(b)}`);
+  }
+  const qF = "Fransanın paytaxtı haradır";
+  const sF = (r) => scoreResult(r, tokenize(qF), "az", qF);
+  const frPage = sF({ title: "Fransa", url: "https://az.wikipedia.org/wiki/Fransa", snippet: "Fransa Avropada yerləşən dövlətdir. Paytaxtı Paris şəhəridir.", source: "wikipedia" });
+  const frList = sF({ title: "Fransanın paytaxtlarının siyahısı", url: "https://az.wikipedia.org/wiki/X", snippet: "Fransanın paytaxtı 1944-cü ildən bəri Parisdir", source: "wikipedia" });
+  assert("v24 paytaxt: 'Fransa' səhifəsi siyahıdan yuxarı", frPage > frList, `page=${frPage} list=${frList}`);
+  const qP = "Azərbaycanın əhalisi nə qədərdir";
+  const sP = (r) => scoreResult(r, tokenize(qP), "az", qP);
+  const old2012 = sP({ title: "Azərbaycan əhalisi", url: "https://az.wikipedia.org/wiki/Azərbaycan_əhalisi", snippet: "1 yanvar 2012-ci il tarixinə 9.235.085 nəfər", source: "wikipedia" });
+  const fresh = sP({ title: "Azərbaycanın əhalisi | Dövlət Statistika Komitəsi", url: "https://stat.gov.az/x", snippet: "2026-cı ilin əvvəlinə əhalinin sayı 10,3 milyon nəfər olub", source: "brave" });
+  assert("v24 əhali: təzə rəqəm köhnə 2012 rəqəmindən yuxarı", fresh > old2012, `fresh=${fresh} old=${old2012}`);
+  const qD = "Docker nədir";
+  const sD = (r) => scoreResult(r, tokenize(qD), "az", qD);
+  const disamb = sD({ title: "Doker", url: "https://az.wikipedia.org/wiki/Doker", snippet: "Docker ən çox istinad edir: Liman işçisi, gəmilərin yüklənməsi", source: "wikipedia" });
+  const dockerPage = sD({ title: "Docker (proqram təminatı)", url: "https://az.wikipedia.org/wiki/Docker_(proqram_təminatı)", snippet: "Docker proqram təminatını konteynerlər adlanan paketlərdə çatdırmaq üçün", source: "wikipedia" });
+  assert("v24 məna ayrımı: 'Doker' səhifəsi Docker məqaləsindən aşağı", dockerPage > disamb, `page=${dockerPage} dis=${disamb}`);
 }
 
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);
