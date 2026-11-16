@@ -583,6 +583,72 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
   assert("v18.1 jina: real nəşr tarixi götürülür", jp.published_at === "2026-11-15T10:20:00.000Z", String(jp.published_at));
   const jpWiki = parseJinaMarkdown(jinaRaw, "https://az.wikipedia.org/wiki/Tərcümə");
   assert("v18.1 jina: Vikipediya redaktə tarixi published_at yazılmır", jpWiki.published_at === null, String(jpWiki.published_at));
+
+  // === v20: real test raundu (15 sual) tapıntıları ===
+  const sc = (r, q, ex = "") => scoreResult(r, tokenize(q + " " + ex), "az", q);
+  const casino = sc(
+    { title: "AZERBAYCANDA KAZİNO SAYTLARI 🎰", url: "https://casino-az.com", snippet: "ən yaxşı bonus 500 AZN qazanın", source: "brave" },
+    "ən yaxşı film saytları"
+  );
+  assert("v20 kazino: 'KAZİNO' (İ hərfi) də spam kimi tutulur", casino === 0, String(casino));
+  const punish = sc(
+    { title: "Türkiyədə ölüm cəzası", url: "https://en.wikipedia.org/wiki/Capital_punishment_in_Turkey", snippet: "Capital punishment in Turkey was abolished in 2004", source: "wikipedia" },
+    "Türkiyənin paytaxtı harasıdır",
+    "capital of Turkey"
+  );
+  const ankara = sc(
+    { title: "Ankara", url: "https://en.wikipedia.org/wiki/Ankara", snippet: "Ankara Türkiyənin paytaxtıdır", source: "wikipedia" },
+    "Türkiyənin paytaxtı harasıdır",
+    "capital of Turkey"
+  );
+  assert("v20 paytaxt: 'capital punishment' məqaləsi Ankara-dan aşağı düşür", punish < ankara, `punish=${punish} ankara=${ankara}`);
+  const noNum = sc(
+    { title: "Azərbaycanda islam", url: "https://en.wikipedia.org/wiki/Islam_in_Azerbaijan", snippet: "Azərbaycanda islam tarixi qədimdir", source: "wikipedia" },
+    "Azərbaycanda neçə universitet var"
+  );
+  const withNum = sc(
+    { title: "Azərbaycanda ali təhsil", url: "https://example.az/tehsil", snippet: "Azərbaycanda 51 universitet fəaliyyət göstərir", source: "brave" },
+    "Azərbaycanda neçə universitet var"
+  );
+  assert("v20 say sualı: rəqəmsiz səhifə cəzalanır", noNum < withNum, `noNum=${noNum} withNum=${withNum}`);
+  const rel = sc(
+    { title: "Azərbaycan–NATO münasibətləri", url: "https://az.wikipedia.org/wiki/Azərbaycan–NATO_münasibətləri", snippet: "Azərbaycan 2002-ci ildə assosiativ üzv oldu", source: "wikipedia" },
+    "NATO-ya üzv ölkələr hansılardır"
+  );
+  const members = sc(
+    { title: "NATO-ya üzv dövlətlər", url: "https://en.wikipedia.org/wiki/Member_states_of_NATO", snippet: "NATO 32 üzv dövlətdən ibarətdir", source: "wikipedia" },
+    "NATO-ya üzv ölkələr hansılardır"
+  );
+  assert("v20 siyahı sualı: 'münasibətləri' məqaləsi üzv siyahısından aşağı", rel < members, `rel=${rel} members=${members}`);
+  const oldSeason = sc(
+    { title: "2010–11 Azerbaijan Premier League", url: "https://en.wikipedia.org/wiki/2010–11_Azerbaijan_Premier_League", snippet: "2010-11 mövsümü", source: "wikipedia" },
+    "Azərbaycan Premyer Liqası cədvəli"
+  );
+  const curSeason = sc(
+    { title: "Azərbaycan Premyer Liqası 2026 cədvəli", url: "https://example.az/pl", snippet: "Canlı cədvəl, 10 komanda, 26 xal", source: "brave" },
+    "Azərbaycan Premyer Liqası cədvəli"
+  );
+  assert("v20 cədvəl sualı: köhnə mövsüm cəzalanır", oldSeason < curSeason, `old=${oldSeason} cur=${curSeason}`);
+  const brand = sc(
+    { title: "Kamp Kahvesi", url: "https://en.wikipedia.org/wiki/Camp_Coffee", snippet: "Camp Coffee is a brand of coffee and chicory essence", source: "wikipedia" },
+    "kahve nasıl yapılır"
+  );
+  const wiki = sc(
+    { title: "Mükemmel Kahve Nasıl Yapılır (Resimlerle)", url: "https://www.wikihow.com/Make-Perfect-Coffee", snippet: "Adım adım mükemmel kahve nasıl yapılır", source: "bing" },
+    "kahve nasıl yapılır"
+  );
+  assert("v20 təlimat sualı: brend məqaləsi təlimatdan aşağı", brand < wiki, `brand=${brand} wiki=${wiki}`);
+  const reactBad = sc(
+    { title: "useEffect - Reaksiya", url: "https://example.az/react-hooks", snippet: "Reaksiya komponenti xarici sistemlə sinxronlaşdırır", source: "bing" },
+    "React useEffect nə üçündür"
+  );
+  const reactGood = sc(
+    { title: "useEffect – React", url: "https://react.dev/reference/react/useEffect", snippet: "useEffect lets you synchronize a component with an external system", source: "brave" },
+    "React useEffect nə üçündür"
+  );
+  assert("v20 tərcüməli brend: 'Reaksiya' səhifəsi react.dev-dən aşağı", reactBad < reactGood, `bad=${reactBad} good=${reactGood}`);
+  const promoLine = cleanContent("APA.az xəbər verir ki, bu gün Bakıda görüş keçirilib. Bizi Telegram kanalımızda izləyin.");
+  assert("v20 filtr: promo cümləsi xəbər cümləsini yemir", promoLine.includes("görüş keçirilib") && !/Telegram/i.test(promoLine), promoLine);
 }
 
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);
