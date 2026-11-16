@@ -184,6 +184,7 @@ assert("conf: 3 hard xəta → hələ medium", computeConfidence([R({ providers:
 assert("conf: 4+ hard xəta → low (degraded)", computeConfidence([R({ providers: ["bing", "brave"], voteCount: 2 })], { tavily: "bad_request", brave: "rate_limited", ddg: "blocked", bing: "timeout" }, false) === "low");
 assert("conf: 2 provider + substantial → high", computeConfidence([R({ providers: ["bing", "brave"], voteCount: 2 })], { tavily: "bad_request" }, false) === "high");
 assert("conf: struktur API (kısa content belə) → high", computeConfidence([R({ source: "open-meteo", content: "Bakı hazırda: 10°C" })], {}, false) === "high");
+assert("v19 conf: zaif ballı nəticələr (AI → .ai domeni) high ALMIR", computeConfidence([R({ providers: ["bing", "brave"], voteCount: 2, score: 2.1, content: "x".repeat(400) }), R({ score: 2.4, content: "y".repeat(300) })], {}, false) === "medium");
 assert("conf: tək provider + qısa content → medium", computeConfidence([R({ content: "kısa" })], {}, false) === "medium");
 assert("conf: tək provider + substantial + soft xəta → medium", computeConfidence([R()], { github: "no_results", arxiv: "no_results" }, false) === "medium");
 

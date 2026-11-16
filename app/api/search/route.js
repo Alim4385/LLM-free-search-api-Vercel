@@ -2,7 +2,7 @@ import { searchAll } from "../../../lib/search.js";
 import { fetchAndExtract, buildDateInfo, normalizeValidIsoDate } from "../../../lib/extract.js";
 import { selectRelevantParagraphs, tokenize } from "../../../lib/rank.js";
 import { matchWeather, fetchWeather, weatherToText } from "../../../lib/weather.js";
-import { matchTime, fetchBakuTime, timeToText } from "../../../lib/time.js";
+import { matchTime, fetchTime, timeToText } from "../../../lib/time.js";
 import { matchCurrency, fetchCBAR, currencyToText } from "../../../lib/currency.js";
 import { scoreResult, diversifyByDomain, extractQuotedPhrases, containsPhrase, isSpamDomain, hostMatches, computeConfidence, isNewsQuery } from "../../../lib/score.js";
 import { cleanContent, cutWord, dedupeSnippet, detectQueryLanguage } from "../../../lib/clean.js";
@@ -13,7 +13,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
-const FILTER_VERSION = 26; // v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 27; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -153,9 +153,13 @@ async function handleSearch(body, req) {
   if (intentName === "weather") {
     try { weather = await fetchWeather(query); weatherText = weatherToText(weather); } catch { weather = null; }
   } else if (intentName === "time") {
-    try { timeData = await fetchBakuTime(); timeText = timeToText(timeData); } catch {}
+    try {
+      const pl = intentMatches.time.place || { tz: "Asia/Baku", label: "Azərbaycan" };
+      timeData = await fetchTime(pl.tz, pl.label);
+      timeText = timeToText(timeData);
+    } catch {}
   } else if (intentName === "currency") {
-    try { currencyData = await fetchCBAR(); currencyText = currencyToText(currencyData); } catch {}
+    try { currencyData = await fetchCBAR(); currencyText = currencyToText(currencyData, query); } catch {}
   }
 
   let searchQuery = query;
@@ -337,7 +341,7 @@ async function handleSearch(body, req) {
 
   const structured = [];
   if (weather && weatherText) structured.push({ title: `${weather.city} - hava məlumatı (Open-Meteo)`, url: "https://open-meteo.com", snippet: undefined, content: weatherText, source: "open-meteo", published_at: weather.fetched_at, updated_at: null, date_info: buildDateInfo(weather.fetched_at, null, reqLang), untrusted: false });
-  if (timeData && timeText) structured.push({ title: `Azərbaycanda hazırkı vaxt (Asia/Baku)`, url: "https://time.is/az/Baku", snippet: undefined, content: timeText, source: "asia-baku-time", published_at: timeData.fetched_at, updated_at: null, date_info: buildDateInfo(timeData.fetched_at, null, reqLang), untrusted: false });
+  if (timeData && timeText) structured.push({ title: `${timeData.place || "Azərbaycan"} üçün hazırkı vaxt (${timeData.timezone})`, url: "https://time.is", snippet: undefined, content: timeText, source: "asia-baku-time", published_at: timeData.fetched_at, updated_at: null, date_info: buildDateInfo(timeData.fetched_at, null, reqLang), untrusted: false });
   if (currencyData && currencyText) structured.push({ title: `Rəsmi valyuta məzənnəsi (CBAR)`, url: "https://www.cbar.az", snippet: undefined, content: currencyText, source: "cbar.az", published_at: currencyData.fetched_at, updated_at: null, date_info: buildDateInfo(currencyData.fetched_at, null, reqLang), untrusted: false });
   if (structured.length) {
     finalResults.unshift(...structured);
@@ -346,8 +350,9 @@ async function handleSearch(body, req) {
 
   // v15/v16 (Alim qaydası): sual hansı dildə verilibsə, cavab məzmununu da həmin dilə çevirib qaytar!
   let resultsTranslated = false;
-  if (shouldTranslateResults && finalResults.length > 0 && format !== "simple") {
-    const trBudget = Math.max(500, Math.min(2200, 8000 - (Date.now() - started)));
+  const HARD_DEADLINE_MS = 8000; // v19: maksimum cavab müddəti (Vercel limitinə düşməsin)
+  if (shouldTranslateResults && finalResults.length > 0 && format !== "simple" && Date.now() - started < HARD_DEADLINE_MS - 900) {
+    const trBudget = Math.max(400, Math.min(2200, HARD_DEADLINE_MS - 900 - (Date.now() - started)));
     resultsTranslated = await translateResultsToQueryLang(finalResults, reqLang, trBudget, 1600);
     if (resultsTranslated) {
       for (const r of finalResults) {
