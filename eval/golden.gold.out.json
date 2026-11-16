@@ -1,21 +1,21 @@
 {
  "repeats": 3,
  "topK": 3,
- "answerOk": 53,
- "retrievalOk": 64,
+ "answerOk": 60,
+ "retrievalOk": 69,
  "rows": [
   {
    "q": "Azərbaycanın əhalisi nə qədərdir",
    "type": "count",
    "answer": "0/3",
-   "retrieval": "2/3",
+   "retrieval": "1/3",
    "status": "FAIL",
    "why": "no-num+unit,no-num+unit,no-num+unit",
    "top": "Azərbaycan əhalisi",
-   "ms": 2696,
+   "ms": 1277,
    "cached": 0,
    "degraded": "",
-   "providers": "wikipedia,bing,google-news,brave"
+   "providers": "bing,wikipedia,brave,google-news"
   },
   {
    "q": "Bakı metrosunda neçə stansiya var",
@@ -25,33 +25,33 @@
    "status": "FAIL",
    "why": "no-number,no-number,no-number",
    "top": "Bakı metrosu",
-   "ms": 1242,
+   "ms": 1420,
    "cached": 0,
    "degraded": "",
-   "providers": "bing,wikipedia,brave,google-news"
+   "providers": "bing,wikipedia,google-news,brave"
   },
   {
    "q": "Xəzər dənizinin sahəsi nə qədərdir",
    "type": "count",
    "answer": "0/3",
-   "retrieval": "1/3",
+   "retrieval": "2/3",
    "status": "FAIL",
    "why": "no-number,no-number,no-number",
    "top": "Xəzər dənizi",
-   "ms": 2357,
+   "ms": 2930,
    "cached": 0,
    "degraded": "",
-   "providers": "wikipedia,bing,google-news,brave"
+   "providers": "bing,wikipedia,brave,google-news"
   },
   {
    "q": "Python-da list ilə tuple arasındakı fərq nədir",
    "type": "compare",
-   "answer": "2/3",
-   "retrieval": "2/3",
+   "answer": "1/3",
+   "retrieval": "1/3",
    "status": "UNSTABLE",
-   "why": "ok,ok,missing:list",
+   "why": "ok,missing:list,missing:list",
    "top": "Difference Between List and Tuple in Pyt",
-   "ms": 2174,
+   "ms": 1159,
    "cached": 0,
    "degraded": "translate_skipped_tech",
    "providers": "bing,wikipedia,github,google-news,brave"
@@ -60,27 +60,27 @@
    "q": "React useEffect nə vaxt işləyir",
    "type": "howto",
    "answer": "3/3",
-   "retrieval": "2/3",
+   "retrieval": "3/3",
    "status": "PASS",
    "why": "ok,ok,ok",
-   "top": "GitHub - Kaecio/useEffect-hook-React: Ho",
-   "ms": 2791,
+   "top": "How does react useEffect work with useSt",
+   "ms": 2124,
    "cached": 0,
    "degraded": "translate_skipped_tech",
-   "providers": "bing,stackoverflow,wikipedia,github,google-news,hacker-news,arxiv,brave"
+   "providers": "arxiv,stackoverflow,hacker-news,wikipedia,google-news,github,bing,brave"
   },
   {
    "q": "Nobel mükafatı ilk dəfə nə vaxt verilib",
    "type": "date",
-   "answer": "2/3",
-   "retrieval": "2/3",
-   "status": "UNSTABLE",
-   "why": "year,year,no-year",
-   "top": "\"Nobel\" sülh mükafatı",
-   "ms": 3749,
-   "cached": 0,
+   "answer": "3/3",
+   "retrieval": "3/3",
+   "status": "PASS",
+   "why": "year,year,year",
+   "top": "Nobel Mükafatı",
+   "ms": 3127,
+   "cached": 1,
    "degraded": "",
-   "providers": "wikipedia,bing,google-news,brave"
+   "providers": "bing,wikipedia,google-news,brave"
   },
   {
    "q": "Fransanın paytaxtı haradır",
@@ -90,10 +90,10 @@
    "status": "UNSTABLE",
    "why": "ok,none-of-any,none-of-any",
    "top": "Paris Salonu",
-   "ms": 3592,
+   "ms": 1966,
    "cached": 0,
    "degraded": "",
-   "providers": "wikipedia,bing,google-news"
+   "providers": "bing,wikipedia,google-news"
   },
   {
    "q": "Türkiyədə saat neçədir",
@@ -103,7 +103,7 @@
    "status": "PASS",
    "why": "ok,ok,ok",
    "top": "Türkiyə üçün hazırkı vaxt (Europe/Istanb",
-   "ms": 117,
+   "ms": 167,
    "cached": 0,
    "degraded": "",
    "providers": ""
@@ -116,8 +116,8 @@
    "status": "PASS",
    "why": "ok,ok,ok",
    "top": "Rəsmi valyuta məzənnəsi (CBAR)",
-   "ms": 1216,
-   "cached": 0,
+   "ms": 1092,
+   "cached": 1,
    "degraded": "",
    "providers": ""
   },
@@ -129,8 +129,8 @@
    "status": "PASS",
    "why": "ok,ok,ok",
    "top": "Bakı - hava məlumatı (Open-Meteo)",
-   "ms": 241,
-   "cached": 0,
+   "ms": 142,
+   "cached": 1,
    "degraded": "",
    "providers": ""
   },
@@ -142,23 +142,23 @@
    "status": "PASS",
    "why": "ok,ok,ok",
    "top": "What is a SQL JOIN, and what are the dif",
-   "ms": 2675,
-   "cached": 0,
-   "degraded": "translate_skipped_tech",
-   "providers": "bing,wikipedia,stackoverflow,hacker-news,google-news,arxiv,github,brave"
+   "ms": 1367,
+   "cached": 1,
+   "degraded": "translate_skipped_tech|extract_timeout",
+   "providers": "arxiv,hacker-news,wikipedia,stackoverflow,bing,github,google-news,brave"
   },
   {
    "q": "Docker nədir",
    "type": "definition",
-   "answer": "1/3",
+   "answer": "3/3",
    "retrieval": "3/3",
-   "status": "UNSTABLE",
-   "why": "ok,missing:konteyner,missing:konteyner",
+   "status": "PASS",
+   "why": "ok,ok,ok",
    "top": "Docker",
-   "ms": 3100,
-   "cached": 0,
-   "degraded": "translate_skipped_tech",
-   "providers": "wikipedia,bing,github,google-news"
+   "ms": 2710,
+   "cached": 1,
+   "degraded": "translate_skipped_tech|extract_timeout",
+   "providers": "bing,wikipedia,github,google-news,brave"
   },
   {
    "q": "Kantın kateqorik imperativi nədir",
@@ -168,10 +168,10 @@
    "status": "UNSTABLE",
    "why": "ok,missing:kateqorik imperativ,missing:kateqorik imperativ",
    "top": "Kateqorik imperativ",
-   "ms": 2936,
+   "ms": 3000,
    "cached": 0,
    "degraded": "",
-   "providers": "wikipedia,bing,google-news,brave"
+   "providers": "bing,wikipedia,google-news"
   },
   {
    "q": "Python-da virtual mühit necə yaradılır",
@@ -181,10 +181,10 @@
    "status": "PASS",
    "why": "ok,ok,ok",
    "top": "GitHub - microvenv: A minimal re-impleme",
-   "ms": 2171,
+   "ms": 2829,
    "cached": 1,
    "degraded": "translate_skipped_tech|extract_timeout",
-   "providers": "stackoverflow,wikipedia,github,hacker-news,bing,google-news,brave,arxiv"
+   "providers": "arxiv,stackoverflow,bing,hacker-news,github,wikipedia,google-news,brave"
   },
   {
    "q": "Linux-da faylı necə silmək olar",
@@ -194,36 +194,36 @@
    "status": "PASS",
    "why": "ok,ok,ok",
    "top": "How to Remove (Delete) Files and Directo",
-   "ms": 2143,
+   "ms": 1841,
    "cached": 1,
    "degraded": "translate_skipped_tech|extract_timeout",
-   "providers": "stackoverflow,bing,wikipedia,hacker-news,github,brave,arxiv,google-news"
+   "providers": "arxiv,hacker-news,wikipedia,stackoverflow,github,bing,brave,google-news"
   },
   {
    "q": "Coroutine nədir Kotlin",
    "type": "definition",
    "answer": "0/3",
-   "retrieval": "2/3",
+   "retrieval": "3/3",
    "status": "FAIL",
    "why": "missing:korutin,missing:korutin,missing:korutin",
    "top": "Coroutine",
-   "ms": 2319,
+   "ms": 2486,
    "cached": 1,
    "degraded": "translate_skipped_tech|extract_timeout",
-   "providers": "bing,wikipedia,google-news,brave"
+   "providers": "wikipedia,bing,brave,google-news"
   },
   {
    "q": "Azərbaycanda minimum əmək haqqı nə qədərdir",
    "type": "count",
-   "answer": "3/3",
-   "retrieval": "3/3",
-   "status": "PASS",
-   "why": "ok,ok,ok",
+   "answer": "2/3",
+   "retrieval": "2/3",
+   "status": "UNSTABLE",
+   "why": "ok,ok,no-num+unit",
    "top": "Minimum əmək haqqı 2026 və yaşayış minim",
-   "ms": 1371,
-   "cached": 2,
+   "ms": 2352,
+   "cached": 1,
    "degraded": "",
-   "providers": "bing,wikipedia,google-news,brave"
+   "providers": "google-news,wikipedia,bing,brave"
   },
   {
    "q": "HTTP ilə HTTPS arasındakı fərq nədir",
@@ -231,9 +231,9 @@
    "answer": "2/3",
    "retrieval": "2/3",
    "status": "UNSTABLE",
-   "why": "ok,ok,missing:https",
+   "why": "ok,missing:https,ok",
    "top": "HTTP/2",
-   "ms": 2737,
+   "ms": 1023,
    "cached": 1,
    "degraded": "",
    "providers": "bing,wikipedia,google-news,brave"
@@ -241,28 +241,28 @@
   {
    "q": "Nizami Gəncəvinin əsərləri hansılardır",
    "type": "list",
-   "answer": "0/3",
+   "answer": "1/3",
    "retrieval": "1/3",
-   "status": "FAIL",
-   "why": "none-of-any,none-of-any,none-of-any",
+   "status": "UNSTABLE",
+   "why": "ok,none-of-any,none-of-any",
    "top": "Nizami Gəncəvi",
-   "ms": 3269,
+   "ms": 4392,
    "cached": 0,
    "degraded": "",
-   "providers": "wikipedia,bing,google-news"
+   "providers": "bing,wikipedia,google-news,brave"
   },
   {
    "q": "JavaScript-də map ilə forEach fərqi nədir",
    "type": "compare",
    "answer": "3/3",
-   "retrieval": "3/3",
+   "retrieval": "1/3",
    "status": "PASS",
    "why": "ok,ok,ok",
    "top": "arrays - JavaScript: Difference between ",
-   "ms": 991,
-   "cached": 2,
-   "degraded": "translate_skipped_tech|extract_timeout",
-   "providers": "bing,wikipedia,github,google-news,brave"
+   "ms": 4159,
+   "cached": 0,
+   "degraded": "translate_skipped_tech",
+   "providers": "bing,wikipedia,google-news,github,brave"
   },
   {
    "q": "Docker ilə virtual maşın arasındakı fərq",
@@ -272,49 +272,49 @@
    "status": "FAIL",
    "why": "missing:konteyner,missing:konteyner,missing:konteyner",
    "top": "How is Docker different from a virtual m",
-   "ms": 2803,
-   "cached": 1,
-   "degraded": "translate_skipped_tech|extract_timeout",
-   "providers": "stackoverflow,bing,wikipedia,github,google-news,hacker-news,arxiv,brave"
+   "ms": 3470,
+   "cached": 0,
+   "degraded": "translate_skipped_tech",
+   "providers": "arxiv,bing,stackoverflow,wikipedia,github,hacker-news,google-news"
   },
   {
    "q": "Azərbaycan Neft Fondu nə vaxt yaradılıb",
    "type": "date",
    "answer": "2/3",
-   "retrieval": "1/3",
-   "status": "UNSTABLE",
-   "why": "year,no-year,year",
-   "top": "Azərbaycan Dövlət Neft Fondu",
-   "ms": 3036,
-   "cached": 0,
-   "degraded": "",
-   "providers": "bing,wikipedia,google-news"
-  },
-  {
-   "q": "Xocalı faciəsi nə vaxt olub",
-   "type": "date",
-   "answer": "2/3",
    "retrieval": "2/3",
    "status": "UNSTABLE",
    "why": "year,no-year,year",
-   "top": "Xocalı qətliamı",
-   "ms": 2129,
+   "top": "Azərbaycan Dövlət Neft Fondu",
+   "ms": 1809,
    "cached": 1,
    "degraded": "",
-   "providers": "bing,wikipedia,google-news,brave"
+   "providers": "bing,google-news,wikipedia,brave"
   },
   {
-   "q": "Rusiya-Ukrayna müharibəsi nə vaxt başladı",
+   "q": "Xocalı faciəsi nə vaxt olub",
    "type": "date",
    "answer": "1/3",
    "retrieval": "1/3",
    "status": "UNSTABLE",
    "why": "year,no-year,no-year",
-   "top": "Rusiya–Ukrayna müharibəsi (2022–hazırda)",
-   "ms": 1965,
+   "top": "Xocalı qətliamı",
+   "ms": 1896,
    "cached": 0,
    "degraded": "",
    "providers": "bing,wikipedia,google-news"
+  },
+  {
+   "q": "Rusiya-Ukrayna müharibəsi nə vaxt başladı",
+   "type": "date",
+   "answer": "2/3",
+   "retrieval": "2/3",
+   "status": "UNSTABLE",
+   "why": "year,no-year,year",
+   "top": "Rusiya–Ukrayna müharibəsi",
+   "ms": 982,
+   "cached": 1,
+   "degraded": "",
+   "providers": "bing,wikipedia,google-news,brave"
   },
   {
    "q": "Bakıda neçə universitet var",
@@ -322,9 +322,9 @@
    "answer": "2/3",
    "retrieval": "2/3",
    "status": "UNSTABLE",
-   "why": "ok,ok,no-num+unit",
+   "why": "ok,no-num+unit,ok",
    "top": "Bakı Dövlət Universiteti",
-   "ms": 663,
+   "ms": 1169,
    "cached": 1,
    "degraded": "",
    "providers": "bing,wikipedia,google-news,brave"
@@ -332,54 +332,54 @@
   {
    "q": "GPT-5 nə vaxt çıxdı",
    "type": "date",
-   "answer": "0/3",
-   "retrieval": "0/3",
-   "status": "FAIL",
-   "why": "no-year,no-year,no-year",
+   "answer": "2/3",
+   "retrieval": "2/3",
+   "status": "UNSTABLE",
+   "why": "year,no-year,year",
    "top": "GitHub - cactus-compute/cactus-hybrid: O",
-   "ms": 1447,
-   "cached": 0,
-   "degraded": "translate_skipped_tech",
-   "providers": "arxiv,wikipedia,stackoverflow,bing,google-news,hacker-news"
+   "ms": 1939,
+   "cached": 1,
+   "degraded": "translate_skipped_tech|extract_timeout",
+   "providers": "arxiv,bing,stackoverflow,wikipedia,google-news,hacker-news,brave"
   },
   {
    "q": "how does DNS work",
    "type": "howto",
-   "answer": "2/3",
+   "answer": "3/3",
    "retrieval": "2/3",
-   "status": "UNSTABLE",
-   "why": "ok,ok,missing:dns",
-   "top": "What is DNS?",
-   "ms": 635,
+   "status": "PASS",
+   "why": "ok,ok,ok",
+   "top": "Multicast DNS",
+   "ms": 581,
    "cached": 1,
    "degraded": "translate_skipped_tech|extract_timeout",
-   "providers": "bing,wikipedia,google-news,brave"
+   "providers": "bing,wikipedia,google-news"
   },
   {
    "q": "dünyanın ən böyük səhrası hansıdır",
    "type": "list",
    "answer": "1/3",
-   "retrieval": "1/3",
+   "retrieval": "2/3",
    "status": "UNSTABLE",
-   "why": "must_not:sahara,ok,none-of-any",
+   "why": "must_not:sahara,ok,must_not:sahara",
    "top": "Ərəb səhrası",
-   "ms": 3462,
-   "cached": 0,
+   "ms": 1233,
+   "cached": 1,
    "degraded": "",
-   "providers": "bing,wikipedia,google-news"
+   "providers": "wikipedia,bing,google-news"
   },
   {
    "q": "Python-da fayl oxuma necə olur",
    "type": "howto",
-   "answer": "2/3",
-   "retrieval": "2/3",
-   "status": "UNSTABLE",
-   "why": "ok,ok,code:open(",
+   "answer": "3/3",
+   "retrieval": "3/3",
+   "status": "PASS",
+   "why": "ok,ok,ok",
    "top": "How to read a file line-by-line into a l",
-   "ms": 2570,
-   "cached": 0,
-   "degraded": "translate_skipped_tech",
-   "providers": "stackoverflow,wikipedia,bing,hacker-news,github,arxiv,google-news"
+   "ms": 1136,
+   "cached": 1,
+   "degraded": "translate_skipped_tech|extract_timeout",
+   "providers": "arxiv,stackoverflow,bing,github,wikipedia,hacker-news,google-news"
   },
   {
    "q": "Azərbaycanda pambıq istehsalı nə qədərdir",
@@ -388,11 +388,11 @@
    "retrieval": "0/3",
    "status": "FAIL",
    "why": "no-num+unit,no-num+unit,no-num+unit",
-   "top": "Azərbaycanda pambıq istehsalı",
-   "ms": 3010,
+   "top": "",
+   "ms": 656,
    "cached": 0,
    "degraded": "",
-   "providers": "bing,wikipedia,google-news"
+   "providers": "bing,google-news"
   }
  ],
  "runs": [
@@ -401,22 +401,7 @@
     "answer": false,
     "retrieval": true,
     "why": "no-num+unit",
-    "ms": 4191,
-    "cached": false,
-    "degraded": [],
-    "providers": [
-     "wikipedia",
-     "bing",
-     "google-news",
-     "brave"
-    ],
-    "top": "Azərbaycan əhalisi"
-   },
-   {
-    "answer": false,
-    "retrieval": true,
-    "why": "no-number",
-    "ms": 2577,
+    "ms": 2819,
     "cached": false,
     "degraded": [],
     "providers": [
@@ -425,20 +410,35 @@
      "brave",
      "google-news"
     ],
+    "top": "Azərbaycan əhalisi"
+   },
+   {
+    "answer": false,
+    "retrieval": true,
+    "why": "no-number",
+    "ms": 3195,
+    "cached": false,
+    "degraded": [],
+    "providers": [
+     "bing",
+     "wikipedia",
+     "google-news",
+     "brave"
+    ],
     "top": "Bakı metrosu"
    },
    {
     "answer": false,
     "retrieval": true,
     "why": "no-number",
-    "ms": 5745,
+    "ms": 4028,
     "cached": false,
     "degraded": [],
     "providers": [
-     "wikipedia",
      "bing",
-     "google-news",
-     "brave"
+     "wikipedia",
+     "brave",
+     "google-news"
     ],
     "top": "Xəzər dənizi"
    },
@@ -446,7 +446,7 @@
     "answer": true,
     "retrieval": true,
     "why": "ok",
-    "ms": 2511,
+    "ms": 2356,
     "cached": false,
     "degraded": [
      "translate_skipped_tech"
@@ -462,50 +462,49 @@
    },
    {
     "answer": true,
-    "retrieval": false,
+    "retrieval": true,
     "why": "ok",
-    "ms": 2835,
+    "ms": 4146,
     "cached": false,
     "degraded": [
      "translate_skipped_tech"
     ],
     "providers": [
-     "bing",
-     "stackoverflow",
-     "wikipedia",
-     "github",
-     "google-news",
-     "hacker-news",
      "arxiv",
+     "stackoverflow",
+     "hacker-news",
+     "wikipedia",
+     "google-news",
+     "github",
+     "bing",
      "brave"
     ],
-    "top": "GitHub - Kaecio/useEffect-hook-React: Ho"
+    "top": "How does react useEffect work with useSt"
    },
    {
     "answer": true,
     "retrieval": true,
     "why": "year",
-    "ms": 4984,
+    "ms": 5368,
     "cached": false,
     "degraded": [],
     "providers": [
-     "wikipedia",
      "bing",
-     "google-news",
-     "brave"
+     "wikipedia",
+     "google-news"
     ],
-    "top": "\"Nobel\" sülh mükafatı"
+    "top": "Nobel Mükafatı"
    },
    {
     "answer": true,
     "retrieval": true,
     "why": "ok",
-    "ms": 6298,
+    "ms": 4202,
     "cached": false,
     "degraded": [],
     "providers": [
-     "wikipedia",
      "bing",
+     "wikipedia",
      "google-news"
     ],
     "top": "Paris Salonu"
@@ -514,7 +513,7 @@
     "answer": true,
     "retrieval": true,
     "why": "ok",
-    "ms": 110,
+    "ms": 97,
     "cached": false,
     "degraded": [],
     "providers": [],
@@ -524,7 +523,7 @@
     "answer": true,
     "retrieval": true,
     "why": "ok",
-    "ms": 1016,
+    "ms": 1234,
     "cached": false,
     "degraded": [],
     "providers": [],
@@ -534,7 +533,7 @@
     "answer": true,
     "retrieval": true,
     "why": "ok",
-    "ms": 187,
+    "ms": 169,
     "cached": false,
     "degraded": [],
     "providers": [],
@@ -544,19 +543,19 @@
     "answer": true,
     "retrieval": true,
     "why": "ok",
-    "ms": 3718,
+    "ms": 2046,
     "cached": false,
     "degraded": [
      "translate_skipped_tech"
     ],
     "providers": [
-     "bing",
+     "arxiv",
+     "hacker-news",
      "wikipedia",
      "stackoverflow",
-     "hacker-news",
-     "google-news",
-     "arxiv",
+     "bing",
      "github",
+     "google-news",
      "brave"
     ],
     "top": "What is a SQL JOIN, and what are the dif"
@@ -565,14 +564,14 @@
     "answer": true,
     "retrieval": true,
     "why": "ok",
-    "ms": 3454,
+    "ms": 4062,
     "cached": false,
     "degraded": [
      "translate_skipped_tech"
     ],
     "providers": [
-     "wikipedia",
      "bing",
+     "wikipedia",
      "github",
      "google-news"
     ],
@@ -582,14 +581,13 @@
     "answer": true,
     "retrieval": true,
     "why": "ok",
-    "ms": 2095,
+    "ms": 4082,
     "cached": false,
     "degraded": [],
     "providers": [
-     "wikipedia",
      "bing",
-     "google-news",
-     "brave"
+     "wikipedia",
+     "google-news"
     ],
     "top": "Kateqorik imperativ"
    },
@@ -597,20 +595,19 @@
     "answer": true,
     "retrieval": true,
     "why": "ok",
-    "ms": 4933,
+    "ms": 4094,
     "cached": false,
     "degraded": [
      "translate_skipped_tech"
     ],
     "providers": [
+     "arxiv",
      "stackoverflow",
-     "wikipedia",
-     "github",
-     "hacker-news",
      "bing",
-     "google-news",
-     "brave",
-     "arxiv"
+     "hacker-news",
+     "github",
+     "wikipedia",
+     "google-news"
     ],
     "top": "GitHub - microvenv: A minimal re-impleme"
    },
@@ -618,19 +615,19 @@
     "answer": true,
     "retrieval": true,
     "why": "ok",
-    "ms": 2852,
+    "ms": 2375,
     "cached": false,
     "degraded": [
      "translate_skipped_tech"
     ],
     "providers": [
-     "stackoverflow",
-     "bing",
-     "wikipedia",
-     "hacker-news",
-     "github",
-     "brave",
      "arxiv",
+     "hacker-news",
+     "wikipedia",
+     "stackoverflow",
+     "github",
+     "bing",
+     "brave",
      "google-news"
     ],
     "top": "How to Remove (Delete) Files and Directo"
@@ -639,16 +636,16 @@
     "answer": false,
     "retrieval": true,
     "why": "missing:korutin",
-    "ms": 4160,
+    "ms": 3202,
     "cached": false,
     "degraded": [
      "translate_skipped_tech"
     ],
     "providers": [
-     "bing",
      "wikipedia",
-     "google-news",
-     "brave"
+     "bing",
+     "brave",
+     "google-news"
     ],
     "top": "Coroutine"
    },
@@ -656,13 +653,13 @@
     "answer": true,
     "retrieval": true,
     "why": "ok",
-    "ms": 3911,
+    "ms": 4702,
     "cached": false,
     "degraded": [],
     "providers": [
-     "bing",
-     "wikipedia",
      "google-news",
+     "wikipedia",
+     "bing",
      "brave"
     ],
     "top": "Minimum əmək haqqı 2026 və yaşayış minim"
@@ -671,7 +668,7 @@
     "answer": true,
     "retrieval": true,
     "why": "ok",
-    "ms": 4613,
+    "ms": 2136,
     "cached": false,
     "degraded": [],
     "providers": [
@@ -683,16 +680,17 @@
     "top": "HTTP/2"
    },
    {
-    "answer": false,
+    "answer": true,
     "retrieval": true,
-    "why": "none-of-any",
-    "ms": 5422,
+    "why": "ok",
+    "ms": 5878,
     "cached": false,
     "degraded": [],
     "providers": [
-     "wikipedia",
      "bing",
-     "google-news"
+     "wikipedia",
+     "google-news",
+     "brave"
     ],
     "top": "Nizami Gəncəvi"
    },
@@ -700,7 +698,7 @@
     "answer": true,
     "retrieval": true,
     "why": "ok",
-    "ms": 2779,
+    "ms": 4113,
     "cached": false,
     "degraded": [
      "translate_skipped_tech"
@@ -708,8 +706,8 @@
     "providers": [
      "bing",
      "wikipedia",
-     "github",
      "google-news",
+     "github",
      "brave"
     ],
     "top": "arrays - JavaScript: Difference between "
@@ -718,20 +716,19 @@
     "answer": false,
     "retrieval": true,
     "why": "missing:konteyner",
-    "ms": 3912,
+    "ms": 5083,
     "cached": false,
     "degraded": [
      "translate_skipped_tech"
     ],
     "providers": [
-     "stackoverflow",
+     "arxiv",
      "bing",
+     "stackoverflow",
      "wikipedia",
      "github",
-     "google-news",
      "hacker-news",
-     "arxiv",
-     "brave"
+     "google-news"
     ],
     "top": "How is Docker different from a virtual m"
    },
@@ -739,13 +736,14 @@
     "answer": true,
     "retrieval": true,
     "why": "year",
-    "ms": 2461,
+    "ms": 2836,
     "cached": false,
     "degraded": [],
     "providers": [
      "bing",
+     "google-news",
      "wikipedia",
-     "google-news"
+     "brave"
     ],
     "top": "Azərbaycan Dövlət Neft Fondu"
    },
@@ -753,7 +751,21 @@
     "answer": true,
     "retrieval": true,
     "why": "year",
-    "ms": 3608,
+    "ms": 2305,
+    "cached": false,
+    "degraded": [],
+    "providers": [
+     "bing",
+     "wikipedia",
+     "google-news"
+    ],
+    "top": "Xocalı qətliamı"
+   },
+   {
+    "answer": true,
+    "retrieval": true,
+    "why": "year",
+    "ms": 1714,
     "cached": false,
     "degraded": [],
     "providers": [
@@ -762,27 +774,13 @@
      "google-news",
      "brave"
     ],
-    "top": "Xocalı qətliamı"
-   },
-   {
-    "answer": true,
-    "retrieval": true,
-    "why": "year",
-    "ms": 2491,
-    "cached": false,
-    "degraded": [],
-    "providers": [
-     "bing",
-     "wikipedia",
-     "google-news"
-    ],
-    "top": "Rusiya–Ukrayna müharibəsi (2022–hazırda)"
+    "top": "Rusiya–Ukrayna müharibəsi"
    },
    {
     "answer": true,
     "retrieval": true,
     "why": "ok",
-    "ms": 1775,
+    "ms": 2869,
     "cached": false,
     "degraded": [],
     "providers": [
@@ -794,21 +792,22 @@
     "top": "Bakı Dövlət Universiteti"
    },
    {
-    "answer": false,
-    "retrieval": false,
-    "why": "no-year",
-    "ms": 1991,
+    "answer": true,
+    "retrieval": true,
+    "why": "year",
+    "ms": 4464,
     "cached": false,
     "degraded": [
      "translate_skipped_tech"
     ],
     "providers": [
      "arxiv",
-     "wikipedia",
-     "stackoverflow",
      "bing",
+     "stackoverflow",
+     "wikipedia",
      "google-news",
-     "hacker-news"
+     "hacker-news",
+     "brave"
     ],
     "top": "GitHub - cactus-compute/cactus-hybrid: O"
    },
@@ -816,7 +815,7 @@
     "answer": true,
     "retrieval": true,
     "why": "ok",
-    "ms": 1677,
+    "ms": 722,
     "cached": false,
     "degraded": [
      "translate_skipped_tech"
@@ -824,21 +823,20 @@
     "providers": [
      "bing",
      "wikipedia",
-     "google-news",
-     "brave"
+     "google-news"
     ],
-    "top": "What is DNS?"
+    "top": "Multicast DNS"
    },
    {
     "answer": false,
     "retrieval": true,
     "why": "must_not:sahara",
-    "ms": 5494,
+    "ms": 2646,
     "cached": false,
     "degraded": [],
     "providers": [
-     "bing",
      "wikipedia",
+     "bing",
      "google-news"
     ],
     "top": "Ərəb səhrası"
@@ -847,18 +845,18 @@
     "answer": true,
     "retrieval": true,
     "why": "ok",
-    "ms": 3726,
+    "ms": 1899,
     "cached": false,
     "degraded": [
      "translate_skipped_tech"
     ],
     "providers": [
-     "stackoverflow",
-     "wikipedia",
-     "bing",
-     "hacker-news",
-     "github",
      "arxiv",
+     "stackoverflow",
+     "bing",
+     "github",
+     "wikipedia",
+     "hacker-news",
      "google-news"
     ],
     "top": "How to read a file line-by-line into a l"
@@ -867,23 +865,48 @@
     "answer": false,
     "retrieval": false,
     "why": "no-num+unit",
-    "ms": 5297,
+    "ms": 962,
     "cached": false,
     "degraded": [],
     "providers": [
      "bing",
-     "wikipedia",
      "google-news"
     ],
-    "top": "Azərbaycanda pambıq istehsalı"
+    "top": ""
    }
   ],
   [
    {
     "answer": false,
-    "retrieval": true,
+    "retrieval": false,
     "why": "no-num+unit",
-    "ms": 2654,
+    "ms": 574,
+    "cached": false,
+    "degraded": [],
+    "providers": [
+     "bing",
+     "google-news"
+    ],
+    "top": ""
+   },
+   {
+    "answer": false,
+    "retrieval": false,
+    "why": "no-number",
+    "ms": 521,
+    "cached": false,
+    "degraded": [],
+    "providers": [
+     "bing",
+     "google-news"
+    ],
+    "top": ""
+   },
+   {
+    "answer": false,
+    "retrieval": true,
+    "why": "no-number",
+    "ms": 3858,
     "cached": false,
     "degraded": [],
     "providers": [
@@ -891,68 +914,38 @@
      "brave",
      "google-news"
     ],
-    "top": "Azərbaycanın əhalisi | Azərbaycan Respub"
+    "top": "Xəzər dənizi"
    },
    {
     "answer": false,
     "retrieval": false,
-    "why": "no-number",
-    "ms": 542,
+    "why": "missing:list",
+    "ms": 512,
     "cached": false,
     "degraded": [],
     "providers": [
+     "github",
      "bing",
      "google-news"
     ],
     "top": ""
    },
    {
-    "answer": false,
-    "retrieval": false,
-    "why": "no-number",
-    "ms": 564,
-    "cached": false,
-    "degraded": [],
-    "providers": [
-     "google-news",
-     "bing"
-    ],
-    "top": ""
-   },
-   {
     "answer": true,
     "retrieval": true,
     "why": "ok",
-    "ms": 2975,
-    "cached": false,
-    "degraded": [
-     "translate_skipped_tech"
-    ],
-    "providers": [
-     "google-news",
-     "github",
-     "bing",
-     "brave"
-    ],
-    "top": "Difference Between List and Tuple in Pyt"
-   },
-   {
-    "answer": true,
-    "retrieval": true,
-    "why": "ok",
-    "ms": 3923,
+    "ms": 1051,
     "cached": false,
     "degraded": [
      "translate_skipped_tech"
     ],
     "providers": [
      "arxiv",
-     "github",
-     "hacker-news",
      "stackoverflow",
      "bing",
-     "google-news",
-     "brave"
+     "github",
+     "hacker-news",
+     "google-news"
     ],
     "top": "How does react useEffect work with useSt"
    },
@@ -960,7 +953,7 @@
     "answer": true,
     "retrieval": true,
     "why": "year",
-    "ms": 3445,
+    "ms": 3912,
     "cached": false,
     "degraded": [],
     "providers": [
@@ -974,7 +967,7 @@
     "answer": false,
     "retrieval": false,
     "why": "none-of-any",
-    "ms": 3174,
+    "ms": 812,
     "cached": false,
     "degraded": [],
     "providers": [
@@ -987,7 +980,7 @@
     "answer": true,
     "retrieval": true,
     "why": "ok",
-    "ms": 120,
+    "ms": 303,
     "cached": false,
     "degraded": [],
     "providers": [],
@@ -997,7 +990,7 @@
     "answer": true,
     "retrieval": true,
     "why": "ok",
-    "ms": 1631,
+    "ms": 1942,
     "cached": false,
     "degraded": [],
     "providers": [],
@@ -1007,7 +1000,7 @@
     "answer": true,
     "retrieval": true,
     "why": "ok",
-    "ms": 166,
+    "ms": 167,
     "cached": false,
     "degraded": [],
     "providers": [],
@@ -1017,69 +1010,69 @@
     "answer": true,
     "retrieval": true,
     "why": "ok",
-    "ms": 2511,
+    "ms": 1963,
     "cached": false,
     "degraded": [
      "translate_skipped_tech"
     ],
     "providers": [
      "arxiv",
-     "github",
-     "stackoverflow",
      "bing",
+     "stackoverflow",
      "hacker-news",
+     "github",
+     "brave",
      "google-news"
     ],
     "top": "What is a SQL JOIN, and what are the dif"
    },
    {
-    "answer": false,
+    "answer": true,
     "retrieval": true,
-    "why": "missing:konteyner",
-    "ms": 3983,
+    "why": "ok",
+    "ms": 3924,
     "cached": false,
     "degraded": [
      "translate_skipped_tech"
     ],
     "providers": [
-     "github",
      "bing",
-     "google-news"
+     "github",
+     "google-news",
+     "brave"
     ],
-    "top": "What is Docker? - GeeksforGeeks"
+    "top": "Docker (proqram)"
    },
    {
     "answer": false,
     "retrieval": false,
     "why": "missing:kateqorik imperativ",
-    "ms": 3694,
+    "ms": 3960,
     "cached": false,
     "degraded": [],
     "providers": [
      "bing",
      "google-news"
     ],
-    "top": ""
+    "top": "Fəlsəfə və Stolüstü Oyunlar: Kateqorik İ"
    },
    {
     "answer": true,
     "retrieval": true,
     "why": "ok",
-    "ms": 90,
-    "cached": true,
+    "ms": 4291,
+    "cached": false,
     "degraded": [
-     "translate_skipped_tech",
-     "extract_timeout"
+     "translate_skipped_tech"
     ],
     "providers": [
+     "arxiv",
      "stackoverflow",
-     "wikipedia",
-     "github",
-     "hacker-news",
      "bing",
+     "hacker-news",
+     "github",
      "google-news",
-     "brave",
-     "arxiv"
+     "brave"
     ],
     "top": "GitHub - microvenv: A minimal re-impleme"
    },
@@ -1087,7 +1080,7 @@
     "answer": true,
     "retrieval": true,
     "why": "ok",
-    "ms": 3470,
+    "ms": 3043,
     "cached": false,
     "degraded": [
      "translate_skipped_tech"
@@ -1098,95 +1091,89 @@
      "bing",
      "hacker-news",
      "github",
-     "google-news"
+     "google-news",
+     "brave"
     ],
-    "top": "Linux delete file with size 0"
+    "top": "How to Remove (Delete) Files and Directo"
    },
    {
     "answer": false,
     "retrieval": true,
     "why": "missing:korutin",
-    "ms": 124,
-    "cached": true,
+    "ms": 4165,
+    "cached": false,
     "degraded": [
-     "translate_skipped_tech",
-     "extract_timeout"
+     "translate_skipped_tech"
     ],
     "providers": [
      "bing",
-     "wikipedia",
      "google-news",
      "brave"
     ],
-    "top": "Coroutine"
+    "top": "Coroutines | Kotlin"
    },
    {
     "answer": true,
     "retrieval": true,
     "why": "ok",
-    "ms": 117,
+    "ms": 107,
     "cached": true,
     "degraded": [],
     "providers": [
-     "bing",
-     "wikipedia",
      "google-news",
+     "wikipedia",
+     "bing",
      "brave"
     ],
     "top": "Minimum əmək haqqı 2026 və yaşayış minim"
    },
    {
-    "answer": true,
-    "retrieval": true,
-    "why": "ok",
-    "ms": 96,
-    "cached": true,
-    "degraded": [],
-    "providers": [
-     "bing",
-     "wikipedia",
-     "google-news",
-     "brave"
-    ],
-    "top": "HTTP/2"
-   },
-   {
     "answer": false,
     "retrieval": false,
-    "why": "none-of-any",
-    "ms": 3283,
+    "why": "missing:https",
+    "ms": 839,
     "cached": false,
     "degraded": [],
     "providers": [
      "bing",
      "google-news"
     ],
-    "top": "Azərbaycan 2021-ci ili “Nizami Gəncəvi i"
+    "top": "AUV ilə ROV arasındakı fərq nədir? - NOA"
+   },
+   {
+    "answer": false,
+    "retrieval": false,
+    "why": "none-of-any",
+    "ms": 3846,
+    "cached": false,
+    "degraded": [],
+    "providers": [
+     "bing",
+     "google-news"
+    ],
+    "top": "Azərbaycan 2021-ci ili \"Nizami Gəncəvi i"
    },
    {
     "answer": true,
-    "retrieval": true,
+    "retrieval": false,
     "why": "ok",
-    "ms": 108,
-    "cached": true,
+    "ms": 4069,
+    "cached": false,
     "degraded": [
-     "translate_skipped_tech",
-     "extract_timeout"
+     "translate_skipped_tech"
     ],
     "providers": [
      "bing",
-     "wikipedia",
      "github",
-     "google-news",
-     "brave"
+     "google-news"
     ],
-    "top": "arrays - JavaScript: Difference between "
+    "top": "GitHub - 4GeeksAcademy/javascript-arrays"
    },
    {
     "answer": false,
     "retrieval": true,
     "why": "missing:konteyner",
-    "ms": 4401,
+    "ms": 4289,
     "cached": false,
     "degraded": [
      "translate_skipped_tech"
@@ -1205,7 +1192,7 @@
     "answer": false,
     "retrieval": false,
     "why": "no-year",
-    "ms": 4243,
+    "ms": 2493,
     "cached": false,
     "degraded": [],
     "providers": [
@@ -1218,7 +1205,7 @@
     "answer": false,
     "retrieval": false,
     "why": "no-year",
-    "ms": 2696,
+    "ms": 2614,
     "cached": false,
     "degraded": [],
     "providers": [
@@ -1231,45 +1218,43 @@
     "answer": false,
     "retrieval": false,
     "why": "no-year",
-    "ms": 3321,
+    "ms": 1145,
     "cached": false,
     "degraded": [],
     "providers": [
-     "google-news",
-     "bing"
+     "bing",
+     "google-news"
     ],
     "top": "Ukrayna müharibə başlayandan bəri Rusiya"
    },
    {
-    "answer": true,
-    "retrieval": true,
-    "why": "ok",
-    "ms": 84,
-    "cached": true,
+    "answer": false,
+    "retrieval": false,
+    "why": "no-num+unit",
+    "ms": 547,
+    "cached": false,
     "degraded": [],
     "providers": [
      "bing",
-     "wikipedia",
-     "google-news",
-     "brave"
+     "google-news"
     ],
-    "top": "Bakı Dövlət Universiteti"
+    "top": ""
    },
    {
     "answer": false,
     "retrieval": false,
     "why": "no-year",
-    "ms": 2267,
+    "ms": 1269,
     "cached": false,
     "degraded": [
      "translate_skipped_tech"
     ],
     "providers": [
+     "arxiv",
      "stackoverflow",
-     "hacker-news",
      "bing",
-     "google-news",
-     "arxiv"
+     "hacker-news",
+     "google-news"
     ],
     "top": "GitHub - cactus-compute/cactus-hybrid: O"
    },
@@ -1277,7 +1262,7 @@
     "answer": true,
     "retrieval": true,
     "why": "ok",
-    "ms": 103,
+    "ms": 93,
     "cached": true,
     "degraded": [
      "translate_skipped_tech",
@@ -1286,16 +1271,15 @@
     "providers": [
      "bing",
      "wikipedia",
-     "google-news",
-     "brave"
+     "google-news"
     ],
-    "top": "What is DNS?"
+    "top": "Multicast DNS"
    },
    {
     "answer": true,
     "retrieval": false,
     "why": "ok",
-    "ms": 4808,
+    "ms": 960,
     "cached": false,
     "degraded": [],
     "providers": [
@@ -1308,17 +1292,19 @@
     "answer": true,
     "retrieval": true,
     "why": "ok",
-    "ms": 3886,
-    "cached": false,
+    "ms": 91,
+    "cached": true,
     "degraded": [
-     "translate_skipped_tech"
+     "translate_skipped_tech",
+     "extract_timeout"
     ],
     "providers": [
      "arxiv",
      "stackoverflow",
-     "hacker-news",
-     "github",
      "bing",
+     "github",
+     "wikipedia",
+     "hacker-news",
      "google-news"
     ],
     "top": "How to read a file line-by-line into a l"
@@ -1327,7 +1313,7 @@
     "answer": false,
     "retrieval": false,
     "why": "no-num+unit",
-    "ms": 3650,
+    "ms": 365,
     "cached": false,
     "degraded": [],
     "providers": [
@@ -1342,7 +1328,7 @@
     "answer": false,
     "retrieval": false,
     "why": "no-num+unit",
-    "ms": 1244,
+    "ms": 437,
     "cached": false,
     "degraded": [],
     "providers": [
@@ -1355,12 +1341,12 @@
     "answer": false,
     "retrieval": false,
     "why": "no-number",
-    "ms": 606,
+    "ms": 543,
     "cached": false,
     "degraded": [],
     "providers": [
-     "bing",
-     "google-news"
+     "google-news",
+     "bing"
     ],
     "top": ""
    },
@@ -1368,7 +1354,7 @@
     "answer": false,
     "retrieval": false,
     "why": "no-number",
-    "ms": 762,
+    "ms": 905,
     "cached": false,
     "degraded": [],
     "providers": [
@@ -1381,7 +1367,7 @@
     "answer": false,
     "retrieval": false,
     "why": "missing:list",
-    "ms": 1035,
+    "ms": 610,
     "cached": false,
     "degraded": [],
     "providers": [
@@ -1395,7 +1381,7 @@
     "answer": true,
     "retrieval": true,
     "why": "ok",
-    "ms": 1615,
+    "ms": 1175,
     "cached": false,
     "degraded": [
      "translate_skipped_tech"
@@ -1404,30 +1390,31 @@
      "arxiv",
      "stackoverflow",
      "hacker-news",
-     "google-news",
      "bing",
-     "github"
+     "github",
+     "google-news"
     ],
     "top": "How does react useEffect work with useSt"
    },
    {
-    "answer": false,
-    "retrieval": false,
-    "why": "no-year",
-    "ms": 2819,
-    "cached": false,
+    "answer": true,
+    "retrieval": true,
+    "why": "year",
+    "ms": 101,
+    "cached": true,
     "degraded": [],
     "providers": [
      "bing",
-     "google-news"
+     "google-news",
+     "brave"
     ],
-    "top": "2026-cı il Nobel mükafatı laureatları il"
+    "top": "\"Nobel\" mükafatı"
    },
    {
     "answer": false,
     "retrieval": false,
     "why": "none-of-any",
-    "ms": 1305,
+    "ms": 883,
     "cached": false,
     "degraded": [],
     "providers": [
@@ -1440,7 +1427,7 @@
     "answer": true,
     "retrieval": true,
     "why": "ok",
-    "ms": 122,
+    "ms": 102,
     "cached": false,
     "degraded": [],
     "providers": [],
@@ -1450,8 +1437,8 @@
     "answer": true,
     "retrieval": true,
     "why": "ok",
-    "ms": 1002,
-    "cached": false,
+    "ms": 101,
+    "cached": true,
     "degraded": [],
     "providers": [],
     "top": "Rəsmi valyuta məzənnəsi (CBAR)"
@@ -1460,8 +1447,8 @@
     "answer": true,
     "retrieval": true,
     "why": "ok",
-    "ms": 369,
-    "cached": false,
+    "ms": 91,
+    "cached": true,
     "degraded": [],
     "providers": [],
     "top": "Bakı - hava məlumatı (Open-Meteo)"
@@ -1470,47 +1457,51 @@
     "answer": true,
     "retrieval": true,
     "why": "ok",
-    "ms": 1797,
-    "cached": false,
+    "ms": 91,
+    "cached": true,
     "degraded": [
-     "translate_skipped_tech"
+     "translate_skipped_tech",
+     "extract_timeout"
     ],
     "providers": [
      "arxiv",
+     "bing",
      "stackoverflow",
      "hacker-news",
      "github",
-     "google-news",
-     "bing"
+     "brave",
+     "google-news"
     ],
     "top": "What is a SQL JOIN, and what are the dif"
    },
    {
-    "answer": false,
+    "answer": true,
     "retrieval": true,
-    "why": "missing:konteyner",
-    "ms": 1863,
-    "cached": false,
+    "why": "ok",
+    "ms": 145,
+    "cached": true,
     "degraded": [
-     "translate_skipped_tech"
+     "translate_skipped_tech",
+     "extract_timeout"
     ],
     "providers": [
-     "google-news",
+     "bing",
      "github",
-     "bing"
+     "google-news",
+     "brave"
     ],
-    "top": "What is Docker? - GeeksforGeeks"
+    "top": "Docker (proqram)"
    },
    {
     "answer": false,
     "retrieval": false,
     "why": "missing:kateqorik imperativ",
-    "ms": 3020,
+    "ms": 959,
     "cached": false,
     "degraded": [],
     "providers": [
-     "google-news",
-     "bing"
+     "bing",
+     "google-news"
     ],
     "top": "Fəlsəfə və Stolüstü Oyunlar: Kateqorik İ"
    },
@@ -1518,18 +1509,20 @@
     "answer": true,
     "retrieval": true,
     "why": "ok",
-    "ms": 1489,
-    "cached": false,
+    "ms": 101,
+    "cached": true,
     "degraded": [
-     "translate_skipped_tech"
+     "translate_skipped_tech",
+     "extract_timeout"
     ],
     "providers": [
      "arxiv",
-     "hacker-news",
      "stackoverflow",
      "bing",
+     "hacker-news",
      "github",
-     "google-news"
+     "google-news",
+     "brave"
     ],
     "top": "GitHub - microvenv: A minimal re-impleme"
    },
@@ -1537,29 +1530,201 @@
     "answer": true,
     "retrieval": true,
     "why": "ok",
-    "ms": 108,
+    "ms": 105,
     "cached": true,
     "degraded": [
      "translate_skipped_tech",
      "extract_timeout"
     ],
     "providers": [
+     "arxiv",
      "stackoverflow",
      "bing",
-     "wikipedia",
      "hacker-news",
      "github",
-     "brave",
-     "arxiv",
-     "google-news"
+     "google-news",
+     "brave"
     ],
     "top": "How to Remove (Delete) Files and Directo"
    },
    {
     "answer": false,
-    "retrieval": false,
+    "retrieval": true,
     "why": "missing:korutin",
-    "ms": 2672,
+    "ms": 92,
+    "cached": true,
+    "degraded": [
+     "translate_skipped_tech",
+     "extract_timeout"
+    ],
+    "providers": [
+     "wikipedia",
+     "bing",
+     "brave",
+     "google-news"
+    ],
+    "top": "Coroutine"
+   },
+   {
+    "answer": false,
+    "retrieval": false,
+    "why": "no-num+unit",
+    "ms": 2248,
+    "cached": false,
+    "degraded": [],
+    "providers": [
+     "bing",
+     "google-news"
+    ],
+    "top": ""
+   },
+   {
+    "answer": true,
+    "retrieval": true,
+    "why": "ok",
+    "ms": 94,
+    "cached": true,
+    "degraded": [],
+    "providers": [
+     "bing",
+     "wikipedia",
+     "google-news",
+     "brave"
+    ],
+    "top": "HTTP/2"
+   },
+   {
+    "answer": false,
+    "retrieval": false,
+    "why": "none-of-any",
+    "ms": 3452,
+    "cached": false,
+    "degraded": [],
+    "providers": [
+     "bing",
+     "google-news"
+    ],
+    "top": "Azərbaycan 2021-ci ili \"Nizami Gəncəvi i"
+   },
+   {
+    "answer": true,
+    "retrieval": false,
+    "why": "ok",
+    "ms": 4295,
+    "cached": false,
+    "degraded": [
+     "translate_skipped_tech"
+    ],
+    "providers": [
+     "bing",
+     "github",
+     "google-news"
+    ],
+    "top": "GitHub - 4GeeksAcademy/javascript-arrays"
+   },
+   {
+    "answer": false,
+    "retrieval": true,
+    "why": "missing:konteyner",
+    "ms": 1039,
+    "cached": false,
+    "degraded": [
+     "translate_skipped_tech"
+    ],
+    "providers": [
+     "arxiv",
+     "stackoverflow",
+     "bing",
+     "hacker-news",
+     "github",
+     "google-news"
+    ],
+    "top": "How is Docker different from a virtual m"
+   },
+   {
+    "answer": true,
+    "retrieval": true,
+    "why": "year",
+    "ms": 99,
+    "cached": true,
+    "degraded": [],
+    "providers": [
+     "bing",
+     "google-news",
+     "wikipedia",
+     "brave"
+    ],
+    "top": "Azərbaycan Dövlət Neft Fondu"
+   },
+   {
+    "answer": false,
+    "retrieval": false,
+    "why": "no-year",
+    "ms": 770,
+    "cached": false,
+    "degraded": [],
+    "providers": [
+     "bing",
+     "google-news"
+    ],
+    "top": "Xocalı Faciəsi və Həqiqət Anı - CIVILNET"
+   },
+   {
+    "answer": true,
+    "retrieval": true,
+    "why": "year",
+    "ms": 88,
+    "cached": true,
+    "degraded": [],
+    "providers": [
+     "bing",
+     "wikipedia",
+     "google-news",
+     "brave"
+    ],
+    "top": "Rusiya–Ukrayna müharibəsi"
+   },
+   {
+    "answer": true,
+    "retrieval": true,
+    "why": "ok",
+    "ms": 91,
+    "cached": true,
+    "degraded": [],
+    "providers": [
+     "bing",
+     "wikipedia",
+     "google-news",
+     "brave"
+    ],
+    "top": "Bakı Dövlət Universiteti"
+   },
+   {
+    "answer": true,
+    "retrieval": true,
+    "why": "year",
+    "ms": 85,
+    "cached": true,
+    "degraded": [
+     "translate_skipped_tech",
+     "extract_timeout"
+    ],
+    "providers": [
+     "arxiv",
+     "bing",
+     "stackoverflow",
+     "wikipedia",
+     "google-news",
+     "hacker-news",
+     "brave"
+    ],
+    "top": "GitHub - cactus-compute/cactus-hybrid: O"
+   },
+   {
+    "answer": true,
+    "retrieval": false,
+    "why": "ok",
+    "ms": 928,
     "cached": false,
     "degraded": [
      "translate_skipped_tech"
@@ -1568,186 +1733,52 @@
      "bing",
      "google-news"
     ],
-    "top": "How R8 made Kotlin Coroutines on Android"
+    "top": "Working of Domain Name System (DNS) Serv"
+   },
+   {
+    "answer": false,
+    "retrieval": true,
+    "why": "must_not:sahara",
+    "ms": 93,
+    "cached": true,
+    "degraded": [],
+    "providers": [
+     "wikipedia",
+     "bing",
+     "google-news"
+    ],
+    "top": "Ərəb səhrası"
    },
    {
     "answer": true,
     "retrieval": true,
     "why": "ok",
-    "ms": 86,
-    "cached": true,
-    "degraded": [],
-    "providers": [
-     "bing",
-     "wikipedia",
-     "google-news",
-     "brave"
-    ],
-    "top": "Minimum əmək haqqı 2026 və yaşayış minim"
-   },
-   {
-    "answer": false,
-    "retrieval": false,
-    "why": "missing:https",
-    "ms": 3501,
+    "ms": 1418,
     "cached": false,
-    "degraded": [],
-    "providers": [
-     "google-news",
-     "bing"
-    ],
-    "top": "AUV ilə ROV arasındakı fərq nədir? - NOA"
-   },
-   {
-    "answer": false,
-    "retrieval": false,
-    "why": "none-of-any",
-    "ms": 1101,
-    "cached": false,
-    "degraded": [],
-    "providers": [
-     "google-news",
-     "bing"
-    ],
-    "top": "Azərbaycan 2021-ci ili “Nizami Gəncəvi i"
-   },
-   {
-    "answer": true,
-    "retrieval": true,
-    "why": "ok",
-    "ms": 86,
-    "cached": true,
     "degraded": [
-     "translate_skipped_tech",
-     "extract_timeout"
+     "translate_skipped_tech"
     ],
     "providers": [
-     "bing",
-     "wikipedia",
-     "github",
-     "google-news",
-     "brave"
-    ],
-    "top": "arrays - JavaScript: Difference between "
-   },
-   {
-    "answer": false,
-    "retrieval": true,
-    "why": "missing:konteyner",
-    "ms": 95,
-    "cached": true,
-    "degraded": [
-     "translate_skipped_tech",
-     "extract_timeout"
-    ],
-    "providers": [
+     "arxiv",
+     "hacker-news",
      "stackoverflow",
      "bing",
-     "wikipedia",
      "github",
-     "google-news",
-     "hacker-news",
-     "arxiv",
-     "brave"
+     "google-news"
     ],
-    "top": "How is Docker different from a virtual m"
+    "top": "How to read a file line-by-line into a l"
    },
    {
-    "answer": true,
+    "answer": false,
     "retrieval": false,
-    "why": "year",
-    "ms": 2405,
+    "why": "no-num+unit",
+    "ms": 642,
     "cached": false,
     "degraded": [],
     "providers": [
      "bing",
      "google-news"
     ],
-    "top": "Azərbaycan Dövlət Neft Fondu I Squared C"
-   },
-   {
-    "answer": true,
-    "retrieval": true,
-    "why": "year",
-    "ms": 82,
-    "cached": true,
-    "degraded": [],
-    "providers": [
-     "bing",
-     "wikipedia",
-     "google-news",
-     "brave"
-    ],
-    "top": "Xocalı qətliamı"
-   },
-   {
-    "answer": false,
-    "retrieval": false,
-    "why": "no-year",
-    "ms": 84,
-    "cached": false,
-    "degraded": [],
-    "providers": [],
-    "top": ""
-   },
-   {
-    "answer": false,
-    "retrieval": false,
-    "why": "no-num+unit",
-    "ms": 129,
-    "cached": false,
-    "degraded": [],
-    "providers": [],
-    "top": ""
-   },
-   {
-    "answer": false,
-    "retrieval": false,
-    "why": "no-year",
-    "ms": 82,
-    "cached": false,
-    "degraded": [],
-    "providers": [],
-    "top": ""
-   },
-   {
-    "answer": false,
-    "retrieval": false,
-    "why": "missing:dns",
-    "ms": 125,
-    "cached": false,
-    "degraded": [],
-    "providers": [],
-    "top": ""
-   },
-   {
-    "answer": false,
-    "retrieval": false,
-    "why": "none-of-any",
-    "ms": 84,
-    "cached": false,
-    "degraded": [],
-    "providers": [],
-    "top": ""
-   },
-   {
-    "answer": false,
-    "retrieval": false,
-    "why": "code:open(",
-    "ms": 98,
-    "cached": false,
-    "degraded": [],
-    "providers": [],
-    "top": ""
-   },
-   {
-    "answer": false,
-    "retrieval": false,
-    "why": "no-num+unit",
-    "ms": 83,
-    "cached": false,
-    "degraded": [],
-    "providers": [],
     "top": ""
    }
   ]
