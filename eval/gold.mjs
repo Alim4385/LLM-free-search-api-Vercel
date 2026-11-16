@@ -1,10 +1,11 @@
 #!/usr/bin/env node
-// Qızıl cavab harness-i (v30): hər sual N dəfə canlı API-yə vurulur,
-// expected sətirlərdən biri top-K nəticədədirsə və ya mənbə domeni uyğundursa PASS.
-// Nəticə: pass@1, pass-all, UNSTABLE sayı, orta latency.
+// v32: QIZIL CAVAB harness-i — SƏRT rejim.
+// pass = answer_ok (cavab mətndədir). retrieval_ok ayrı sütundur, PASS etmir.
+// Tipləşdirilmiş yoxlama: count (rəqəm+vahid, tol, must_not), date (il + must_not),
+// all/any (söz sərhədi ilə), codeTokens.
 //
-// İstifadə: node eval/gold.mjs [golden.json] [repeats] [topK]
-//   env API_URL, CONCURRENCY
+// node eval/gold.mjs [file] [repeats] [topK]
+// env: API_URL, CONCURRENCY, NO_CACHE=1
 
 import { readFileSync, writeFileSync } from "node:fs";
 
@@ -14,96 +15,146 @@ const topK = Math.max(1, Number(process.argv[4] || 3));
 const API = process.env.API_URL || "https://searchapi-eta.vercel.app/api/search";
 const CONC = Math.max(1, Number(process.env.CONCURRENCY || 2));
 
-const fold = (x) =>
-  String(x || "").toLowerCase().normalize("NFC")
-    .replace(/ə/g, "e").replace(/ı/g, "i").replace(/ş/g, "s").replace(/ç/g, "c")
-    .replace(/ğ/g, "g").replace(/ö/g, "o").replace(/ü/g, "u")
-    .replace(/(\d)\s*[.,]\s*(?=\d)/g, "$1.")   // 362,9 / 362 . 9 → 362.9
-    .replace(/\s+/g, " ").trim();
+const AZ = [["ə","e"],["ı","i"],["ş","s"],["ç","c"],["ğ","g"],["ö","o"],["ü","u"]];
+const fold = (x) => {
+  let s = String(x || "").toLowerCase().normalize("NFC");
+  for (const [a, b] of AZ) s = s.split(a).join(b);
+  return s.replace(/\s+/g, " ").trim();
+};
+const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+// söz sərhədi (AZ hərfləri ilə də işləyir)
+const wordRe = (w) => new RegExp(`(?<![\\p{L}\\p{N}])${esc(fold(w))}(?![\\p{L}\\p{N}])`, "u");
+const hasWord = (hay, w) => wordRe(w).test(hay);
+
+function numsIn(text) {
+  return [...text.matchAll(/(\d[\d\s.,]*)/g)]
+    .map((m) => Number.parseFloat(m[1].replace(/\s/g, "").replace(/\.(?=\d{3}\b)/g, "").replace(",", ".")))
+    .filter((n) => Number.isFinite(n));
+}
+// rəqəm VAHİDİN yanında olmalıdır (±80 simvol)
+function numberWithUnit(hay, unitPattern, tol) {
+  const re = new RegExp(`(\\d[\\d\\s.,]*)\\s*(?:min\\s+|milyon\\s+|milyard\\s+)?(?:${unitPattern})|(?:${unitPattern})[^.]{0,60}?(\\d[\\d\\s.,]*)`, "gu");
+  let m;
+  while ((m = re.exec(hay)) !== null) {
+    const raw = (m[1] || m[2] || "").replace(/\s/g, "");
+    let n = Number.parseFloat(raw.replace(/\.(?=\d{3}\b)/g, "").replace(",", "."));
+    if (!Number.isFinite(n)) continue;
+    if (tol == null) return n;
+    if (Math.abs(n - tol) === 0) return n;
+    if (Math.abs(n - tol) / Math.max(1, tol) <= 0.25) return n;
+  }
+  return null;
+}
+
+function checkAnswer(hay, exp = {}) {
+  // 1) dəqiq ədəd + vahid
+  if (exp.num != null) {
+    const got = numberWithUnit(hay, exp.unit || "", exp.tol ?? 0);
+    if (got == null) return { ok: false, why: "no-number" };
+    for (const bad of exp.must_not || []) {
+      if (Math.abs(got - bad) < 0.001) return { ok: false, why: "must_not" };
+    }
+    return { ok: Math.abs(got - exp.num) <= (exp.tol ?? 0) + 0.001, why: `num=${got}` };
+  }
+  // 2) il
+  if (exp.year != null) {
+    const years = [...hay.matchAll(/\b(1[5-9]\d{2}|20\d{2})\b/g)].map((m) => Number(m[1]));
+    if (years.includes(exp.year)) return { ok: true, why: "year" };
+    for (const bad of exp.must_not || []) if (years.includes(bad)) return { ok: false, why: `must_not:${bad}` };
+    return { ok: false, why: "no-year" };
+  }
+  // 3) rəqəm tələb olunur, dəqiq dəyər yox (say sualları)
+  if (exp.requiresDigits) {
+    const near = numberWithUnit(hay, exp.unit || "\\d", null);
+    if (near == null) return { ok: false, why: "no-num+unit" };
+  }
+  // 4) bütün sözlər / hər hansı söz
+  if (exp.all) for (const w of exp.all) if (!hasWord(hay, w)) return { ok: false, why: `missing:${w}` };
+  if (exp.codeTokens) for (const c of exp.codeTokens) if (!hay.includes(fold(c))) return { ok: false, why: `code:${c}` };
+  if (exp.any) {
+    const hit = exp.any.some((w) => hasWord(hay, w) || hay.includes(fold(w)));
+    if (!hit) return { ok: false, why: "none-of-any" };
+  }
+  for (const bad of exp.must_not || []) if (hasWord(hay, bad)) return { ok: false, why: `must_not:${bad}` };
+  return { ok: true, why: "ok" };
+}
 
 const items = JSON.parse(readFileSync(file, "utf8"));
 
 async function runOne(item) {
-  const url = `${API}?q=${encodeURIComponent(item.q)}&limit=${topK}`;
+  const qs = new URLSearchParams({ q: item.q, max_results: String(topK) });
+  if (process.env.NO_CACHE) qs.set("no_cache", "1");
   const t0 = Date.now();
   try {
-    const r = await fetch(url, { signal: AbortSignal.timeout(30000) });
+    const r = await fetch(`${API}?${qs}`, { signal: AbortSignal.timeout(30000) });
     const j = await r.json();
     const results = (j.results || []).slice(0, topK);
-    const hay = results.map((x) =>
-      fold(`${x.title || ""} ${x.snippet || ""} ${x.content || ""}`)
-    ).join(" || ");
-    const domains = results.map((x) => {
-      try { return new URL(x.url).hostname.replace(/^www\./, ""); } catch { return ""; }
-    });
-    const srcOk = (item.sources || []).some((d) => domains.some((h) => h === d || h.endsWith("." + d)));
-    const exp = (item.expected || []).map(fold);
-    const expOk = exp.some((e) => e.length >= 3 && hay.includes(e));
-    return {
-      pass: expOk || srcOk,
-      why: expOk ? "expected" : srcOk ? "source" : "miss",
-      ms: Date.now() - t0,
-      top: (results[0] && results[0].title || "").slice(0, 42),
-      degraded: (j.meta && j.meta.degraded_stages) || [],
-      cached: !!(j.meta && j.meta.cached),
-      providers: (j.meta && j.meta.providers_used) || [],
-    };
+    const hay = fold(results.map((x) => `${x.title || ""} ${x.snippet || ""} ${x.content || ""}`).join(" || "));
+    const domains = results.map((x) => { try { return new URL(x.url).hostname.replace(/^www\./, ""); } catch { return ""; } });
+    const retrieval = (item.sources || []).some((d) => domains.some((h) => h === d || h.endsWith("." + d)));
+    const verdict = checkAnswer(hay, item.expect || {});
+    return { answer: verdict.ok, retrieval, why: verdict.why, ms: Date.now() - t0,
+      cached: !!(j.meta && j.meta.cached), degraded: (j.meta && j.meta.degraded_stages) || [],
+      providers: (j.meta && j.meta.providers_used) || [], top: (results[0] && results[0].title || "").slice(0, 40) };
   } catch (e) {
-    return { pass: false, why: "error:" + e.message.slice(0, 20), ms: Date.now() - t0, top: "", degraded: [] };
+    return { answer: false, retrieval: false, why: "error:" + e.message.slice(0, 18), ms: Date.now() - t0, cached: false, degraded: [], providers: [], top: "" };
   }
 }
 
 async function withConc(list, n, fn) {
-  const out = new Array(list.length);
-  let i = 0;
-  await Promise.all(Array.from({ length: n }, async () => {
-    while (i < list.length) {
-      const idx = i++;
-      out[idx] = await fn(list[idx], idx);
-    }
-  }));
+  const out = new Array(list.length); let i = 0;
+  await Promise.all(Array.from({ length: n }, async () => { while (i < list.length) { const k = i++; out[k] = await fn(list[k]); } }));
   return out;
 }
 
 const runs = [];
 for (let rep = 0; rep < repeats; rep++) {
-  const res = await withConc(items, CONC, (item) => runOne(item));
-  runs.push(res);
-  process.stderr.write(`repeat ${rep + 1}/${repeats} bitdi\n`);
+  runs.push(await withConc(items, CONC, runOne));
+  process.stderr.write(`repeat ${rep + 1}/${repeats}\n`);
 }
 
 const rows = items.map((item, i) => {
   const marks = runs.map((r) => r[i]);
-  const passes = marks.filter((m) => m.pass).length;
-  const status = passes === repeats ? "PASS" : passes === 0 ? "FAIL" : "UNSTABLE";
+  const ap = marks.filter((m) => m.answer).length;
+  const rp = marks.filter((m) => m.retrieval).length;
   return {
-    q: item.q,
-    type: item.type || "",
-    status,
-    passes: `${passes}/${repeats}`,
-    why: marks.map((m) => m.why).join(","),
+    q: item.q, type: item.type, answer: `${ap}/${repeats}`, retrieval: `${rp}/${repeats}`,
+    status: ap === repeats ? "PASS" : ap === 0 ? "FAIL" : "UNSTABLE",
+    why: marks.map((m) => m.why).join(","), top: marks[0]?.top || "",
+    ms: Math.round(marks.reduce((s, m) => s + m.ms, 0) / marks.length),
     cached: marks.filter((m) => m.cached).length,
-    degraded: [...new Set(marks.flatMap((m) => m.degraded || []))].join("|"),
-    providers: [...new Set(marks.flatMap((m) => m.providers || []))].join(","),
-    top: marks[0]?.top || "",
-    ms: Math.round(marks.reduce((s, m) => s + (m.ms || 0), 0) / marks.length),
+    degraded: [...new Set(marks.flatMap((m) => m.degraded))].join("|"),
+    providers: [...new Set(marks.flatMap((m) => m.providers))].join(","),
   };
 });
 
-const cnt = (s) => rows.filter((r) => r.status === s).length;
-const avgMs = Math.round(rows.reduce((s, r) => s + r.ms, 0) / Math.max(1, rows.length));
-const passRate = Math.round((rows.reduce((s, r) => s + Number(r.passes.split("/")[0]) / repeats, 0) / rows.length) * 100);
-
+const val = (s) => Number(s.split("/")[0]) / repeats;
+const avg = (arr) => (arr.length ? Math.round((arr.reduce((a, b) => a + b, 0) / arr.length) * 100) : 0);
 const pad = (s, n) => String(s).padEnd(n).slice(0, n);
-console.log(pad("STATUS", 9) + pad("PASS", 7) + pad("TYPE", 11) + pad("ms", 6) + "SUAL → TOP-1");
-for (const r of rows) {
-  console.log(pad(r.status, 9) + pad(r.passes, 7) + pad(r.type, 11) + pad(r.ms, 6) + r.q.slice(0, 46) + " → " + r.top);
-}
-const cachedCalls = rows.reduce((s2, r) => s2 + r.cached, 0);
-console.log(`\ncached ${cachedCalls}/${items.length * repeats} çağırış`);
-console.log(`PASS ${cnt("PASS")} | UNSTABLE ${cnt("UNSTABLE")} | FAIL ${cnt("FAIL")} | ${items.length} sual`);
-console.log(`pass@1 ${passRate}% | orta latency ${avgMs} ms | repeats ${repeats}`);
 
-const outFile = file.replace(/\.json$/, "") + `.gold.out.json`;
-writeFileSync(outFile, JSON.stringify({ file, repeats, topK, passRate, avgMs, rows, runs }, null, 1));
-console.log(`→ ${outFile}`);
+console.log(pad("STATUS", 9) + pad("ANS", 6) + pad("RETR", 6) + pad("TYPE", 11) + pad("ms", 6) + "SUAL → TOP-1");
+for (const r of rows) console.log(pad(r.status, 9) + pad(r.answer, 6) + pad(r.retrieval, 6) + pad(r.type, 11) + pad(r.ms, 6) + r.q.slice(0, 44) + " → " + r.top);
+
+const answerOk = avg(rows.map((r) => val(r.answer)));
+const retrievalOk = avg(rows.map((r) => val(r.retrieval)));
+const cnt = (s) => rows.filter((r) => r.status === s).length;
+const cachedCalls = rows.reduce((s, r) => s + r.cached, 0);
+
+console.log(`\nanswer_ok ${answerOk}%  |  retrieval_ok ${retrievalOk}%  |  fərq ${retrievalOk - answerOk} xal ("səhifə tapıldı, cavab yoxdur")`);
+console.log(`PASS(all runs) ${cnt("PASS")} | UNSTABLE ${cnt("UNSTABLE")} | FAIL ${cnt("FAIL")} | ${items.length} sual | cached ${cachedCalls}/${items.length * repeats}`);
+
+const types = [...new Set(rows.map((r) => r.type))];
+console.log("\nTIP ÜZRƏ:");
+for (const t of types) {
+  const sub = rows.filter((r) => r.type === t);
+  console.log(`  ${pad(t, 12)} answer_ok ${pad(avg(sub.map((r) => val(r.answer))) + "%", 6)} retrieval_ok ${avg(sub.map((r) => val(r.retrieval)))}%  (n=${sub.length})`);
+}
+
+const unstable = rows.filter((r) => r.status === "UNSTABLE");
+if (unstable.length) {
+  console.log("\nUNSTABLE atributları:");
+  for (const r of unstable) console.log(`  ${pad(r.answer, 5)} ${pad(r.type, 11)} ${r.q.slice(0, 40)} | degraded=${r.degraded || "-"} | providers=${r.providers.slice(0, 70)}`);
+}
+
+writeFileSync(file.replace(/\.json$/, "") + ".gold.out.json", JSON.stringify({ repeats, topK, answerOk, retrievalOk, rows, runs }, null, 1));
+console.log(`\n→ ${file.replace(/\.json$/, "")}.gold.out.json`);

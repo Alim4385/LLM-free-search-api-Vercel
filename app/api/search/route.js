@@ -15,7 +15,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 55; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 56; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -119,6 +119,7 @@ async function handleSearch(body, req) {
   if (!query) return jsonResponse({ error: "missing_query", message: "query sahəsi tələb olunur" }, 400);
 
   const maxResults = Math.min(Math.max(parseInt(body.max_results || body.maxResults || "5", 10) || 5, 1), 8);
+  const NO_CACHE = /^(1|true|on)$/i.test(String(body.no_cache || body.noCache || ""));
   const maxChars = Math.min(Math.max(parseInt(body.max_chars || body.maxChars || "4000", 10) || 4000, 500), 8000);
   const fmt = (typeof body.format === "string" ? body.format : "json").toLowerCase();
   const format = ["json", "jsonl", "simple"].includes(fmt) ? fmt : "json";
@@ -130,7 +131,7 @@ async function handleSearch(body, req) {
   const shouldTranslateResults = body.translate_results !== false && body.translate_results !== "0" && body.translate_results !== 0;
 
   const cKey = cacheKey("search", { q: query.toLowerCase(), n: maxResults, c: maxChars, l: reqLang, tr: shouldTranslateResults ? 1 : 0, v: FILTER_VERSION, f: freshness || "", x: excludeDomains.join(",") });
-  const cached = await cacheGet(cKey);
+  const cached = NO_CACHE ? null : await cacheGet(cKey);
   if (cached) {
     const obj = { ...cached, meta: { ...cached.meta, cached: true, took_ms: Date.now() - started } };
     logReq(requestId, query, obj.meta.took_ms, { status: 200, cached: true });
@@ -446,7 +447,7 @@ async function handleSearch(body, req) {
     }
   };
 
-  const cacheable = !skipFetch && intent !== "time" && finalResults.length > 0;
+  const cacheable = !NO_CACHE && !skipFetch && intent !== "time" && finalResults.length > 0;
   const degraded = usedFallback || Object.keys(errors).length >= 3;
   const freshSensitive = intent === "weather" || intent === "currency" || isNewsQuery(query);
   const ttl = degraded ? 30 : (freshSensitive ? 120 : 300);
