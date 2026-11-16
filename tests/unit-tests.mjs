@@ -9,6 +9,7 @@ import { matchTime, isTimeQuery } from "../lib/time.js";
 import { matchCurrency, isCurrencyQuery } from "../lib/currency.js";
 import { sanitizeQuery, checkRateLimit } from "../lib/ratelimit.js";
 import { readFileSync } from "node:fs";
+import { detectConflicts, parseNum } from "../lib/conflict.js";
 import { isChallengePage } from "../lib/extract.js";
 import { scoreResult, isSpamDomain, hostMatches, diversifyByDomain, isJunkDomain, computeConfidence } from "../lib/score.js";
 import { cleanContent, pickAnswer, cutWord, dedupeSnippet, normalizeColloquialAz, detectQueryLanguage, acceptLanguageHeader, wikiExtractUrl, restoreAsciiAz } from "../lib/clean.js";
@@ -740,6 +741,39 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v26 TDZ: route.js-də 'əvvəl istifadə, sonra elan' yoxdur", tdz === null, String(tdz));
   } catch (e) {
     assert("v26 TDZ: route.js oxundu", false, e.message);
+  }
+
+  // === v29: rəqəm ziddiyyəti + sources sahəsi ===
+  assert("v29 parseNum: '362,9' → 362.9", parseNum("362,9") === 362.9, String(parseNum("362,9")));
+  assert("v29 parseNum: '9.235.085' → 9235085", parseNum("9.235.085") === 9235085, String(parseNum("9.235.085")));
+  assert("v29 parseNum: '10,300,000' → 10300000", parseNum("10,300,000") === 10300000, String(parseNum("10,300,000")));
+
+  const qPop = "Azərbaycanın əhalisi nə qədərdir";
+  const cRes = [
+    { id: 1, title: "Azərbaycan əhalisi", url: "https://az.wikipedia.org/wiki/Azərbaycan_əhalisi", content: "Azərbaycan əhalisi 9.2 milyon nəfərdir", source: "wikipedia" },
+    { id: 2, title: "Azərbaycan əhalisi 2026", url: "https://stat.gov.az/x", content: "Azərbaycan əhalisi 10,3 milyon nəfər olub", source: "brave" }
+  ];
+  const conf = detectConflicts(cRes, qPop);
+  assert("v29 ziddiyyət: 9.2 vs 10.3 milyon nəfər aşkarlanır", conf.length === 1 && conf[0].unit === "people" && conf[0].values.length === 2, JSON.stringify(conf));
+
+  const sameRes = [
+    { id: 1, title: "Azərbaycan əhalisi", url: "https://a.az/x", content: "əhalisi 10,3 milyon nəfər", source: "brave" },
+    { id: 2, title: "Azərbaycan əhalisi", url: "https://b.az/x", content: "əhalisi 10.3 milyon nəfər", source: "wikipedia" }
+  ];
+  assert("v29 ziddiyyət: eyni rəqəm → boş", detectConflicts(sameRes, qPop).length === 0, JSON.stringify(detectConflicts(sameRes, qPop)));
+
+  const topicRes = [
+    { id: 1, title: "Pambıq", url: "https://a.az/x", content: "Pambıq istehsalı 362,9 min ton olub", source: "brave" },
+    { id: 2, title: "Buğda", url: "https://b.az/x", content: "Buğda istehsalı 3 milyon ton olub", source: "brave" }
+  ];
+  assert("v29 ziddiyyət: fərqli mövzu (pambıq vs buğda) → boş", detectConflicts(topicRes, "pambıq istehsalı nə qədərdir").length === 0, JSON.stringify(detectConflicts(topicRes, "pambıq istehsalı nə qədərdir")));
+
+  try {
+    const routeSrc2 = readFileSync(new URL("../app/api/search/route.js", import.meta.url), "utf8");
+    assert("v29 sources: hər nəticədə sources sahəsi var", /sources:\s*\[\.\.\.new Set/.test(routeSrc2));
+    assert("v29 conflicts: cavabda conflicts sahəsi var", /conflicts:\s*conflicts\.length/.test(routeSrc2));
+  } catch (e) {
+    assert("v29 sources/conflicts: route.js oxundu", false, e.message);
   }
 }
 
