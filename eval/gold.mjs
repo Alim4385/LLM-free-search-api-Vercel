@@ -79,6 +79,17 @@ function checkAnswer(hay, exp = {}) {
   return { ok: true, why: "ok" };
 }
 
+// throttle: 30/dəq limitinə sığmaq üçün çağırışlar arasında ≥2200ms
+const MIN_GAP = Number(process.env.MIN_GAP_MS || 2200);
+let lastCall = 0;
+async function throttle() {
+  const wait = lastCall + MIN_GAP - Date.now();
+  lastCall = Math.max(Date.now(), lastCall + MIN_GAP);
+  if (wait > 0) await new Promise((res) => setTimeout(res, wait));
+}
+// boş cavab sayğacları
+const http = { http_429: 0, http_other: 0, empty_results: 0, api_error: 0 };
+
 const items = JSON.parse(readFileSync(file, "utf8"));
 
 // page_ok: gözlənilən səhifə (domen və ya başlıq/snippet açar sözü) gəldi?
@@ -93,17 +104,22 @@ async function runOne(item) {
   if (process.env.NO_CACHE) qs.set("no_cache", "1");
   const t0 = Date.now();
   try {
+    await throttle(); // v36: 30 sorğu/dəq limiti — throttle olmadan 429 "səhv cavab" kimi sayılırdı
     const r = await fetch(`${API}?${qs}`, { signal: AbortSignal.timeout(30000) });
+    if (!r.ok) return { answer: false, retrieval: false, page: false, err: true, http: r.status, why: `http:${r.status}`, ms: Date.now() - t0, cached: false, degraded: [], providers: [], top: "" };
     const j = await r.json();
+    if (j.error) return { answer: false, retrieval: false, page: false, err: true, http: r.status, why: `api:${j.error}`, ms: Date.now() - t0, cached: false, degraded: [], providers: [], top: "" };
     const results = (j.results || []).slice(0, topK);
     const hay = fold(results.map((x) => `${x.title || ""} ${x.snippet || ""} ${x.content || ""}`).join(" || "));
     const domains = results.map((x) => { try { return new URL(x.url).hostname.replace(/^www\./, ""); } catch { return ""; } });
     const retrieval = (item.sources || []).some((d) => domains.some((h) => h === d || h.endsWith("." + d)));
     const verdict = checkAnswer(hay, item.expect || {});
+    if (!results.length) http.empty_results++;
     return { answer: verdict.ok, retrieval, page: pageOk(domains, hay, item), why: verdict.why, ms: Date.now() - t0,
       cached: !!(j.meta && j.meta.cached), degraded: (j.meta && j.meta.degraded_stages) || [],
       providers: (j.meta && j.meta.providers_used) || [], top: (results[0] && results[0].title || "").slice(0, 40) };
   } catch (e) {
+    http.http_other++;
     return { answer: false, retrieval: false, page: false, err: true, why: "error:" + e.message.slice(0, 18), ms: Date.now() - t0, cached: false, degraded: [], providers: [], top: "" };
   }
 }
@@ -128,7 +144,7 @@ const rows = items.map((item, i) => {
   const errs = marks.filter((m) => m.err).length;
   return {
     q: item.q, type: item.type, answer: `${ap}/${repeats}`, retrieval: `${rp}/${repeats}`,
-    status: errs === repeats ? "ERROR" : ap === repeats ? "PASS" : ap === 0 ? "FAIL" : "UNSTABLE",
+    status: errs > 0 ? "ERROR" : ap === repeats ? "PASS" : ap === 0 ? "FAIL" : "UNSTABLE",
     page: `${pp}/${repeats}`,
     why: marks.map((m) => m.why).join(","), top: marks[0]?.top || "",
     ms: Math.round(marks.reduce((s, m) => s + m.ms, 0) / marks.length),
