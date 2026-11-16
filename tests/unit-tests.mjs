@@ -9,7 +9,7 @@ import { matchTime, isTimeQuery } from "../lib/time.js";
 import { matchCurrency, isCurrencyQuery } from "../lib/currency.js";
 import { sanitizeQuery, checkRateLimit } from "../lib/ratelimit.js";
 import { scoreResult, isSpamDomain, hostMatches, diversifyByDomain, isJunkDomain, computeConfidence } from "../lib/score.js";
-import { cleanContent, pickAnswer, cutWord, dedupeSnippet, normalizeColloquialAz, detectQueryLanguage, wikiExtractUrl } from "../lib/clean.js";
+import { cleanContent, pickAnswer, cutWord, dedupeSnippet, normalizeColloquialAz, detectQueryLanguage, acceptLanguageHeader, wikiExtractUrl } from "../lib/clean.js";
 import { normalizeUrl, decodeEntities, stripQuestionWords } from "../lib/search.js";
 import { expandQuery, expandQueryAsync, rewriteSearchIntentAz, stripMetaInstructions, isMetaQuery } from "../lib/expand.js";
 import { isLongAzQuery, detectContentLanguage } from "../lib/translate.js";
@@ -487,6 +487,50 @@ console.log("\n=== V16: DANIŞIQ AZ, FONETİK TƏMİZLİK, LÜĞƏT FİLTRİ VƏ
   assert("v16 date_info: bugünkü mənbə 'fresh' ('təzə') kimi işarələnir", freshInfo.freshness === "fresh" && freshInfo.basis === "published" && freshInfo.label.includes("təzə"), JSON.stringify(freshInfo));
   assert("v16 date_info: 2012-ci il mənbəsi 'old' ('köhnə mənbə') kimi işarələnir", oldInfo.freshness === "old" && oldInfo.age_days > 4000 && oldInfo.label.includes("köhnə"), JSON.stringify(oldInfo));
   assert("v16 date_info: tarixsiz mənbə 'unknown' qalır", unknownInfo.freshness === "unknown" && unknownInfo.date === null, JSON.stringify(unknownInfo));
+}
+
+console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KAZİNO FİLTRİ ===");
+{
+  assert("v17 typo: 'Tərçemə' -> 'tərcümə'", normalizeColloquialAz("Tərçemə") === "tərcümə", normalizeColloquialAz("Tərçemə"));
+  assert("v17 typo: 'Ən yaxşı flim saytları' -> 'film'", normalizeColloquialAz("Ən yaxşı flim saytları") === "Ən yaxşı film saytları");
+  assert("v17 typo: 'En iyi flimler' -> 'En iyi filmler'", normalizeColloquialAz("En iyi flimler") === "En iyi filmler");
+  assert("v17 colloq: 'hansılardı' -> 'hansılardır', 'üçündü' -> 'üçündür'",
+    normalizeColloquialAz("Azərbaycan saytlar hansılardı") === "Azərbaycan saytlar hansılardır" &&
+    normalizeColloquialAz("GitHub saytı nə üçündü") === "GitHub saytı nə üçündür"
+  );
+  assert("v17 lang: ASCII TR 'En iyi filmler' = tr (en deyil!)", detectQueryLanguage("En iyi filmler") === "tr", detectQueryLanguage("En iyi filmler"));
+  assert("v17 lang: 'Tərçemə' = az", detectQueryLanguage("Tərçemə") === "az");
+  assert("v17 lang: 'Minecraft' = en", detectQueryLanguage("Minecraft") === "en");
+  assert("v17 accept-language: az/tr/en fərqli başlıqlar qaytarır",
+    acceptLanguageHeader("az").startsWith("az-AZ") &&
+    acceptLanguageHeader("tr").startsWith("tr-TR") &&
+    acceptLanguageHeader("en").startsWith("en-US")
+  );
+  assert("v17 stem: 6 hərfli 'nadir' və 'sətir' kök sözləri kəsilmir (-dir qoruması)", stemAz("nadir") === "nadir" && stemAz("sətir") === "setir");
+  assert("v17 tokenize: 'üçündür' və 'hansılardır' sual köməkçiləri stopword kimi atılır",
+    !tokenize("GitHub saytı nə üçündür").includes("ucund") && !tokenize("saytlar hansılardır").includes("hansi")
+  );
+  assert("v17 expand: təksözlü 'tərcümə' üçün də EN qarşılığı ('translate') çıxır", expandQuery("tərcümə").english === "translate", JSON.stringify(expandQuery("tərcümə")));
+  const casinoScore = scoreResult(
+    { title: "AZƏRBAYCANDA TOP 5+ ƏN YAXŞI KAZİNO SAYTLARI 2026", url: "https://example.com/kazino", snippet: "Azərbaycanda ən çox istifadə edilən kazino saytları", source: "google-news" },
+    tokenize("Azərbaycanda ən çox istifadə edilən saytlar"),
+    "az",
+    "Azərbaycanda ən çox istifadə edilən saytlar"
+  );
+  assert("v17 spam: kazino reklamı adi sayt reytinqi sualında score=0 alır", casinoScore === 0, String(casinoScore));
+  const svScore = scoreResult(
+    { title: "Top websites in Azerbaijan", url: "https://ahrefs.com/sv/top/azerbaijan", snippet: "Top websites in Azerbaijan ranked", source: "brave" },
+    tokenize("top websites azerbaijan"),
+    "az",
+    "Azərbaycanda saytlar"
+  );
+  const enScore = scoreResult(
+    { title: "Top websites in Azerbaijan", url: "https://ahrefs.com/top/azerbaijan", snippet: "Top websites in Azerbaijan ranked", source: "brave" },
+    tokenize("top websites azerbaijan"),
+    "az",
+    "Azərbaycanda saytlar"
+  );
+  assert("v17 locale: yad dildəki URL yolu (/sv/) normal səhifədən aşağı xal alır", svScore < enScore, `sv=${svScore} en=${enScore}`);
 }
 
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);

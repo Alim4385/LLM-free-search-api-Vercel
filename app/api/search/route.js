@@ -13,7 +13,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
-const FILTER_VERSION = 21; // v16.1: Wikipedia Wayback/Arxivləşdirilib dipnot demote + BBC WhatsApp promo təmizliyi
+const FILTER_VERSION = 22; // v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -123,7 +123,7 @@ async function handleSearch(body, req) {
   const fr = (typeof body.freshness === "string" ? body.freshness : "").toLowerCase();
   const freshness = ["day","week","month","year"].includes(fr) ? fr : null;
   const excludeDomains = Array.isArray(body.exclude_domains) ? body.exclude_domains.filter(d => typeof d === "string").map(d => d.toLowerCase().replace(/^www\./, "")).slice(0, 20) : [];
-  const qLang = detectQueryLanguage(query);
+  const qLang = detectQueryLanguage(rewriteSearchIntentAz(query) || query);
   const reqLang = typeof body.lang === "string" && ["az", "tr", "en", "ru"].includes(body.lang.toLowerCase()) ? body.lang.toLowerCase() : qLang;
   const shouldTranslateResults = body.translate_results !== false && body.translate_results !== "0" && body.translate_results !== 0;
 
@@ -244,11 +244,11 @@ async function handleSearch(body, req) {
   const searchTookMs = Date.now() - started;
   // v15: 3500ms -> 5500ms (mənbə gecikəndə tam məqalə oxunuşunu yarıda kəsməsin)
   const skipFetch = format === "simple" || searchTookMs > 5500;
-  // v15/v16: həm normallaşmış sual, həm də ingilis tərcüməsi ilə abzas seçimi!
+  // v15/v17: həm normallaşmış sual, həm də ingilis tərcüməsi ilə abzas seçimi + saytı sorğu dilində aç!
   const extractQuery = effAnchor ? `${normQuery} ${effAnchor}` : normQuery;
   const extracted = skipFetch
     ? toFetch.map(() => ({ status: "fulfilled", value: null }))
-    : await Promise.allSettled(toFetch.map(r => fetchAndExtract(r.url, extractQuery, 2600)));
+    : await Promise.allSettled(toFetch.map(r => fetchAndExtract(r.url, extractQuery, 2600, reqLang)));
 
   const currentIntent = /(?<![\p{L}])(ən\s+çox|son|bu\s+gün|bugün|hazırda|indiki|yeni|top|best|most\s+visited|most\s+popular|latest|current)(?![\p{L}])/iu.test(normQuery) && !/\b(1\d{3}|20[01]\d)\b/.test(normQuery);
   const finalResults = [];
@@ -298,7 +298,11 @@ async function handleSearch(body, req) {
     }
 
     const clippedContent = content.slice(0, itemBudget);
-    const rawSnippet = cutWord(cleanContent(base.snippet || ""), 200);
+    // Əgər axtarış motorunun snippet-i kəsik/xətalıdırsa ("url_to_copy Sorry!..."), saytın rəsmi yerli ön-izləməsini (meta_description) götür
+    const rawSnipSource = (ex && ex.meta_description && (!base.snippet || base.snippet.length < 35 || /url_to_copy|requires a keyboard/i.test(base.snippet)))
+      ? ex.meta_description
+      : (base.snippet || (ex && ex.meta_description) || "");
+    const rawSnippet = cutWord(cleanContent(rawSnipSource), 220);
     const out = {
       id: finalResults.length + 1,
       title,
