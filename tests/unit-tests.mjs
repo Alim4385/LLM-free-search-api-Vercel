@@ -9,11 +9,12 @@ import { matchTime, isTimeQuery } from "../lib/time.js";
 import { matchCurrency, isCurrencyQuery } from "../lib/currency.js";
 import { sanitizeQuery, checkRateLimit } from "../lib/ratelimit.js";
 import { scoreResult, isSpamDomain, hostMatches, diversifyByDomain, isJunkDomain, computeConfidence } from "../lib/score.js";
-import { cleanContent, pickAnswer, cutWord, detectQueryLanguage, wikiExtractUrl } from "../lib/clean.js";
+import { cleanContent, pickAnswer, cutWord, dedupeSnippet, normalizeColloquialAz, detectQueryLanguage, wikiExtractUrl } from "../lib/clean.js";
 import { normalizeUrl, decodeEntities, stripQuestionWords } from "../lib/search.js";
-import { expandQuery, expandQueryAsync, stripMetaInstructions, isMetaQuery } from "../lib/expand.js";
-import { isLongAzQuery } from "../lib/translate.js";
-import { isBlockedIp, assertPublicUrl, extractCacheGet, extractCacheSet } from "../lib/extract.js";
+import { expandQuery, expandQueryAsync, rewriteSearchIntentAz, stripMetaInstructions, isMetaQuery } from "../lib/expand.js";
+import { isLongAzQuery, detectContentLanguage } from "../lib/translate.js";
+import { isBlockedIp, assertPublicUrl, extractCacheGet, extractCacheSet, extractPageDates, buildDateInfo } from "../lib/extract.js";
+import { parseHTML } from "linkedom";
 import { isCircuitOpen, recordFailure, recordSuccess } from "../lib/circuit.js";
 
 let pass=0, fail=0;
@@ -429,6 +430,63 @@ console.log("\n=== V15: XƏBƏR ŞABLONU, REKLAM LİNKİ, TƏKRAR SÖZ VƏ İNFO
     trapQ
   );
   assert("v15 P5 hallüsinasiya qoruması: 9 anlayışlı sualda yalnız 2 ümumi söz tutarsa score=0", trapScore === 0, String(trapScore));
+}
+
+console.log("\n=== V16: DANIŞIQ AZ, FONETİK TƏMİZLİK, LÜĞƏT FİLTRİ VƏ DATE_INFO ===");
+{
+  const q1 = normalizeColloquialAz("Azərbaycan paytaxtı hansı şəhərdi");
+  assert("v16 colloq: 'şəhərdi' -> 'şəhərdir'", q1 === "Azərbaycan paytaxtı hansı şəhərdir", q1);
+  const q2 = normalizeColloquialAz("Dünyanın ən cox isdifadə edilmiş saytları");
+  assert("v16 colloq: 'cox isdifadə' -> 'çox istifadə'", q2 === "Dünyanın ən çox istifadə edilmiş saytları", q2);
+  const q3 = rewriteSearchIntentAz("Xəbərlər hakda məlumat Azərbaycanda");
+  assert("v16 intent: 'Xəbərlər hakda məlumat Azərbaycanda' -> son xəbərlər", /son xəbərlər/iu.test(q3) && !/haqqında məlumat/iu.test(q3), q3);
+
+  const ipaRaw = "Bakı ([bɑˈcɯ] ⓘ) — Azərbaycanın paytaxtıdır. Bakı (ABŞ: , Böyük Britaniya: ; rəsmi adı: Bakı) Xəzər sahilindədir.";
+  const ipaClean = cleanContent(ipaRaw);
+  assert("v16 clean: IPA [bɑˈcɯ] və ⓘ simvolları təmizlənir", !ipaClean.includes("bɑˈcɯ") && !ipaClean.includes("ⓘ") && ipaClean.includes("Bakı — Azərbaycanın paytaxtıdır"), ipaClean);
+  assert("v16 clean: içi boş tələffüz mötərizəsi '(ABŞ: , Böyük Britaniya: ; ...)' silinir", !/ABŞ:\s*,/u.test(ipaClean), ipaClean);
+
+  const braveNoise = cleanContent("2 weeks ago - AI can make mistakes, so verify using Britannica articles. ... Baku, the capital of Azerbaijan, lies on the Caspian Sea.");
+  assert("v16 clean: Brave '2 weeks ago - AI can make mistakes...' səs-küyü silinir", braveNoise.startsWith("Baku, the capital of Azerbaijan"), braveNoise);
+
+  const dup = dedupeSnippet("Baku, the capital of Azerbaijan, is located on the Caspian…", "Baku, the capital of Azerbaijan, is located on the Caspian Sea and has 2.3 million people.");
+  assert("v16 dedupe: content ilə eyni başlayan snippet silinir (təkrar olmur)", dup === undefined, String(dup));
+
+  const enWithAzGloss = "Azerbaijan State News Agency (AZERTAC; Azerbaijani: Azərbaycan Dövlət İnformasiya Agentliyi) is the official news agency of the Republic of Azerbaijan.";
+  assert("v16 lang: mötərizədə AZ adı olan EN məqalə 'en' kimi tanınır (tərcümə olunacaq)", detectContentLanguage(enWithAzGloss) === "en", detectContentLanguage(enWithAzGloss));
+  const enWithProper = "Visibility on Azerbaijan's roads to fall to 500 meters on Nov. 16 Operativ Məlumat Mərkəzi";
+  assert("v16 lang: EN xəbər başlığı sonunda AZ agentlik adı olsa da 'en' tanınır", detectContentLanguage(enWithProper) === "en", detectContentLanguage(enWithProper));
+
+  // Lüğət demote testi: adi sualda Merriam-Webster 0 alır, məna sualında isə qalır
+  const mwOnRank = scoreResult(
+    { title: "MOST Definition & Meaning - Merriam-Webster", url: "https://www.merriam-webster.com/dictionary/most", snippet: "The meaning of MOST is greatest in quantity or degree.", source: "bing" },
+    tokenize("Dünyanın ən çox istifadə edilmiş saytları most visited websites"),
+    "az",
+    "Dünyanın ən çox istifadə edilmiş saytları"
+  );
+  assert("v16 dict: reytinq sualında Merriam-Webster /dictionary/ score=0", mwOnRank === 0, String(mwOnRank));
+  const mwOnDef = scoreResult(
+    { title: "SERENDIPITY Definition & Meaning", url: "https://www.merriam-webster.com/dictionary/serendipity", snippet: "The meaning of SERENDIPITY is luck in finding good things.", source: "bing" },
+    tokenize("serendipity meaning definition"),
+    "en",
+    "serendipity meaning"
+  );
+  assert("v16 dict: həqiqi məna/lüğət sualında dictionary saytı qalır", mwOnDef >= 1.5, String(mwOnDef));
+
+  // HTML-dən həqiqi tarix çıxarma + date_info təravət yoxlaması (Rule 8: tarix yoxdursa uydurulmur!)
+  const { document: docWithDate } = parseHTML('<html><head><meta property="article:published_time" content="2026-11-15T10:30:00Z"><meta property="article:modified_time" content="2026-11-16T08:00:00Z"></head><body><p>Mətn</p></body></html>');
+  const pd1 = extractPageDates(docWithDate);
+  assert("v16 pageDate: meta article:published_time və modified_time düzgün çıxarılır", pd1.publishedAt === "2026-11-15T10:30:00.000Z" && pd1.updatedAt === "2026-11-16T08:00:00.000Z", JSON.stringify(pd1));
+  const { document: docNoDate } = parseHTML("<html><head><title>Tarixsiz səhifə</title></head><body><p>Sadə mətn</p></body></html>");
+  const pd2 = extractPageDates(docNoDate);
+  assert("v16 pageDate (Rule 8): tarix yoxdursa null qaytarır, heç vaxt uydurmur", pd2.publishedAt === null && pd2.updatedAt === null, JSON.stringify(pd2));
+
+  const freshInfo = buildDateInfo(new Date().toISOString(), null, "az");
+  const oldInfo = buildDateInfo("2012-07-08T16:03:09Z", null, "az");
+  const unknownInfo = buildDateInfo(null, null, "az");
+  assert("v16 date_info: bugünkü mənbə 'fresh' ('təzə') kimi işarələnir", freshInfo.freshness === "fresh" && freshInfo.basis === "published" && freshInfo.label.includes("təzə"), JSON.stringify(freshInfo));
+  assert("v16 date_info: 2012-ci il mənbəsi 'old' ('köhnə mənbə') kimi işarələnir", oldInfo.freshness === "old" && oldInfo.age_days > 4000 && oldInfo.label.includes("köhnə"), JSON.stringify(oldInfo));
+  assert("v16 date_info: tarixsiz mənbə 'unknown' qalır", unknownInfo.freshness === "unknown" && unknownInfo.date === null, JSON.stringify(unknownInfo));
 }
 
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);

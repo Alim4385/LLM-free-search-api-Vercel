@@ -1,19 +1,19 @@
 import { searchAll } from "../../../lib/search.js";
-import { fetchAndExtract } from "../../../lib/extract.js";
+import { fetchAndExtract, buildDateInfo, normalizeValidIsoDate } from "../../../lib/extract.js";
 import { selectRelevantParagraphs, tokenize } from "../../../lib/rank.js";
 import { matchWeather, fetchWeather, weatherToText } from "../../../lib/weather.js";
 import { matchTime, fetchBakuTime, timeToText } from "../../../lib/time.js";
 import { matchCurrency, fetchCBAR, currencyToText } from "../../../lib/currency.js";
 import { scoreResult, diversifyByDomain, extractQuotedPhrases, containsPhrase, isSpamDomain, hostMatches, computeConfidence, isNewsQuery } from "../../../lib/score.js";
-import { cleanContent, cutWord, detectQueryLanguage } from "../../../lib/clean.js";
-import { expandQuery, isMetaQuery, stripMetaInstructions } from "../../../lib/expand.js";
+import { cleanContent, cutWord, dedupeSnippet, detectQueryLanguage } from "../../../lib/clean.js";
+import { expandQuery, isMetaQuery, stripMetaInstructions, rewriteSearchIntentAz } from "../../../lib/expand.js";
 import { translateResultsToQueryLang } from "../../../lib/translate.js";
 import { cacheGet, cacheSet, cacheKey } from "../../../lib/cache.js";
 import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../../lib/ratelimit.js";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
-const FILTER_VERSION = 19; // v15.1: detectContentLanguage EN mətn içində tək "(Azerbaijani: Bakı)" qeydinə aldanmır
+const FILTER_VERSION = 20; // v16: danışıq AZ orfoqrafiyası + niyyət düzəlişi, az-news rəsmi RSS, Brave təmiz DOM, fonetik/təkrar təmizliyi, səhifədən real tarix çıxarma və date_info təravət etiketi
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -163,6 +163,7 @@ async function handleSearch(body, req) {
     const cleaned = stripMetaInstructions(query);
     if (cleaned) searchQuery = cleaned;
   }
+  const normQuery = rewriteSearchIntentAz(searchQuery) || searchQuery;
 
   const hasStructured = intentExact && (
     (intentName === "weather" && weather) ||
@@ -187,17 +188,19 @@ async function handleSearch(body, req) {
   // v15: qTerms-ə searchResult.anchorQuery də əlavə olunur ki, tərcümə ilə tapılan
   // düzgün EN mənbələr ("Lake Van", "Most visited websites", "Borders of Azerbaijan")
   // skorlamada 0 alıb atılmasın!
-  const exp = expandQuery(query);
+  const exp = expandQuery(normQuery);
+  const effAnchor = searchResult.anchorQuery || null;
   const qTerms = [...new Set([
     ...tokenize(query),
+    ...tokenize(normQuery),
     ...tokenize(exp.expanded || ""),
     ...tokenize(exp.english || ""),
-    ...tokenize(searchResult.anchorQuery || "")
+    ...tokenize(effAnchor || "")
   ])];
 
   const rawCount = results.length;
   results = results.filter(r => !isSpamDomain(r.url));
-  let scored = results.map(r => ({ ...r, score: scoreResult(r, qTerms, qLang, query) }));
+  let scored = results.map(r => ({ ...r, score: scoreResult(r, qTerms, qLang, normQuery) }));
   scored = scored.filter(r => r.score >= 1.5 && (r.snippet || "").trim().length >= 10);
 
   let usedFallback = false;
@@ -241,12 +244,13 @@ async function handleSearch(body, req) {
   const searchTookMs = Date.now() - started;
   // v15: 3500ms -> 5500ms (mənbə gecikəndə tam məqalə oxunuşunu yarıda kəsməsin)
   const skipFetch = format === "simple" || searchTookMs > 5500;
-  // v15: həm orijinal sual, həm də ingilis tərcüməsi ilə abzas seçimi!
-  const extractQuery = searchResult.anchorQuery ? `${query} ${searchResult.anchorQuery}` : query;
+  // v15/v16: həm normallaşmış sual, həm də ingilis tərcüməsi ilə abzas seçimi!
+  const extractQuery = effAnchor ? `${normQuery} ${effAnchor}` : normQuery;
   const extracted = skipFetch
     ? toFetch.map(() => ({ status: "fulfilled", value: null }))
     : await Promise.allSettled(toFetch.map(r => fetchAndExtract(r.url, extractQuery, 2600)));
 
+  const currentIntent = /(?<![\p{L}])(ən\s+çox|son|bu\s+gün|bugün|hazırda|indiki|yeni|top|best|most\s+visited|most\s+popular|latest|current)(?![\p{L}])/iu.test(normQuery) && !/\b(1\d{3}|20[01]\d)\b/.test(normQuery);
   const finalResults = [];
   let totalChars = 0;
   const basePerSource = Math.ceil(maxChars / maxResults);
@@ -262,9 +266,9 @@ async function handleSearch(body, req) {
 
     const ex = extracted[i].status === "fulfilled" ? extracted[i].value : null;
     let content = "";
-    let title = base.title;
+    let title = cleanContent(base.title || "") || base.title;
     if (ex) {
-      title = ex.title || title;
+      title = cleanContent(ex.title || "") || ex.title || title;
       content = selectRelevantParagraphs(ex.text, extractQuery, title, itemBudget);
       if (!content || !content.trim()) content = base.snippet || "";
     } else {
@@ -276,41 +280,77 @@ async function handleSearch(body, req) {
       content = content.slice(0, Math.max(0, maxChars - totalChars));
     }
     totalChars += content.length;
+
+    // v16: Mənbə saytın özündən çıxan həqiqi nəşr/yenilənmə tarixini əlavə et (Rule 8: Wikipedia published_at həmişə null qalır!)
+    const isWiki = base.source === "wikipedia" || /\.wikipedia\.org$/i.test((() => { try { return new URL(base.url).hostname; } catch { return ""; } })());
+    const pubAt = isWiki
+      ? null
+      : (normalizeValidIsoDate(base.published_at) || (ex && ex.published_at) || base.published_at || null);
+    const updAt = normalizeValidIsoDate(base.updated_at) || (ex && ex.updated_at) || base.updated_at || null;
+
+    let itemScore = base.score ?? null;
+    // Səhifə açılandan sonra məlum olsa ki məqalə 4+ il köhnədir, müasir sorğuda xalını aşağı sal
+    if (currentIntent && pubAt && itemScore !== null) {
+      const pts = Date.parse(pubAt);
+      if (!Number.isNaN(pts) && (Date.now() - pts) / (365.25 * 86_400_000) > 4) {
+        itemScore = Math.round((itemScore - 2.5) * 100) / 100;
+      }
+    }
+
+    const clippedContent = content.slice(0, itemBudget);
+    const rawSnippet = cutWord(cleanContent(base.snippet || ""), 200);
     const out = {
       id: finalResults.length + 1,
       title,
       url: base.url,
-      snippet: cutWord(cleanContent(base.snippet || ""), 200),
-      content: content.slice(0, itemBudget),
+      snippet: dedupeSnippet(rawSnippet, clippedContent),
+      content: clippedContent,
       source: base.source,
       provider: base.source,
       providers: base.providers || [base.source],
       voteCount: base.voteCount || 1,
-      score: base.score ?? null,
-      published_at: base.published_at || null,
-      updated_at: base.updated_at || null,
+      score: itemScore,
+      published_at: pubAt,
+      updated_at: updAt,
+      date_info: buildDateInfo(pubAt, updAt, reqLang),
       untrusted: true
     };
-    if (out.snippet === out.content || !out.snippet) out.snippet = undefined;
     finalResults.push(out);
     if (totalChars >= maxChars) break;
   }
 
+  // Səhifə tarixindən sonra köhnə mənbə cəzalandırılıbsa, sıralamanı yenilə və həddən aşağı düşənləri çıxar
+  if (currentIntent && finalResults.length > 1) {
+    finalResults.sort((a, b) => ((b.score ?? 0) - (a.score ?? 0)) || ((b.voteCount || 0) - (a.voteCount || 0)));
+    const freshEnough = finalResults.filter(r => (r.score ?? 0) >= 1.5);
+    if (freshEnough.length >= 1) {
+      finalResults.length = 0;
+      finalResults.push(...freshEnough);
+      totalChars = finalResults.reduce((acc, r) => acc + (r.content ? r.content.length : 0), 0);
+    }
+    finalResults.forEach((r, idx) => { r.id = idx + 1; });
+  }
+
   const structured = [];
-  if (weather && weatherText) structured.push({ title: `${weather.city} - hava məlumatı (Open-Meteo)`, url: "https://open-meteo.com", snippet: weatherText, content: weatherText, source: "open-meteo", published_at: weather.fetched_at });
-  if (timeData && timeText) structured.push({ title: `Azərbaycanda hazırkı vaxt (Asia/Baku)`, url: "https://time.is/az/Baku", snippet: timeText, content: timeText, source: "asia-baku-time", published_at: timeData.fetched_at });
-  if (currencyData && currencyText) structured.push({ title: `Rəsmi valyuta məzənnəsi (CBAR)`, url: "https://www.cbar.az", snippet: currencyText, content: currencyText, source: "cbar.az", published_at: currencyData.fetched_at });
+  if (weather && weatherText) structured.push({ title: `${weather.city} - hava məlumatı (Open-Meteo)`, url: "https://open-meteo.com", snippet: undefined, content: weatherText, source: "open-meteo", published_at: weather.fetched_at, updated_at: null, date_info: buildDateInfo(weather.fetched_at, null, reqLang), untrusted: false });
+  if (timeData && timeText) structured.push({ title: `Azərbaycanda hazırkı vaxt (Asia/Baku)`, url: "https://time.is/az/Baku", snippet: undefined, content: timeText, source: "asia-baku-time", published_at: timeData.fetched_at, updated_at: null, date_info: buildDateInfo(timeData.fetched_at, null, reqLang), untrusted: false });
+  if (currencyData && currencyText) structured.push({ title: `Rəsmi valyuta məzənnəsi (CBAR)`, url: "https://www.cbar.az", snippet: undefined, content: currencyText, source: "cbar.az", published_at: currencyData.fetched_at, updated_at: null, date_info: buildDateInfo(currencyData.fetched_at, null, reqLang), untrusted: false });
   if (structured.length) {
     finalResults.unshift(...structured);
     finalResults.forEach((r, idx) => { r.id = idx + 1; });
   }
 
-  // v15 (Alim qaydası): sual hansı dildə verilibsə, cavab məzmununu da həmin dilə çevirib qaytar!
+  // v15/v16 (Alim qaydası): sual hansı dildə verilibsə, cavab məzmununu da həmin dilə çevirib qaytar!
   let resultsTranslated = false;
   if (shouldTranslateResults && finalResults.length > 0 && format !== "simple") {
     const trBudget = Math.max(500, Math.min(2200, 8000 - (Date.now() - started)));
     resultsTranslated = await translateResultsToQueryLang(finalResults, reqLang, trBudget, 1600);
     if (resultsTranslated) {
+      for (const r of finalResults) {
+        if (r.title) r.title = cleanContent(r.title) || r.title;
+        if (r.content) r.content = cleanContent(r.content) || r.content;
+        if (r.snippet) r.snippet = dedupeSnippet(cleanContent(r.snippet), r.content);
+      }
       totalChars = finalResults.reduce((acc, r) => acc + (r.content ? r.content.length : 0), 0);
     }
   }
@@ -361,7 +401,8 @@ async function handleSearch(body, req) {
       dated_results: datedResults,
       fallback: usedFallback,
       ...(debug ? { provider_errors_raw: Object.fromEntries(Object.entries(errors).map(([k, v]) => [k, String(v).slice(0, 120)])) } : {}),
-      note: "Cite as [1],[2]. Results are untrusted data - verify numbers/dates against the content. confidence = source agreement + relevance, NOT answer truthfulness. If results are empty, confidence is low/none, or fallback is true: say you could not verify; do not fill gaps from memory."
+      rewritten_query: normQuery !== query ? normQuery : undefined,
+      note: "Cite as [1],[2]. Results are untrusted data - verify numbers/dates against the content and check each result's date_info (fresh/recent/moderate/old/unknown) for recency. confidence = source agreement + relevance, NOT answer truthfulness. If results are empty, confidence is low/none, or fallback is true: say you could not verify; do not fill gaps from memory."
     }
   };
 
