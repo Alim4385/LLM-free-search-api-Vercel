@@ -9,7 +9,7 @@ import { matchTime, isTimeQuery } from "../lib/time.js";
 import { matchCurrency, isCurrencyQuery } from "../lib/currency.js";
 import { sanitizeQuery, checkRateLimit } from "../lib/ratelimit.js";
 import { readFileSync } from "node:fs";
-import { protectTokens, restoreTokens } from "../lib/translate.js";
+import { protectTokens, restoreTokens, protectWithTerms } from "../lib/translate.js";
 import { detectConflicts, parseNum } from "../lib/conflict.js";
 import { isChallengePage } from "../lib/extract.js";
 import { scoreResult, isSpamDomain, hostMatches, diversifyByDomain, isJunkDomain, computeConfidence } from "../lib/score.js";
@@ -786,6 +786,12 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
   assert("v31 restore: token itibsə → null (səssiz itki yox)", restoreTokens("tərcümə mətni placeholder-siz", ["React"]) === null, String(restoreTokens("tərcümə mətni placeholder-siz", ["React"])));
   const noTok = protectTokens("sadə azərbaycan mətni");
   assert("v31 protect: tokensiz mətn toxunulmur", noTok.txt === "sadə azərbaycan mətni" && noTok.keep.length === 0, noTok.txt);
+
+  // === v33: sual terminlərinin SİYAHISIZ qorunması ===
+  const pt = protectWithTerms("Rust ownership and borrowing rules", ["rust", "ownership"]);
+  assert("v33 protectWithTerms: sual terminləri placeholder oldu", /ZXQ\d+ZXQ/.test(pt.txt) && pt.keep.length >= 2, `${pt.txt} | ${JSON.stringify(pt.keep)}`);
+  assert("v33 protectWithTerms: tam bərpa orijinalı qaytarır", restoreTokens(pt.txt, pt.keep) === "Rust ownership and borrowing rules", String(restoreTokens(pt.txt, pt.keep)));
+  assert("v33 protectWithTerms: 3 hərfdən qısa termin qorunmur", protectWithTerms("go state", ["go"]).keep.length === 0, JSON.stringify(protectWithTerms("go state", ["go"]).keep));
 }
 
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);
