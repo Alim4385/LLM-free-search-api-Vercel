@@ -3,7 +3,7 @@
 // normalizeUrl (viewtopic ?t=), decodeEntities (hex + no double-decode),
 // scoreResult fuzzy (stem mismatch), isSpamDomain (includes over-match),
 // selectRelevantParagraphs fallback, sanitizeQuery (kod tokenları qorunur)
-import { tokenize, stemAz, normalizeAz, selectRelevantParagraphs, orderByRecency } from "../lib/rank.js";
+import { tokenize, stemAz, normalizeAz, selectRelevantParagraphs, orderByRecency, isGenericNewsTerm } from "../lib/rank.js";
 import { matchWeather, isWeatherQuery, detectCity } from "../lib/weather.js";
 import { matchUnits, unitsToText } from "../lib/units.js";
 import { matchTime, isTimeQuery } from "../lib/time.js";
@@ -1024,6 +1024,18 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v58: tarixsiz nəticə sona düşür", ord[2].title === "ana sehife", ord.map(x => x.title).join(","));
     const same = orderByRecency([{ title: "x", score: 1 }, { title: "y", score: 2 }]);
     assert("v58: tarix yoxdursa skor qalır", same[0].title === "y", same.map(x => x.title).join(","));
+  }
+
+
+  // === v58.1: ümumi xəbər termini anlayışı (EN tərcümə də daxil) ===
+  {
+    assert("v58.1: azerbaijan generic sayılır", isGenericNewsTerm("azerbaijan"));
+    assert("v58.1: latest generic sayılır", isGenericNewsTerm("latest"));
+    assert("v58.1: 'uefa' generic DEYİL", !isGenericNewsTerm("uefa"));
+    assert("v58.1: il generic sayılır", isGenericNewsTerm("2026"));
+    const all = ["xeber", "azerbaycan", "latest", "news", "azerbaijan"].every(isGenericNewsTerm);
+    assert("v58.1: 'son xəbərlər Azərbaycan' tam generic", all);
+    assert("v58.1: 'iqtisadiyyatda son xəbərlər' generic deyil", !isGenericNewsTerm("iqtisadiyyat"));
   }
 
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);
