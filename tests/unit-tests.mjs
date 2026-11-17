@@ -914,5 +914,14 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v54.3 token: 'Füzulinin' → 'fuzul'", tokenize("Füzulinin").includes("fuzul"), JSON.stringify(tokenize("Füzulinin")));
   }
 
+
+  // === v54.4: sorğu termini olmayan nəticə sıfır skor alır ===
+  {
+    const med = { title: "Medera Hospital | Sağlamlığınızın qeydinə qalın", snippet: "Biz pasiyent mərkəzli qayğıya və qabaqcıl tibbi həllərə üstünlük veririk.", url: "https://mederahospital.az/vitamin-c-faydalari", source: "web" };
+    assert("v54.4: əlaqəsiz .az ana səhifəsi 0 alır", scoreResult(med, ["vitamin", "qida"], "az", "C vitamini hansı qidalarda var") === 0, String(scoreResult(med, ["vitamin", "qida"], "az", "C vitamini hansı qidalarda var")));
+    const ok = { title: "C Vitamini Hansı Qidalarda Var?", snippet: "C vitamini suda həll olunan vitamindir, qida ilə alınır.", url: "https://saglamyasha.az/diet/vitaminler/c-vitamini/", source: "web" };
+    assert("v54.4: uyğun nəticə skor alır", scoreResult(ok, ["vitamin", "qida"], "az", "C vitamini hansı qidalarda var") > 1, String(scoreResult(ok, ["vitamin", "qida"], "az", "C vitamini hansı qidalarda var")));
+  }
+
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);
 process.exit(fail?1:0);

@@ -1,4 +1,4 @@
-import { searchAll, searchMilliArxiv, isArchiveTopic } from "../../../lib/search.js";
+import { searchAll, searchMilliArxiv, isArchiveTopic, searchAzWikiHint } from "../../../lib/search.js";
 import { fetchAndExtract, buildDateInfo, normalizeValidIsoDate } from "../../../lib/extract.js";
 import { detectConflicts } from "../../../lib/conflict.js";
 import { selectRelevantParagraphs, tokenize } from "../../../lib/rank.js";
@@ -22,7 +22,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 130; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 131; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -438,9 +438,12 @@ async function handleSearch(body, req) {
     try {
       const coreAz = tokenize(normQuery).filter(t => t.length >= 3).slice(0, 4).join(" ");
       if (coreAz) {
-        const rsW = await withTimeout(searchAll(`${coreAz} site:az.wikipedia.org`, Math.min(6, maxResults), { freshness, excludeDomains }), 1500, "azwiki hint timeout");
-        const tW = [...new Set([...qTerms, ...tokenize(rsW.anchorQuery || "")])];
-        const extraW = (rsW.results || []).filter(r => /wikipedia\.org/i.test(r.url) && !isSpamDomain(r.url))
+        // v54.4: "site:" operatorunu provayderlər atırdı → hint heç vaxt işə düşmürdü.
+        // İndi az.wikipedia API-nin özü, 4 namizəd sorğu ilə.
+        const rsW = await withTimeout(searchAzWikiHint(normQuery, qTerms, Math.min(6, maxResults)), 1600, "azwiki hint timeout");
+        const rsWList = Array.isArray(rsW) ? rsW : [];
+        const tW = [...new Set([...qTerms, ...tokenize(coreAz)])];
+        const extraW = rsWList.filter(r => /wikipedia\.org/i.test(r.url) && !isSpamDomain(r.url))
           .map(r => ({ ...r, score: scoreResult(r, tW, qLang, normQuery) }))
           .filter(r => r.score >= 1.3);
         if (extraW.length) {
