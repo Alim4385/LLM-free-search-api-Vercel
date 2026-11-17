@@ -22,7 +22,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 126; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 127; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -751,7 +751,13 @@ async function handleSearch(body, req) {
     // top-3-ün 2-si rəsmi sənəd/kod hostudursa, tərcümə məzmunu təhrif edir → keç
     const DOCS_HOST = /(^|\.)(stackoverflow\.com|github\.com|react\.dev|mozilla\.org|python\.org|kotlinlang\.org|docker\.com|postgresql\.org|git-scm\.com|kubernetes\.io|rust-lang\.org|golang\.org|npmjs\.com)$|^docs\./i;
     const docsTop = finalResults.slice(0, 3).filter((r) => { try { return DOCS_HOST.test(new URL(r.url).hostname.replace(/^www\./, "")); } catch { return false; } }).length;
-    if (isTechQuery || docsTop >= 2) {
+    // v54: 1-ci nəticə ENSİKLOPEDİYA/məqalədirsə (kod səhifəsi deyilsə) tərcümə EDİLİR.
+    // "GitHub nədir" → en.wikipedia mətni AZ cavabda ingilis qalırdı.
+    const PROSE_HOST = /(^|\.)(wikipedia\.org|britannica\.com|azertag\.az|report\.az|apa\.az)$/i;
+    const firstIsProse = (() => {
+      try { return PROSE_HOST.test(new URL(finalResults[0].url).hostname.replace(/^www\./, "")); } catch { return false; }
+    })();
+    if (!firstIsProse && (isTechQuery || docsTop >= 2)) {
       degradedStages.push(isTechQuery ? "translate_skipped_tech" : "translate_skipped_docs");
     } else {
       const protTerms = [...new Set((String(query).match(/[A-Za-z][A-Za-z0-9_.:-]{2,}/g) || []))].slice(0, 8);
