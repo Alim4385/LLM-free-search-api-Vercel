@@ -22,7 +22,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 123; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 124; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -586,7 +586,10 @@ async function handleSearch(body, req) {
   // v52: istifadəçi tələbi — "nəticə gəlməsə təkrar sınansın, 1 nəticədənsə bir neçə
   // fərqli nəticə olsun". Boş və ya tək nəticə qalıbsa, FƏRQLİ sorğu forması ilə
   // ikinci cəhd: EN anchor + nüvə sözlər + (mövzu uyğundursa) rəsmi Milli Arxiv.
-  if (!unintelligible && !hasStructured && finalResults.length < 2 && (HARD_DEADLINE_MS - (Date.now() - started)) > 2400) {
+  // v52.3: score_gate_bypassed (skor qapısı hər şeyi atdı → zəif namizədlər göstərildi)
+  // halında da ikinci cəhd edilir; faydalı nəticə gəlsə, zibil namizədlər atılır.
+  const bypassFilled = degradedStages.includes("score_gate_bypassed");
+  if (!unintelligible && !hasStructured && (finalResults.length < 2 || bypassFilled) && (HARD_DEADLINE_MS - (Date.now() - started)) > 2400) {
     const have = new Set(finalResults.map(x => String(x.url || "").replace(/\/$/, "")));
     const rescueQs = [];
     if (effAnchor && effAnchor.trim() && effAnchor !== normQuery) rescueQs.push(effAnchor);
@@ -653,6 +656,15 @@ async function handleSearch(body, req) {
       } catch {}
     }
     if (added) degradedStages.push("rescue_retry");
+    // ikinci cəhd faydalı nəticə gətirdisə, bypass ilə gələn zəif namizədləri at
+    if (added && bypassFilled) {
+      const keep = finalResults.filter(x => x.rescued || (x.score ?? 0) >= 1.5);
+      if (keep.length >= 1 && keep.length < finalResults.length) {
+        degradedStages.push("junk_pruned_after_rescue");
+        finalResults.length = 0;
+        keep.forEach((x, i) => { x.id = i + 1; finalResults.push(x); });
+      }
+    }
   }
 
   // v43: istifadəçi "son 1 gün/həftə" istəyibsə, çıxarışdan sonra REAL tarixi yoxla
