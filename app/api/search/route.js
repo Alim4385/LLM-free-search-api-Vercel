@@ -11,7 +11,7 @@ import { matchMath, mathToText } from "../../../lib/math.js";
 import { matchSports, fetchLastMatch, lastMatchToText } from "../../../lib/sports.js";
 import { matchNutrition, fetchNutrient, nutrientToText } from "../../../lib/nutrition.js";
 import { leadAnswerSentence } from "../../../lib/rank.js";
-import { classifyType, officialBoost, wantsFresh, sameDayCue } from "../../../lib/router.js";
+import { classifyType, officialBoost, wantsFresh, sameDayCue, newsTrustBoost, AZ_NEWS_TRUSTED } from "../../../lib/router.js";
 import { scoreResult, diversifyByDomain, extractQuotedPhrases, containsPhrase, isSpamDomain, hostMatches, computeConfidence, isNewsQuery, looksLikeGibberish } from "../../../lib/score.js";
 import { cleanContent, cutWord, dedupeSnippet, detectQueryLanguage, isBoilerplateOnly, stripBoilerplateHead } from "../../../lib/clean.js";
 import { expandQuery, isMetaQuery, stripMetaInstructions, rewriteSearchIntentAz } from "../../../lib/expand.js";
@@ -22,7 +22,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 124; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 125; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -321,6 +321,17 @@ async function handleSearch(body, req) {
     });
   }
 
+  // v53: xəbər sorğusunda tanınmış AZ mənbələri (AZƏRTAC, Report, APA, Trend...) önə.
+  // Səbəb: "axtardığım xəbərdə düzgün sayt gəlmirdi" — xəbər sorğularında sayt-hədəfli
+  // cəhd ümumiyyətlə yox idi (yalnız hüquq/təhsil/iqtisad üçün site: hint var idi).
+  const newsQ = isNewsQuery(normQuery) || sameDayCue(normQuery);
+  if (newsQ) {
+    scored = scored.map(r => {
+      const b = newsTrustBoost(r.url);
+      return b ? { ...r, score: r.score + b, trusted_news: true } : r;
+    });
+  }
+
   let usedFallback = false;
   if (!scored.length && results.length) { usedFallback = true; }
   scored.sort((a, b) => (b.score - a.score) || ((b.voteCount || 0) - (a.voteCount || 0)) || a.url.localeCompare(b.url));
@@ -391,6 +402,29 @@ async function handleSearch(body, req) {
         const seen2 = new Set(scored.map(r => r.url));
         for (const r of extraS) if (!seen2.has(r.url)) scored.push(r);
         scored.sort((a, b) => b.score - a.score);
+      }
+    } catch {}
+  }
+
+  // v53: xəbər sorğusunda tanınmış AZ mənbəsindən HEÇ NƏ gəlməyibsə → sayt-hədəfli
+  // bir cəhd (AZƏRTAC + Report OR ilə). Sual "xəbər" olsa da nəticə xarici sayt olurdu.
+  if (newsQ && !hasStructured && Date.now() - started < 2600 && !scored.some(r => newsTrustBoost(r.url) > 0)) {
+    try {
+      const coreN = tokenize(normQuery).filter(t => t.length >= 3).slice(0, 5).join(" ");
+      if (coreN) {
+        const doms = AZ_NEWS_TRUSTED.slice(0, 2);
+        const qSite = `${coreN} (site:${doms[0]} OR site:${doms[1]})`;
+        const rsN = await withTimeout(searchAll(qSite, Math.min(6, maxResults), { freshness, excludeDomains }), 1600, "news site hint timeout");
+        const tN = [...new Set([...qTerms, ...tokenize(rsN.anchorQuery || "")])];
+        const extraN = (rsN.results || []).filter(r => !isSpamDomain(r.url))
+          .map(r => ({ ...r, score: scoreResult(r, tN, qLang, normQuery) + newsTrustBoost(r.url) }))
+          .filter(r => r.score >= 1.4);
+        if (extraN.length) {
+          degradedStages.push("news_site_hint");
+          const seenN = new Set(scored.map(r => r.url));
+          for (const r of extraN.sort((a, b) => b.score - a.score)) if (!seenN.has(r.url)) scored.push(r);
+          scored.sort((a, b) => b.score - a.score);
+        }
       }
     } catch {}
   }

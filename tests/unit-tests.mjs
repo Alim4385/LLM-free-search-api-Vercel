@@ -15,6 +15,8 @@ import { detectConflicts, parseNum } from "../lib/conflict.js";
 import { isChallengePage } from "../lib/extract.js";
 import { scoreResult, isSpamDomain, hostMatches, diversifyByDomain, isJunkDomain, computeConfidence, looksLikeGibberish } from "../lib/score.js";
 import { cleanContent, pickAnswer, cutWord, dedupeSnippet, normalizeColloquialAz, detectQueryLanguage, acceptLanguageHeader, wikiExtractUrl, restoreAsciiAz } from "../lib/clean.js";
+import { matchAzertagItems, azertagLangFor } from "../lib/azertag.js";
+import { newsTrustBoost, AZ_NEWS_TRUSTED } from "../lib/router.js";
 import { normalizeUrl, decodeEntities, stripQuestionWords, parseDDGLite, normalizeMwmbl, parseYahooJP, parseMilliArxiv, isArchiveTopic } from "../lib/search.js";
 import { parseJinaMarkdown } from "../lib/extract.js";
 import { expandQuery, expandQueryAsync, rewriteSearchIntentAz, stripMetaInstructions, isMetaQuery } from "../lib/expand.js";
@@ -873,6 +875,25 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v52 milliarxiv: başlıq h4-dən, snippet ayrı", ma[0].title === "Əməkdaşlarımızın Arxiv Araşdırmaları" && !ma[0].snippet.includes("Arxiv Araşdırmaları") && ma[0].snippet.includes("arxiv işinin"), JSON.stringify(ma[0]));
     assert("v52 milliarxiv: boş HTML → boş massiv", parseMilliArxiv("<html></html>").length === 0);
     assert("v52 milliarxiv: mövzu aşkarlanması", isArchiveTopic("sovet dövrü repressiya") === true && isArchiveTopic("arxiv sənədləri") === true && isArchiveTopic("banan kalium") === false);
+  }
+
+
+  // === v53: AZƏRTAC RSS uyğunlaşdırması + xəbər mənbə bonusu ===
+  {
+    const items = [
+      { title: "Rutte: NATO ölkələri Ukraynaya silah alınması üçün ABŞ-yə müraciət edib", snippet: "NATO sammiti", url: "https://azertag.az/xeber/1", published_at: "2026-11-17T20:00:00.000Z" },
+      { title: "Salyanda piyadanın ölümü ilə nəticələnən yol qəzası olub", snippet: "Qəza rayon polisi", url: "https://azertag.az/xeber/2", published_at: "2026-11-17T19:00:00.000Z" },
+      { title: "Hava proqnozu açıqlandı", snippet: "Sabah yağış", url: "https://azertag.az/xeber/3", published_at: null }
+    ];
+    const m = matchAzertagItems(items, "NATO Ukraynaya silah yardımı", 5);
+    assert("v53 azertag: mövzuya uyğun xəbər tapılır", m.length >= 1 && /NATO/.test(m[0].title), JSON.stringify(m.map(x => x.title)));
+    const m2 = matchAzertagItems(items, "Salyanda yol qəzası", 5);
+    assert("v53 azertag: AZ söz formaları uyğunlaşır (Salyanda→Salyan)", m2.length >= 1 && /Salyan/.test(m2[0].title), JSON.stringify(m2.map(x => x.title)));
+    assert("v53 azertag: əlaqəsiz sorğu → boş", matchAzertagItems(items, "quantum computing benchmark", 5).length === 0);
+    assert("v53 azertag: dil xəritəsi", azertagLangFor("ru") === "ru" && azertagLangFor("en") === "en" && azertagLangFor("az") === "az" && azertagLangFor("tr") === "az");
+    assert("v53 xəbər bonusu: azertag/report +1.2", newsTrustBoost("https://azertag.az/xeber/x") === 1.2 && newsTrustBoost("https://www.report.az/a") === 1.2 && newsTrustBoost("https://special.azertag.az/az/xeber/1") === 1.2);
+    assert("v53 xəbər bonusu: kənar sayt 0", newsTrustBoost("https://example.com/x") === 0 && newsTrustBoost("") === 0);
+    assert("v53 xəbər siyahısı boş deyil", AZ_NEWS_TRUSTED.length >= 10 && AZ_NEWS_TRUSTED.includes("azertag.az"));
   }
 
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);
