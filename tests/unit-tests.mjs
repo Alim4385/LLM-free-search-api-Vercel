@@ -996,5 +996,18 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v57.2: konkret sorğuda generic fallback işləmir", matchSitemapItems(items, "böyrək daşı", 2).length === 0);
   }
 
+
+  // === v57.3: xəbər sualında ana səhifə cəzası + ümumi "son xəbərlər" istisnası ===
+  {
+    const now = new Date().toISOString();
+    const q = "son xəbərlər";
+    const t = tokenize(q);
+    const art = scoreResult({ title: "UEFA Millətlər Liqası: Danimarka heç-heçə edib", snippet: "Oyun nəticəsi barədə məlumat verilib və təfərrüatlar açıqlanıb", url: "https://icma.az/news/uefa-milletler-liqasi-danimarka-hec-hece-edib-2174632", source: "icma.az", published_at: now }, t, "az", q);
+    assert("v57.3: ümumi 'son xəbərlər' sorğusunda tarixli məqalə atılmır", art > 0, String(art));
+    const homeSlug = scoreResult({ title: "Son xəbərlər", snippet: "Son xəbərlər və ən son xeberler burada toplanib", url: "https://news.az/2026/11/18/son-xeberler-bu-gun", source: "brave" }, t, "az", q);
+    const homeRoot = scoreResult({ title: "Son xəbərlər", snippet: "Son xəbərlər və ən son xeberler burada toplanib", url: "https://news.az/", source: "brave" }, t, "az", q);
+    assert("v57.3: ana səhifə məqalə ünvanından aşağı düşür", homeRoot < homeSlug, `root=${homeRoot} slug=${homeSlug}`);
+  }
+
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);
 process.exit(fail?1:0);
