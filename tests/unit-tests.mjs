@@ -3,7 +3,7 @@
 // normalizeUrl (viewtopic ?t=), decodeEntities (hex + no double-decode),
 // scoreResult fuzzy (stem mismatch), isSpamDomain (includes over-match),
 // selectRelevantParagraphs fallback, sanitizeQuery (kod tokenları qorunur)
-import { tokenize, stemAz, normalizeAz, selectRelevantParagraphs, orderByRecency, isGenericNewsTerm } from "../lib/rank.js";
+import { tokenize, stemAz, normalizeAz, selectRelevantParagraphs, orderByRecency, isGenericNewsTerm, isNewsSectionTerm, sourceCoversSection } from "../lib/rank.js";
 import { matchWeather, isWeatherQuery, detectCity } from "../lib/weather.js";
 import { matchUnits, unitsToText } from "../lib/units.js";
 import { matchTime, isTimeQuery } from "../lib/time.js";
@@ -1036,6 +1036,16 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     const all = ["xeber", "azerbaycan", "latest", "news", "azerbaijan"].every(isGenericNewsTerm);
     assert("v58.1: 'son xəbərlər Azərbaycan' tam generic", all);
     assert("v58.1: 'iqtisadiyyatda son xəbərlər' generic deyil", !isGenericNewsTerm("iqtisadiyyat"));
+  }
+
+
+  // === v59: xəbər bölməsi sözləri ===
+  {
+    assert("v59: 'iqtisadiyyat' bölmə sözüdür", isNewsSectionTerm("iqtisadiyyat"));
+    assert("v59: 'idman' bölmə sözüdür", isNewsSectionTerm("idman"));
+    assert("v59: 'uefa' bölmə sözü DEYİL", !isNewsSectionTerm("uefa"));
+    assert("v59: iqtisadiyyat.az iqtisadiyyat bölməsini örtür", sourceCoversSection(["iqtisadiyyat"], "iqtisadiyyatda"));
+    assert("v59: icma.az iqtisadiyyat bölməsini örtmür", !sourceCoversSection(undefined, "iqtisadiyyatda"));
   }
 
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);
