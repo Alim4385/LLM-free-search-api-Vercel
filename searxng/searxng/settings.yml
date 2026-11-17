@@ -6,13 +6,13 @@ general:
   instance_name: "Qaqa SearXNG"
   debug: false
   # secret_key-i mütləq dəyiş (aşağıdakı sətri özünə məxsus yaz)
-  secret_key: "DEGISDIRIBURAYA-OZUNUN-GIZLI-ACARINI-YAZ-1234567890"
+  secret_key: ""   # v44: boş qalır — docker-compose SEARXNG_SECRET-dən götürülür (default şifrə silindi)
 
 server:
   port: 8888
-  bind_address: "0.0.0.0"
-  secret_key: "DEGISDIRIBURAYA-OZUNUN-GIZLI-ACARINI-YAZ-1234567890"
-  limiter: false
+  bind_address: "127.0.0.1"   # v44: yalnız lokal
+  secret_key: ""   # v44: boş qalır — docker-compose SEARXNG_SECRET-dən götürülür (default şifrə silindi)
+  limiter: true    # v44: botsuz limit aktiv
   image_proxy: true
 
 search:

@@ -5,12 +5,13 @@ services:
     image: searxng/searxng:latest
     container_name: searxng
     ports:
-      - "8888:8888"
+      - "127.0.0.1:8888:8888"   # v44: yalnız lokal — internetə AÇILMIR
     volumes:
       - ./searxng:/etc/searxng:rw
     environment:
       - SEARXNG_BASE_URL=http://localhost:8888/
-      - SEARXNG_LIMITER=false
+      - SEARXNG_LIMITER=true
+      - SEARXNG_SECRET=${SEARXNG_SECRET:?SEARXNG_SECRET env dəyişəni tələb olunur}
     restart: unless-stopped
     cap_drop:
       - ALL
