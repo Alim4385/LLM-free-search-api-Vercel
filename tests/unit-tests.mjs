@@ -1048,5 +1048,13 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v59: icma.az iqtisadiyyat bölməsini örtmür", !sourceCoversSection(undefined, "iqtisadiyyatda"));
   }
 
+
+  // === v59.1: raund-18 CANON əlavələri ===
+  {
+    const src = readFileSync(new URL("../lib/search.js", import.meta.url), "utf8");
+    assert("v59.1: iPhone batareya CANON qaydası var", /iphone\[\\s\\S\]\{0,30\}\(batareya\|battery\)/.test(src) || /iphone battery health tips apple support/.test(src));
+    assert("v59.1: quş qripi CANON qaydası var", /bird flu H5N1 symptoms causes who\.int/.test(src));
+  }
+
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);
 process.exit(fail?1:0);
