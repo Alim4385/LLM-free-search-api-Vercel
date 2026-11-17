@@ -931,5 +931,17 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v54.5: göl sorğusunda 'gol' termini qalır", tokenize("Azərbaycanın ən böyük gölü hansıdır").includes("gol"));
   }
 
+
+  // === v56: raund-15 səhvləri ===
+  {
+    assert("v56: 'kömək' mövzu termini deyil", !tokenize("qripə nə kömək edir").includes("komek"), JSON.stringify(tokenize("qripə nə kömək edir")));
+    assert("v56: 'qrip' termini qalır", tokenize("qripə nə kömək edir").some(t => t.startsWith("qrip")));
+    const hind = { title: "Hindistan iqtisadiyyatının əsas sektorları", snippet: "Hindistan iqtisadiyyatı üç sektorda", url: "https://byjusexamprep.com/x", source: "bing" };
+    assert("v56: başqa ölkənin nəticəsi sıfırlanır", scoreResult(hind, ["azerbaycan", "iqtisadiyyat", "sektor"], "az", "Azərbaycan iqtisadiyyatının əsas sektorları") === 0);
+    const az = { title: "Azərbaycan iqtisadiyyatı", snippet: "Azərbaycan iqtisadiyyatının əsas sektorları neft, qaz, kənd təsərrüfatı", url: "https://az.wikipedia.org/wiki/Azərbaycan_iqtisadiyyatı", source: "wikipedia" };
+    assert("v56: düzgün ölkə nəticəsi keçir", scoreResult(az, ["azerbaycan", "iqtisadiyyat", "sektor"], "az", "Azərbaycan iqtisadiyyatının əsas sektorları") > 1);
+    assert("v56: twitpic zibildir", scoreResult({ title: "Speed of earth around the Sun", snippet: "30 km/s", url: "http://twitpic.com/838m7v", source: "bing" }, ["yer", "gunes", "suret"], "az", "Yerin Günəş ətrafında sürəti") === 0);
+  }
+
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);
 process.exit(fail?1:0);
