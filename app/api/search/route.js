@@ -12,7 +12,7 @@ import { matchSports, fetchLastMatch, lastMatchToText } from "../../../lib/sport
 import { matchNutrition, fetchNutrient, nutrientToText } from "../../../lib/nutrition.js";
 import { leadAnswerSentence } from "../../../lib/rank.js";
 import { classifyType, officialBoost, wantsFresh, sameDayCue } from "../../../lib/router.js";
-import { scoreResult, diversifyByDomain, extractQuotedPhrases, containsPhrase, isSpamDomain, hostMatches, computeConfidence, isNewsQuery } from "../../../lib/score.js";
+import { scoreResult, diversifyByDomain, extractQuotedPhrases, containsPhrase, isSpamDomain, hostMatches, computeConfidence, isNewsQuery, looksLikeGibberish } from "../../../lib/score.js";
 import { cleanContent, cutWord, dedupeSnippet, detectQueryLanguage, isBoilerplateOnly, stripBoilerplateHead } from "../../../lib/clean.js";
 import { expandQuery, isMetaQuery, stripMetaInstructions, rewriteSearchIntentAz } from "../../../lib/expand.js";
 import { translateResultsToQueryLang } from "../../../lib/translate.js";
@@ -22,7 +22,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 117; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 118; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -246,13 +246,15 @@ async function handleSearch(body, req) {
   // v28: texniki sualda AZ-a TƏRCÜMƏ olunmuş genişlənmə şərtləri zəhərlidir
   // ("React state idarəetməsi" → "Dövlət idarəçiliyi" məqaləsi qalib gəlirdi)
   const isTechQuery = /(?<![\p{L}])(react|javascript|python|docker|dns|api|sql|git|kotlin|java|css|html|typescript|vue|node|linux|gpt|llm|redux|useeffect|state\s+management)(?![\p{L}])/iu.test(normQuery);
+  // v51.3: mənasız tokenlər uyğunluq termini sayılmır (bax: looksLikeGibberish) —
+  // yoxsa "asdfqwer zxcvbnm nonsense" sorğusuna YouTube düşürdü.
   const qTerms = [...new Set([
     ...tokenize(query),
     ...tokenize(normQuery),
     ...(isTechQuery ? [] : tokenize(exp.expanded || "")),
     ...(isAzCount ? [] : tokenize(exp.english || "")),
     ...(isAzCount ? [] : tokenize(effAnchor || ""))
-  ])];
+  ])].filter(t => !looksLikeGibberish(t));
 
   const rawCount = results.length;
   // v42.5: "Access Denied / Just a moment / 403 Forbidden" kimi bloklanmış səhifələr nəticə deyil

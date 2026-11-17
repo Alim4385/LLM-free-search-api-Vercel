@@ -12,7 +12,7 @@ import { readFileSync } from "node:fs";
 import { protectTokens, restoreTokens, protectWithTerms } from "../lib/translate.js";
 import { detectConflicts, parseNum } from "../lib/conflict.js";
 import { isChallengePage } from "../lib/extract.js";
-import { scoreResult, isSpamDomain, hostMatches, diversifyByDomain, isJunkDomain, computeConfidence } from "../lib/score.js";
+import { scoreResult, isSpamDomain, hostMatches, diversifyByDomain, isJunkDomain, computeConfidence, looksLikeGibberish } from "../lib/score.js";
 import { cleanContent, pickAnswer, cutWord, dedupeSnippet, normalizeColloquialAz, detectQueryLanguage, acceptLanguageHeader, wikiExtractUrl, restoreAsciiAz } from "../lib/clean.js";
 import { normalizeUrl, decodeEntities, stripQuestionWords, parseDDGLite, normalizeMwmbl, parseYahooJP } from "../lib/search.js";
 import { parseJinaMarkdown } from "../lib/extract.js";
@@ -830,6 +830,17 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v51.1 yahoo: başlıq+url+snippet düzgün", yp[0].url === "https://az.wikipedia.org/wiki/Fotosintez" && yp[0].title === "Fotosintez - Vikipediya" && /kimyəvi enerjiyə/.test(yp[0].snippet), JSON.stringify(yp[0]));
     assert("v51.1 yahoo: source adı yahoo", yp.every(x => x.source === "yahoo"));
     assert("v51.1 yahoo: boş HTML → boş massiv", parseYahooJP("").length === 0);
+  }
+
+
+  // === v51.3: mənasız token aşkarlayıcı ===
+  {
+    assert("v51.3 gibberish: 'asdfqwer' tutulur", looksLikeGibberish("asdfqwer") === true);
+    assert("v51.3 gibberish: 'zxcvbnm' tutulur", looksLikeGibberish("zxcvbnm") === true);
+    assert("v51.3 gibberish: 'zzzz' tutulur", looksLikeGibberish("zzzz") === true);
+    assert("v51.3 gibberish: saitsiz token tutulur", looksLikeGibberish("bcdf") === true && looksLikeGibberish("xzcv") === true);
+    assert("v51.3 gibberish: real sözlər keçir", ["naxçıvan","nonsense","python","photosynthesis","şəki","baki","strengths"].every(w => !looksLikeGibberish(w)), JSON.stringify(["naxçıvan","nonsense","python","photosynthesis","şəki","baki","strengths"].filter(w => looksLikeGibberish(w))));
+    assert("v51.3 gibberish: qısa söz (<=2) toxunulmur", looksLikeGibberish("ak") === false && looksLikeGibberish("") === false);
   }
 
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);
