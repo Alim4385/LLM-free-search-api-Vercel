@@ -14,7 +14,7 @@ import { detectConflicts, parseNum } from "../lib/conflict.js";
 import { isChallengePage } from "../lib/extract.js";
 import { scoreResult, isSpamDomain, hostMatches, diversifyByDomain, isJunkDomain, computeConfidence } from "../lib/score.js";
 import { cleanContent, pickAnswer, cutWord, dedupeSnippet, normalizeColloquialAz, detectQueryLanguage, acceptLanguageHeader, wikiExtractUrl, restoreAsciiAz } from "../lib/clean.js";
-import { normalizeUrl, decodeEntities, stripQuestionWords } from "../lib/search.js";
+import { normalizeUrl, decodeEntities, stripQuestionWords, parseDDGLite, normalizeMwmbl } from "../lib/search.js";
 import { parseJinaMarkdown } from "../lib/extract.js";
 import { expandQuery, expandQueryAsync, rewriteSearchIntentAz, stripMetaInstructions, isMetaQuery } from "../lib/expand.js";
 import { isLongAzQuery, detectContentLanguage } from "../lib/translate.js";
@@ -793,6 +793,31 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
   assert("v33 protectWithTerms: tam bərpa orijinalı qaytarır", restoreTokens(pt.txt, pt.keep) === "Rust ownership and borrowing rules", String(restoreTokens(pt.txt, pt.keep)));
   assert("v33 protectWithTerms: 3 hərfdən qısa termin qorunmur", protectWithTerms("go state", ["go"]).keep.length === 0, JSON.stringify(protectWithTerms("go state", ["go"]).keep));
 }
+
+
+  // === v51: keyless provayder parserləri (şəbəkəsiz, fixture-lə) ===
+  {
+    const lite = `<table><tr><td>1.&nbsp;</td><td><a rel="nofollow" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Faz.wikipedia.org%2Fwiki%2FFotosintez&amp;rut=abc" class='result-link'>Fotosintez — Vikipediya</a></td></tr>
+    <tr><td>&nbsp;</td><td class='result-snippet'>Fotosintez <b>işıq</b> enerjisi ilə üzvi maddələr sintez edir.</td></tr>
+    <tr><td>2.&nbsp;</td><td><a rel="nofollow" href="https://kayzen.az/blog/1.html" class='result-link'>Kayzen</a></td></tr>
+    <tr><td>&nbsp;</td><td class='result-snippet'>İkinci snippet</td></tr></table>`;
+    const parsed = parseDDGLite(lite, 10);
+    assert("v51 ddg-lite: 2 nəticə parse olunur", parsed.length === 2, String(parsed.length));
+    assert("v51 ddg-lite: uddg yönləndirməsi açılır", parsed[0]?.url === "https://az.wikipedia.org/wiki/Fotosintez", parsed[0]?.url);
+    assert("v51 ddg-lite: başlıqda entity həll olunur", parsed[0]?.title.includes("Vikipediya"), parsed[0]?.title);
+    assert("v51 ddg-lite: snippet düzgün nəticəyə bağlanır", /işıq/.test(parsed[0]?.snippet || "") && /İkinci/.test(parsed[1]?.snippet || ""), JSON.stringify(parsed.map(p => p.snippet)));
+    assert("v51 ddg-lite: source adı ddg-lite", parsed.every(p => p.source === "ddg-lite"));
+    assert("v51 ddg-lite: boş HTML → boş massiv", parseDDGLite("<html>yoxdur</html>").length === 0);
+    const mw = normalizeMwmbl([
+      { url: "http://python.org/sf/1", title: [{ value: "Welcome to ", is_bold: false }, { value: "Python", is_bold: true }], extract: [{ value: "Lists are one of the compound ", is_bold: false }, { value: "data types", is_bold: true }] },
+      { url: "", title: [{ value: "boş url" }] },
+      { url: "https://stackoverflow.com/a/1", title: [{ value: "List vs Dict" }] }
+    ], 10);
+    assert("v51 mwmbl: url-siz element atılır", mw.length === 2, String(mw.length));
+    assert("v51 mwmbl: title/extract massivləri birləşir", mw[0].title === "Welcome to Python" && mw[0].snippet === "Lists are one of the compound data types", JSON.stringify(mw[0]));
+    assert("v51 mwmbl: source adı mwmbl", mw.every(x => x.source === "mwmbl"));
+    assert("v51 mwmbl: massiv olmayan cavab → boş", normalizeMwmbl({ error: "x" }).length === 0 && normalizeMwmbl(null).length === 0);
+  }
 
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);
 process.exit(fail?1:0);
