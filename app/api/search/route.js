@@ -22,7 +22,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 134; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 135; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -851,6 +851,28 @@ async function handleSearch(body, req) {
       : /no results|parse empty/i.test(v) ? "no_results"
       : /timeout|abort/i.test(v) ? "timeout"
       : "error";
+  }
+
+  // v55.2: başlığında sorğu termini OLMAYAN nəticə, başlığında olan nəticənin üstünə
+  // qalxmamalıdır. "C vitamini hansı qidalarda var" → Medera Hospital başlığı
+  // ("Sağlamlığınızın qeydinə qalın") 1-ci, "C Vitamini Hansı Qidalarda Var?" 2-ci idi.
+  if (finalResults.length > 1 && qTerms.length) {
+    const titleKey = (r) => {
+      const tt = tokenize(String(r.title || ""));
+      return qTerms.some(t => {
+        const k = String(t);
+        if (k.length < 4) return false;
+        const stem = k.slice(0, Math.max(4, k.length - 2));
+        return tt.some(x => x.startsWith(stem));
+      }) ? 1 : 0;
+    };
+    const dec = finalResults.map((r, i) => ({ r, i, k: titleKey(r) }));
+    if (dec.some(d => d.k === 1) && dec.some(d => d.k === 0)) {
+      dec.sort((a, b) => (b.k - a.k) || ((b.r.score || 0) - (a.r.score || 0)) || (a.i - b.i));
+      finalResults.length = 0;
+      dec.forEach((d, idx) => { d.r.id = idx + 1; finalResults.push(d.r); });
+      degradedStages.push("title_relevance_order");
+    }
   }
 
   // v29: rəqəm ziddiyyəti — eyni vahid üçün müxtəlif nəticələrdə fərqli dəyərlər
