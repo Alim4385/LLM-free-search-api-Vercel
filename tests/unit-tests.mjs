@@ -3,7 +3,7 @@
 // normalizeUrl (viewtopic ?t=), decodeEntities (hex + no double-decode),
 // scoreResult fuzzy (stem mismatch), isSpamDomain (includes over-match),
 // selectRelevantParagraphs fallback, sanitizeQuery (kod tokenları qorunur)
-import { tokenize, stemAz, normalizeAz, selectRelevantParagraphs } from "../lib/rank.js";
+import { tokenize, stemAz, normalizeAz, selectRelevantParagraphs, orderByRecency } from "../lib/rank.js";
 import { matchWeather, isWeatherQuery, detectCity } from "../lib/weather.js";
 import { matchUnits, unitsToText } from "../lib/units.js";
 import { matchTime, isTimeQuery } from "../lib/time.js";
@@ -1007,6 +1007,23 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     const homeSlug = scoreResult({ title: "Son xəbərlər", snippet: "Son xəbərlər və ən son xeberler burada toplanib", url: "https://news.az/2026/11/18/son-xeberler-bu-gun", source: "brave" }, t, "az", q);
     const homeRoot = scoreResult({ title: "Son xəbərlər", snippet: "Son xəbərlər və ən son xeberler burada toplanib", url: "https://news.az/", source: "brave" }, t, "az", q);
     assert("v57.3: ana səhifə məqalə ünvanından aşağı düşür", homeRoot < homeSlug, `root=${homeRoot} slug=${homeSlug}`);
+  }
+
+
+  // === v58: təzəlik rejimi (yalnız ümumi xəbər sorğusu) ===
+  {
+    const now = new Date().toISOString();
+    const old = new Date(Date.now() - 5 * 24 * 3600 * 1000).toISOString();
+    const items = [
+      { title: "ana sehife", score: 9 },
+      { title: "kohne", score: 4, published_at: old },
+      { title: "teze", score: 1, published_at: now }
+    ];
+    const ord = orderByRecency(items);
+    assert("v58: təzə məqalə birinci", ord[0].title === "teze", ord.map(x => x.title).join(","));
+    assert("v58: tarixsiz nəticə sona düşür", ord[2].title === "ana sehife", ord.map(x => x.title).join(","));
+    const same = orderByRecency([{ title: "x", score: 1 }, { title: "y", score: 2 }]);
+    assert("v58: tarix yoxdursa skor qalır", same[0].title === "y", same.map(x => x.title).join(","));
   }
 
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);
