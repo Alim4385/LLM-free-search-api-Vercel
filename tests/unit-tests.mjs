@@ -906,5 +906,13 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v54.2 temp: tək temperatur çevrilmir", matchUnits("25 dərəcə selsi").hit === false);
   }
 
+
+  // === v54.3: leksikon kökü həddən artıq qısaltmasın ===
+  {
+    assert("v54.3 token: 'Bakıda' → 'baki' (bak DEYİL)", tokenize("Bakıda").includes("baki") && !tokenize("Bakıda").includes("bak"), JSON.stringify(tokenize("Bakıda")));
+    assert("v54.3 token: 'qidalarda' → 'qida'", tokenize("qidalarda").includes("qida"), JSON.stringify(tokenize("qidalarda")));
+    assert("v54.3 token: 'Füzulinin' → 'fuzul'", tokenize("Füzulinin").includes("fuzul"), JSON.stringify(tokenize("Füzulinin")));
+  }
+
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);
 process.exit(fail?1:0);
