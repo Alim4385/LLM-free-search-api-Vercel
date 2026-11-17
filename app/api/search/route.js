@@ -597,6 +597,19 @@ async function handleSearch(body, req) {
   // v29: rəqəm ziddiyyəti — eyni vahid üçün müxtəlif nəticələrdə fərqli dəyərlər
   // v30.1 (P2 hazır olana qədər): vahid çarpanı (min/milyon) və il ölçüsü olmadığı üçün
   // saxta ziddiyyət istehsal edir → default SÖNDÜRÜLDÜ. ENABLE_CONFLICTS=1 ilə yandırılır.
+  // v45: site: sorğusunda başqa domenli nəticələr QALMAMALIDIR (provayder site: -i saya salmır)
+  const siteM = query.match(/site:([a-z0-9.-]+\.[a-z]{2,})/i);
+  if (siteM) {
+    const host = siteM[1].toLowerCase().replace(/^www\./, "");
+    const keep = finalResults.filter(r => {
+      try { const h = new URL(r.url).hostname.toLowerCase().replace(/^www\./, ""); return h === host || h.endsWith("." + host); } catch { return false; }
+    });
+    if (keep.length !== finalResults.length) {
+      finalResults.length = 0;
+      keep.forEach((r, idx) => { r.id = idx + 1; finalResults.push(r); });
+      degradedStages.push("site_filter");
+    }
+  }
   // v45: site: / dırnaqlı dəqiq sorğuda nəticə çıxmasa → fallback:true (LLM uydurmasın)
   if (!finalResults.length && (/site:([a-z0-9.-]+\.[a-z]{2,})/i.test(query) || /"[^"]+"/.test(query))) {
     usedFallback = true;
