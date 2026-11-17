@@ -975,5 +975,17 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v57: şəkil URL-i götürülür", /x\.webp$/.test(a.image));
   }
 
+
+  // === v57.1: təzəlik qaydası ===
+  {
+    const now = new Date().toISOString();
+    const old = new Date(Date.now() - 90 * 24 * 3600 * 1000).toISOString();
+    const q = "son xəbərlər Azərbaycan";
+    const t = tokenize(q);
+    const freshR = scoreResult({ title: "Azərbaycan son xəbərlər", snippet: "Azərbaycan son xəbərlər bu gün", url: "https://icma.az/news/x", source: "icma.az", published_at: now }, t, "az", q);
+    const staleR = scoreResult({ title: "Azərbaycan son xəbərlər", snippet: "Azərbaycan son xəbərlər bu gün", url: "https://icma.az/news/y", source: "icma.az", published_at: old }, t, "az", q);
+    assert("v57.1: təzə xəbər köhnədən yuxarı", freshR > staleR, `fresh=${freshR} stale=${staleR}`);
+  }
+
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);
 process.exit(fail?1:0);
