@@ -22,7 +22,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 118; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 119; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -219,9 +219,16 @@ async function handleSearch(body, req) {
     (intentName === "sports" && sportsData) ||
     (intentName === "nutrition" && nutriData)
   );
+  // v51.4: sorğunun mənalı sözlərinin çoxu klaviatura zibili olsa ("asdfqwer zxcvbnm
+  // nonsense", "asdkjqwe zzzz") provayderlər hər şeyi qaytarır və filtrlər zibil
+  // keçirir. Belə sorğuda axtarışa HEÇ getmirik: boş cavab + fallback:true.
+  const contentTokens = tokenize(normQuery).filter(t => String(t).length >= 3);
+  const gibberishHits = contentTokens.filter(looksLikeGibberish).length;
+  const unintelligible = !hasStructured && contentTokens.length >= 2 && gibberishHits / contentTokens.length >= 0.6;
+
   let searchResult = { results: [], providersUsed: [], errors: {}, anchorQuery: null, translated: false };
   let results = [], providersUsed = [], errors = {};
-  if (!hasStructured) {
+  if (!hasStructured && !unintelligible) {
     try {
       // v42.1: provayderlərdən DAHA ÇOX namizəd al (sonradan filtr 1-ə düşməsin)
       searchResult = await searchAllShared(searchQuery, Math.min(10, maxResults + 5), { freshness, excludeDomains });
@@ -637,7 +644,11 @@ async function handleSearch(body, req) {
   }
 
   let reason = null;
-  if (!finalResults.length) {
+  if (!finalResults.length && unintelligible) {
+    reason = "unintelligible_query";
+    usedFallback = true;
+    if (!degradedStages.includes("unintelligible")) degradedStages.push("unintelligible");
+  } else if (!finalResults.length) {
     const allFailed = providersUsed.length === 0 && Object.keys(errors).length > 0;
     if (allFailed) reason = "blocked";
     else if (!rawCount) reason = "no_match";
