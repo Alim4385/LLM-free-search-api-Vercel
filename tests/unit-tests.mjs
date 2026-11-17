@@ -15,7 +15,7 @@ import { detectConflicts, parseNum } from "../lib/conflict.js";
 import { isChallengePage } from "../lib/extract.js";
 import { scoreResult, isSpamDomain, hostMatches, diversifyByDomain, isJunkDomain, computeConfidence, looksLikeGibberish } from "../lib/score.js";
 import { cleanContent, pickAnswer, cutWord, dedupeSnippet, normalizeColloquialAz, detectQueryLanguage, acceptLanguageHeader, wikiExtractUrl, restoreAsciiAz } from "../lib/clean.js";
-import { normalizeUrl, decodeEntities, stripQuestionWords, parseDDGLite, normalizeMwmbl, parseYahooJP } from "../lib/search.js";
+import { normalizeUrl, decodeEntities, stripQuestionWords, parseDDGLite, normalizeMwmbl, parseYahooJP, parseMilliArxiv, isArchiveTopic } from "../lib/search.js";
 import { parseJinaMarkdown } from "../lib/extract.js";
 import { expandQuery, expandQueryAsync, rewriteSearchIntentAz, stripMetaInstructions, isMetaQuery } from "../lib/expand.js";
 import { isLongAzQuery, detectContentLanguage } from "../lib/translate.js";
@@ -855,6 +855,24 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     const c = matchUnits("1 akr neçə hektar");
     assert("v51.5 vahid: akr → hektar", c.hit && /0,404686/.test(unitsToText(c)), c.hit ? unitsToText(c) : "no hit");
     assert("v51.5 vahid: valyuta sözləri vahid sayılmır", matchUnits("200 dollar neçə lirədir").hit === false);
+  }
+
+
+  // === v52: Milli Arxiv (milliarxiv.gov.az) parseri ===
+  {
+    const html = `<div class="media-body"><a href="/az/arxiv-100" class="search-result">
+      <h4 class="media-heading">Əməkdaşlarımızın Arxiv Araşdırmaları</h4>
+      Azərbaycanda&nbsp; arxiv işinin yaranma tarixi Azə...
+      <p class="search-links">https://milliarxiv.gov.az/az/arxiv-100</p></a></div>
+      <div class="media-body"><a href="https://milliarxiv.gov.az/az/x" class="search-result">
+      <h4 class="media-heading">İkinci sənəd</h4>
+      Qısa təsvir<p class="search-links">https://milliarxiv.gov.az/az/x</p></a></div>`;
+    const ma = parseMilliArxiv(html, "https://milliarxiv.gov.az", 5);
+    assert("v52 milliarxiv: 2 nəticə parse olunur", ma.length === 2, String(ma.length));
+    assert("v52 milliarxiv: nisbi href mütləqləşir", ma[0].url === "https://milliarxiv.gov.az/az/arxiv-100", ma[0]?.url);
+    assert("v52 milliarxiv: başlıq h4-dən, snippet ayrı", ma[0].title === "Əməkdaşlarımızın Arxiv Araşdırmaları" && !ma[0].snippet.includes("Arxiv Araşdırmaları") && ma[0].snippet.includes("arxiv işinin"), JSON.stringify(ma[0]));
+    assert("v52 milliarxiv: boş HTML → boş massiv", parseMilliArxiv("<html></html>").length === 0);
+    assert("v52 milliarxiv: mövzu aşkarlanması", isArchiveTopic("sovet dövrü repressiya") === true && isArchiveTopic("arxiv sənədləri") === true && isArchiveTopic("banan kalium") === false);
   }
 
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);

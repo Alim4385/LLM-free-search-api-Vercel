@@ -1,4 +1,4 @@
-import { searchAll } from "../../../lib/search.js";
+import { searchAll, searchMilliArxiv, isArchiveTopic } from "../../../lib/search.js";
 import { fetchAndExtract, buildDateInfo, normalizeValidIsoDate } from "../../../lib/extract.js";
 import { detectConflicts } from "../../../lib/conflict.js";
 import { selectRelevantParagraphs, tokenize } from "../../../lib/rank.js";
@@ -22,7 +22,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 120; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 121; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -578,6 +578,76 @@ async function handleSearch(body, req) {
   if (!finalResults.length && junkPool.length) {
     degradedStages.push("junk_restored");
     for (const o of junkPool.slice(0, 2)) { o.id = finalResults.length + 1; finalResults.push(o); }
+  }
+
+  // v52: istifadəçi tələbi — "nəticə gəlməsə təkrar sınansın, 1 nəticədənsə bir neçə
+  // fərqli nəticə olsun". Boş və ya tək nəticə qalıbsa, FƏRQLİ sorğu forması ilə
+  // ikinci cəhd: EN anchor + nüvə sözlər + (mövzu uyğundursa) rəsmi Milli Arxiv.
+  if (!unintelligible && !hasStructured && finalResults.length < 2 && (HARD_DEADLINE_MS - (Date.now() - started)) > 2400) {
+    const have = new Set(finalResults.map(x => String(x.url || "").replace(/\/$/, "")));
+    const rescueQs = [];
+    if (effAnchor && effAnchor.trim() && effAnchor !== normQuery) rescueQs.push(effAnchor);
+    const coreQ = tokenize(normQuery).slice(0, 4).join(" ");
+    if (coreQ && coreQ !== normQuery) rescueQs.push(coreQ);
+    const strongTerms = [...new Set([...qTerms])].map(t => String(t).toLowerCase()).filter(t => t.length >= 4);
+    const addCandidate = (c) => {
+      if (finalResults.length >= maxResults) return false;
+      const key = String(c.url || "").replace(/\/$/, "");
+      if (!key || have.has(key)) return false;
+      if (isSpamDomain(c.url) || ERR_PAGE.test(String(c.title || "").trim())) return false;
+      const blob = `${c.title || ""} ${c.snippet || ""}`.toLowerCase();
+      if (!strongTerms.some(t => blob.includes(t))) return false;
+      const sc = scoreResult(c, qTerms, qLang, normQuery);
+      if (sc < 1.2) return false;
+      const snip = cutWord(cleanContent(c.snippet || ""), 220);
+      if (!snip.trim() || isBoilerplateOnly(snip)) return false;
+      have.add(key);
+      finalResults.push({
+        id: finalResults.length + 1,
+        title: cleanContent(c.title || "") || c.title,
+        url: c.url,
+        snippet: snip,
+        content: snip,
+        source: c.source,
+        provider: c.source,
+        providers: c.providers || [c.source],
+        sources: [...new Set([...(c.providers || []), c.source].filter(Boolean))],
+        voteCount: c.voteCount || 1,
+        score: Math.round(sc * 100) / 100,
+        published_at: c.published_at || null,
+        updated_at: c.updated_at || null,
+        date_info: buildDateInfo(c.published_at || null, c.updated_at || null, reqLang),
+        untrusted: true,
+        rescued: true
+      });
+      return true;
+    };
+    let added = 0;
+    for (const rq of rescueQs.slice(0, 2)) {
+      if (finalResults.length >= maxResults || added >= 2) break;
+      if ((HARD_DEADLINE_MS - (Date.now() - started)) < 1800) break;
+      try {
+        const rs = await Promise.race([
+          searchAll(rq, Math.min(6, maxResults + 3), { freshness, excludeDomains }),
+          new Promise((_, rej) => setTimeout(() => rej(new Error("rescue timeout")), 2400))
+        ]);
+        if (rs && rs.results) {
+          const ranked = rs.results.slice().sort((a, b) => (b.voteCount || 0) - (a.voteCount || 0));
+          for (const c of ranked) { if (addCandidate(c)) added++; if (added >= 2) break; }
+        }
+      } catch {}
+    }
+    // rəsmi mənbə: Milli Arxiv (yavaş sayt — yalnız burada, vaxt qalanda)
+    if (added < 2 && isArchiveTopic(normQuery) && (HARD_DEADLINE_MS - (Date.now() - started)) > 2600) {
+      try {
+        const ma = await Promise.race([
+          searchMilliArxiv(normQuery, 4),
+          new Promise((_, rej) => setTimeout(() => rej(new Error("ma timeout")), 3000))
+        ]);
+        for (const c of (ma || [])) { if (addCandidate(c)) added++; if (added >= 2) break; }
+      } catch {}
+    }
+    if (added) degradedStages.push("rescue_retry");
   }
 
   // v43: istifadəçi "son 1 gün/həftə" istəyibsə, çıxarışdan sonra REAL tarixi yoxla
