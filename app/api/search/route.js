@@ -22,7 +22,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 121; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 122; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -623,13 +623,15 @@ async function handleSearch(body, req) {
       return true;
     };
     let added = 0;
+    const rescueStop = started + HARD_DEADLINE_MS - 700; // 8s deadline-ı aşmamaq
+    const leftMs = () => rescueStop - Date.now();
     for (const rq of rescueQs.slice(0, 2)) {
       if (finalResults.length >= maxResults || added >= 2) break;
-      if ((HARD_DEADLINE_MS - (Date.now() - started)) < 1800) break;
+      if (leftMs() < 1400) break;
       try {
         const rs = await Promise.race([
           searchAll(rq, Math.min(6, maxResults + 3), { freshness, excludeDomains }),
-          new Promise((_, rej) => setTimeout(() => rej(new Error("rescue timeout")), 2400))
+          new Promise((_, rej) => setTimeout(() => rej(new Error("rescue timeout")), Math.min(2400, Math.max(600, leftMs()))))
         ]);
         if (rs && rs.results) {
           const ranked = rs.results.slice().sort((a, b) => (b.voteCount || 0) - (a.voteCount || 0));
@@ -638,11 +640,11 @@ async function handleSearch(body, req) {
       } catch {}
     }
     // rəsmi mənbə: Milli Arxiv (yavaş sayt — yalnız burada, vaxt qalanda)
-    if (added < 2 && isArchiveTopic(normQuery) && (HARD_DEADLINE_MS - (Date.now() - started)) > 2600) {
+    if (added < 2 && isArchiveTopic(normQuery) && leftMs() > 2600) {
       try {
         const ma = await Promise.race([
           searchMilliArxiv(normQuery, 4),
-          new Promise((_, rej) => setTimeout(() => rej(new Error("ma timeout")), 3000))
+          new Promise((_, rej) => setTimeout(() => rej(new Error("ma timeout")), Math.min(3000, Math.max(700, leftMs()))))
         ]);
         for (const c of (ma || [])) { if (addCandidate(c)) added++; if (added >= 2) break; }
       } catch {}
