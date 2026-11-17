@@ -22,7 +22,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 116; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 117; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -385,8 +385,17 @@ async function handleSearch(body, req) {
   if (scored.length < 3) {
     const seenU = new Set(scored.map(r => r.url));
     const siteLocked = /site:([a-z0-9.-]+\.[a-z]{2,})/i.test(query) || /"([^"]+)"/.test(query);
+    // v51.2: "asdkjqwe zzzz" kimi mənasız sorğuda hər provayder zibil qaytarır
+    // (YouTube, Microsoft ana səhifəsi) və 0.4 skor qapısı hamısını keçirirdi.
+    // İndi gate_relaxed də ƏN AZI BİR real termin uyğunluğu tələb edir.
+    const relaxTerms = [...new Set([...qTerms, ...tokenize(searchResult.anchorQuery || "")])]
+      .map(t => String(t).toLowerCase()).filter(t => t.length >= 4);
     const weak = (siteLocked ? [] : results)
       .filter(r => !isSpamDomain(r.url) && !seenU.has(r.url) && !ERR_PAGE.test(String(r.title || "").trim()))
+      .filter(r => {
+        const blob = `${r.title || ""} ${r.snippet || ""}`.toLowerCase();
+        return relaxTerms.some(t => blob.includes(t));
+      })
       .filter(r => {
         if (!/wikipedia\.org/.test(r.url || "")) return true;  // v39.5 filtrini təkrarla
         const t = String(r.title || "").toLowerCase();
