@@ -14,7 +14,7 @@ import { detectConflicts, parseNum } from "../lib/conflict.js";
 import { isChallengePage } from "../lib/extract.js";
 import { scoreResult, isSpamDomain, hostMatches, diversifyByDomain, isJunkDomain, computeConfidence } from "../lib/score.js";
 import { cleanContent, pickAnswer, cutWord, dedupeSnippet, normalizeColloquialAz, detectQueryLanguage, acceptLanguageHeader, wikiExtractUrl, restoreAsciiAz } from "../lib/clean.js";
-import { normalizeUrl, decodeEntities, stripQuestionWords, parseDDGLite, normalizeMwmbl } from "../lib/search.js";
+import { normalizeUrl, decodeEntities, stripQuestionWords, parseDDGLite, normalizeMwmbl, parseYahooJP } from "../lib/search.js";
 import { parseJinaMarkdown } from "../lib/extract.js";
 import { expandQuery, expandQueryAsync, rewriteSearchIntentAz, stripMetaInstructions, isMetaQuery } from "../lib/expand.js";
 import { isLongAzQuery, detectContentLanguage } from "../lib/translate.js";
@@ -817,6 +817,19 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v51 mwmbl: title/extract massivləri birləşir", mw[0].title === "Welcome to Python" && mw[0].snippet === "Lists are one of the compound data types", JSON.stringify(mw[0]));
     assert("v51 mwmbl: source adı mwmbl", mw.every(x => x.source === "mwmbl"));
     assert("v51 mwmbl: massiv olmayan cavab → boş", normalizeMwmbl({ error: "x" }).length === 0 && normalizeMwmbl(null).length === 0);
+  }
+
+
+  // === v51.1: Yahoo (Google indeksli) parseri ===
+  {
+    const html = `<div class="sw-CardBase"><section><a class="x" href="https://az.wikipedia.org/wiki/Fotosintez"><br/><h3 class="sw-Card__titleMain"><span><b>Fotosintez</b> - Vikipediya</span></h3><div class="sw-Card__section"><p class="sw-Card__summary"><b>Fotosintez</b> — işıq enerjisinin kimyəvi enerjiyə çevrilməsi.</p></div></section></div>
+    <div class="sw-CardBase"><section><a href="https://stamp.yahoo.co.jp/stamp/x"><h3><span>AIを楽しもう！</span></h3></a></div>
+    <div class="sw-CardBase"><section><a href="https://az.khanacademy.org/science/biology/photosynthesis"><h3><span>Fotosintezə giriş</span></h3></a><p class="sw-Card__summary">Fotosintez işıq enerjisinin şəkər formasında kimyəvi...</p></section></div>`;
+    const yp = parseYahooJP(html, 10);
+    assert("v51.1 yahoo: reklam/səhifə linkləri atılır", yp.length === 2, String(yp.length) + " " + JSON.stringify(yp.map(x => x.url)));
+    assert("v51.1 yahoo: başlıq+url+snippet düzgün", yp[0].url === "https://az.wikipedia.org/wiki/Fotosintez" && yp[0].title === "Fotosintez - Vikipediya" && /kimyəvi enerjiyə/.test(yp[0].snippet), JSON.stringify(yp[0]));
+    assert("v51.1 yahoo: source adı yahoo", yp.every(x => x.source === "yahoo"));
+    assert("v51.1 yahoo: boş HTML → boş massiv", parseYahooJP("").length === 0);
   }
 
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);
