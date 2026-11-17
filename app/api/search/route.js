@@ -22,7 +22,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 148; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 149; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -872,6 +872,37 @@ async function handleSearch(body, req) {
       finalResults.length = 0;
       ordered.forEach((r, idx) => { r.id = idx + 1; finalResults.push(r); });
       degradedStages.push("recency_order");
+    }
+  }
+  // v58.2: ƏHATƏ qaydası — başlıq+mətnində sorğunun DAHA ÇOX fərqli termini olan nəticə
+  // üstündür. "Azərbaycanın ən böyük gölü" → yalnız "azerbaycan" sözünə uyğun gələn
+  // "Azərbaycan milli futbol komandası" 1-ci idi; "Türkiyənin ən böyük şəhəri" → yalnız
+  // "seher" sözünə uyğun gələn şəxsi profil. Ümumi qaydadır, sayta bağlı deyil.
+  if (finalResults.length > 1 && qTerms.length >= 2 && !genericNewsQ) {
+    const covCache = new Map();
+    const covOf = (r) => {
+      if (covCache.has(r)) return covCache.get(r);
+      const toks = new Set(tokenize(`${r.title || ""} ${r.snippet || ""}`));
+      let n = 0;
+      for (const t of qTerms) {
+        const k = String(t).toLowerCase();
+        if (k.length < 3) continue;
+        const stem = k.slice(0, Math.max(4, k.length - 2));
+        if ([...toks].some(x => x === k || x.startsWith(stem))) n++;
+      }
+      covCache.set(r, n);
+      return n;
+    };
+    const covs = finalResults.map(r => covOf(r));
+    const maxCov = Math.max(...covs);
+    const best = Math.max(...finalResults.map(r => r.score || 0));
+    // yalnız həqiqətən fərq varsa və aparıcı nəticə zəif əhatəlidirsə sırala
+    if (maxCov >= 2 && covs[0] < maxCov) {
+      const dec = finalResults.map((r, i) => ({ r, i, c: covs[i] }));
+      dec.sort((a, b) => (b.c - a.c) || ((b.r.score || 0) - (a.r.score || 0)) || (a.i - b.i));
+      finalResults.length = 0;
+      dec.forEach((d, idx) => { d.r.id = idx + 1; finalResults.push(d.r); });
+      degradedStages.push("coverage_order");
     }
   }
   if (finalResults.length > 1 && qTerms.length) {
