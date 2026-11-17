@@ -364,7 +364,8 @@ console.log("\n=== V12: JUNK DOMAINS + TOPIC GATING (score.js) ===");
 {
   const t2 = tokenize("son xeberler gundem");
   const gh = scoreResult({ title: "news repo", url: "https://github.com/x/news", snippet: "son xeberler gundem archive repository", source: "github" }, t2, "tr", "son xeberler gundem");
-  const gs = scoreResult({ title: "Gündəm xəbərləri", url: "https://news.google.com/", snippet: "son xeberler gundem today breaking", source: "google-news" }, t2, "tr", "son xeberler gundem");
+  // v55.1: news.google.com artıq JUNK (RSS başlıq linkləri fakt vermir) — real xəbər saytı ilə yoxlayırıq
+  const gs = scoreResult({ title: "Gündəm xəbərləri", url: "https://www.bbc.com/news", snippet: "son xeberler gundem today breaking", source: "google-news" }, t2, "tr", "son xeberler gundem");
   assert("topic: news sorğusunda github < news mənbə", gh < gs, `gh=${gh} gs=${gs}`);
 }
 
@@ -673,7 +674,7 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
   let crashed = null;
   let countScore = null;
   try {
-    countScore = scoreResult({ title: "Mənsur Yavaşın CHP-dən çıxması", url: "https://news.google.com/rss/articles/x", snippet: "Ankaranın rayon bələdiyyə sədrləri", source: "google-news" }, tokenize("Ankarada neçə ilçə var"), "az", "Ankarada neçə ilçə var");
+    countScore = scoreResult({ title: "Mənsur Yavaşın CHP-dən çıxması", url: "https://report.az/xeber/x", snippet: "Ankaranın rayon bələdiyyə sədrləri", source: "google-news" }, tokenize("Ankarada neçə ilçə var"), "az", "Ankarada neçə ilçə var");
   } catch (e) { crashed = e.message; }
   assert("v23 say sualı: scoreResult partlamır (TDZ yoxdur)", crashed === null, String(crashed));
   assert("v23 say sualı: xəbər mənbəyi mənfi bal alır", typeof countScore === "number" && countScore < 0, String(countScore));
