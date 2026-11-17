@@ -896,5 +896,15 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v53 xəbər siyahısı boş deyil", AZ_NEWS_TRUSTED.length >= 10 && AZ_NEWS_TRUSTED.includes("azertag.az"));
   }
 
+
+  // === v54.2: "dərəcə" ilə temperatura çevirməsi ===
+  {
+    const t1 = matchUnits("20 dərəcə selsi neçə farenheytdir");
+    assert("v54.2 temp: '20 dərəcə selsi' → 68 °F", t1.hit && /68/.test(unitsToText(t1)), t1.hit ? unitsToText(t1) : "no hit");
+    const t2 = matchUnits("100 farenheyt neçə selsidir");
+    assert("v54.2 temp: 'farenheyt' şəklində tanınır", t2.hit && /37,7/.test(unitsToText(t2)), t2.hit ? unitsToText(t2) : "no hit");
+    assert("v54.2 temp: tək temperatur çevrilmir", matchUnits("25 dərəcə selsi").hit === false);
+  }
+
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);
 process.exit(fail?1:0);
