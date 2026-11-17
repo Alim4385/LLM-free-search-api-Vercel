@@ -5,6 +5,7 @@
 // selectRelevantParagraphs fallback, sanitizeQuery (kod tokenları qorunur)
 import { tokenize, stemAz, normalizeAz, selectRelevantParagraphs } from "../lib/rank.js";
 import { matchWeather, isWeatherQuery, detectCity } from "../lib/weather.js";
+import { matchUnits, unitsToText } from "../lib/units.js";
 import { matchTime, isTimeQuery } from "../lib/time.js";
 import { matchCurrency, isCurrencyQuery } from "../lib/currency.js";
 import { sanitizeQuery, checkRateLimit } from "../lib/ratelimit.js";
@@ -841,6 +842,19 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v51.3 gibberish: saitsiz token tutulur", looksLikeGibberish("bcdf") === true && looksLikeGibberish("xzcv") === true);
     assert("v51.3 gibberish: real sözlər keçir", ["naxçıvan","nonsense","python","photosynthesis","şəki","baki","strengths"].every(w => !looksLikeGibberish(w)), JSON.stringify(["naxçıvan","nonsense","python","photosynthesis","şəki","baki","strengths"].filter(w => looksLikeGibberish(w))));
     assert("v51.3 gibberish: qısa söz (<=2) toxunulmur", looksLikeGibberish("ak") === false && looksLikeGibberish("") === false);
+  }
+
+
+  // === v51.5: sahə vahidləri + funt (valyuta ilə qarışmır) ===
+  {
+    const a = matchUnits("15 kvadrat metr neçə kvadrat futdur");
+    assert("v51.5 vahid: kvadrat metr → kvadrat fut", a.hit && /161,4/.test(unitsToText(a)), a.hit ? unitsToText(a) : "no hit");
+    const b = matchUnits("1 funt neçə kiloqram");
+    assert("v51.5 vahid: funt kütlə kimi tanınır", b.hit && b.from.id === "funt" && b.to.id === "kq", b.hit ? `${b.from.id}->${b.to.id}` : "no hit");
+    assert("v51.5 vahid: təkrar quyruq yoxdur (val=1)", !/\(1 funt/.test(unitsToText(b)), unitsToText(b));
+    const c = matchUnits("1 akr neçə hektar");
+    assert("v51.5 vahid: akr → hektar", c.hit && /0,404686/.test(unitsToText(c)), c.hit ? unitsToText(c) : "no hit");
+    assert("v51.5 vahid: valyuta sözləri vahid sayılmır", matchUnits("200 dollar neçə lirədir").hit === false);
   }
 
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);
