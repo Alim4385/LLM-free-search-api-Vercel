@@ -22,7 +22,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 122; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 123; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -362,7 +362,9 @@ async function handleSearch(body, req) {
     try {
       const core = tokenize(query).slice(0, 3).join(" ");
       if (core && core !== normQuery) {
-        const retry2 = await withTimeout(searchAll(core, maxResults, { freshness, excludeDomains }), 2500, "retry2 timeout");
+        // v52.2: retry də ümumi deadline-a sığmalıdır (əvvəl 8195-10925 ms çıxırdı)
+        const retryBudget = Math.min(2500, Math.max(600, HARD_DEADLINE_MS - 2600 - (Date.now() - started)));
+        const retry2 = await withTimeout(searchAll(core, maxResults, { freshness, excludeDomains }), retryBudget, "retry2 timeout");
         const t2 = [...new Set([...qTerms, ...tokenize(retry2.anchorQuery || "")])];
         const extra = retry2.results.filter(r => !isSpamDomain(r.url))
           .map(r => ({ ...r, score: scoreResult(r, t2, qLang, core) }))
@@ -457,12 +459,13 @@ async function handleSearch(body, req) {
   const toFetch = filtered.slice(0, maxResults + 2); // v39.4: 2 ehtiyat namizəd (zibil səhifə düşsə əvəzlənsin)
   const searchTookMs = Date.now() - started;
   // v15: 3500ms -> 5500ms (mənbə gecikəndə tam məqalə oxunuşunu yarıda kəsməsin)
-  const skipFetch = format === "simple" || searchTookMs > 5500;
+  // v52.2: 8s deadline sərt qalsın — vaxt azalıbsa səhifə oxunuşunu keç (snippet kifayətdir)
+  const skipFetch = format === "simple" || searchTookMs > 5500 || (HARD_DEADLINE_MS - (Date.now() - started)) < 1600;
   // v15/v17: həm normallaşmış sual, həm də ingilis tərcüməsi ilə abzas seçimi + saytı sorğu dilində aç!
   const extractQuery = effAnchor ? `${normQuery} ${effAnchor}` : normQuery;
   // v26: çıxarış mərhələsi ümumi deadline-a sığmalıdır — əvvəl jina fallback 5 nəticədə
   // paralel 5.5s gözləyirdi və took_ms 8s-i keçirdi. İndi qalan vaxtla RACE olunur.
-  const extractBudget = Math.max(1200, HARD_DEADLINE_MS - (Date.now() - started) - 500);
+  const extractBudget = Math.max(700, Math.min(3000, HARD_DEADLINE_MS - (Date.now() - started) - 900));
   const extractAll = Promise.allSettled(
     toFetch.map((r, i) => fetchAndExtract(r.url, extractQuery, Math.min(2600, extractBudget), reqLang, { jina: i < 2 }))
   );
@@ -695,7 +698,7 @@ async function handleSearch(body, req) {
   // v15/v16 (Alim qaydası): sual hansı dildə verilibsə, cavab məzmununu da həmin dilə çevirib qaytar!
   let resultsTranslated = false;
   if (shouldTranslateResults && finalResults.length > 0 && format !== "simple" && Date.now() - started < HARD_DEADLINE_MS - 900) {
-    const trBudget = Math.max(400, Math.min(2200, HARD_DEADLINE_MS - 900 - (Date.now() - started)));
+    const trBudget = Math.max(400, Math.min(2200, HARD_DEADLINE_MS - 1200 - (Date.now() - started)));
     // v30 (P1): texniki/məzmunca EN olan suallarda NƏTİCƏ tərcüməsi söndürülür.
     // Səbəb: "React state management" → "dövlət idarəetməsi" təhrifi məhz buradan gəlirdi.
     // v33: STRUKTUR siqnal — sadalanmış söz regex-i yerinə nəticələrə bax:
