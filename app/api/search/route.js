@@ -22,7 +22,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 145; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 146; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -549,6 +549,11 @@ async function handleSearch(body, req) {
   const junkPool = [];
   const finalResults = [];
   let contentOffTopic = false; // v55: mətni sorğuya aidiyyəti olmayan səhifə
+  // v57.5: ümumi "son xəbərlər" sorğusunda məzmun-uyğunluq qapısı işləməməlidir —
+  // UEFA xəbərində "xəbər" sözü keçmir, amma nəticə düzgündür.
+  const GENERIC_QT = new Set(["xeber", "xeberler", "azerbaycan", "son", "news", "dunya", "gundem", "bugun", "yeni", "latest"]);
+  const genericNewsQ = /(?<![\p{L}])(x[əe]b[əe]r|xeber|news|son|latest|headlines)(?![\p{L}])/iu.test(normQuery) &&
+    qTerms.length > 0 && qTerms.every(t => GENERIC_QT.has(String(t).toLowerCase()));
   let totalChars = 0;
   const basePerSource = Math.ceil(maxChars / maxResults);
 
@@ -614,7 +619,7 @@ async function handleSearch(body, req) {
     // yüklənən tibbi saytın yalnız şüarı gəlir: "Biz pasiyent mərkəzli qayğıya..."),
     // nəticə zibil hovuzuna düşür. Yalnız mətn sorğu dilindədirsə tətbiq olunur ki,
     // tərcümə olunmamış EN səhifələr təsadüfən silinməsin.
-    if (clippedContent && clippedContent.length > 200) {
+    if (!genericNewsQ && clippedContent && clippedContent.length > 200) {
       const cNorm = cleanContent(clippedContent).toLowerCase();
       const contentInQueryLang = qLang === "en" || /[əğışöüç]/.test(cNorm);
       const offTopic = contentInQueryLang && qTerms.length > 0 && !qTerms.some(t => {
