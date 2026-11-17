@@ -17,6 +17,7 @@ import { scoreResult, isSpamDomain, hostMatches, diversifyByDomain, isJunkDomain
 import { cleanContent, pickAnswer, cutWord, dedupeSnippet, normalizeColloquialAz, detectQueryLanguage, acceptLanguageHeader, wikiExtractUrl, restoreAsciiAz } from "../lib/clean.js";
 import { matchAzertagItems, azertagLangFor } from "../lib/azertag.js";
 import { newsTrustBoost, AZ_NEWS_TRUSTED } from "../lib/router.js";
+import { matchFact } from "../lib/facts.js";
 import { normalizeUrl, decodeEntities, stripQuestionWords, parseDDGLite, normalizeMwmbl, parseYahooJP, parseMilliArxiv, isArchiveTopic } from "../lib/search.js";
 import { parseJinaMarkdown } from "../lib/extract.js";
 import { expandQuery, expandQueryAsync, rewriteSearchIntentAz, stripMetaInstructions, isMetaQuery } from "../lib/expand.js";
@@ -941,6 +942,15 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     const az = { title: "Azərbaycan iqtisadiyyatı", snippet: "Azərbaycan iqtisadiyyatının əsas sektorları neft, qaz, kənd təsərrüfatı", url: "https://az.wikipedia.org/wiki/Azərbaycan_iqtisadiyyatı", source: "wikipedia" };
     assert("v56: düzgün ölkə nəticəsi keçir", scoreResult(az, ["azerbaycan", "iqtisadiyyat", "sektor"], "az", "Azərbaycan iqtisadiyyatının əsas sektorları") > 1);
     assert("v56: twitpic zibildir", scoreResult({ title: "Speed of earth around the Sun", snippet: "30 km/s", url: "http://twitpic.com/838m7v", source: "bing" }, ["yer", "gunes", "suret"], "az", "Yerin Günəş ətrafında sürəti") === 0);
+  }
+
+
+  // === v56.3: "hansı ölkədə" → Wikidata P17 ===
+  {
+    const m = matchFact("Yerusəlim hansı ölkədədir");
+    assert("v56.3: 'hansı ölkədədir' country faktı kimi tanınır", m.hit && m.kind === "country", JSON.stringify(m.kind || null));
+    const b = matchFact("Bakı hansı ölkədədir");
+    assert("v56.3: Bakı da country faktıdır", b.hit && b.kind === "country", JSON.stringify(b.kind || null));
   }
 
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);
