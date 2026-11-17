@@ -22,7 +22,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 153; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 154; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -484,7 +484,7 @@ async function handleSearch(body, req) {
     // İndi gate_relaxed də ƏN AZI BİR real termin uyğunluğu tələb edir.
     const relaxTerms = [...new Set([...qTerms, ...tokenize(searchResult.anchorQuery || "")])]
       .map(t => String(t).toLowerCase()).filter(t => t.length >= 4);
-    const weak = (siteLocked ? [] : results)
+    const weak = ((siteLocked || unintelligible) ? [] : results)
       .filter(r => !isSpamDomain(r.url) && !seenU.has(r.url) && !ERR_PAGE.test(String(r.title || "").trim()))
       .filter(r => {
         const blob = `${r.title || ""} ${r.snippet || ""}`.toLowerCase();
@@ -507,7 +507,8 @@ async function handleSearch(body, req) {
 
   // v42.4: skor qapısı HƏR ŞEYİ atdısa (AZ-da tez-tez: "dinozavrlar haqqında faktlar"),
   // boş cavab yerine provayderin ən yaxşı 3 namizədini göstər
-  if (!scored.length && results.length && !/site:([a-z0-9.-]+\.[a-z]{2,})/i.test(query) && !/"([^"]+)"/.test(query)) {
+  // v60.1: mənasız sorğuda bypass OLMAMALIDIR — "asdkjqwe zzz qqq" boş qalmalıdır (invariant)
+  if (!scored.length && results.length && !unintelligible && !/site:([a-z0-9.-]+\.[a-z]{2,})/i.test(query) && !/"([^"]+)"/.test(query)) {
     degradedStages.push("score_gate_bypassed");
     const hitsOf = (blob, terms) => terms.reduce((n, t) => n + (blob.includes(String(t)) ? 1 : 0), 0);
     const byRaw = results
@@ -886,6 +887,25 @@ async function handleSearch(body, req) {
       degradedStages.push("recency_order");
     }
   }
+  if (finalResults.length > 1 && qTerms.length) {
+    const titleKey = (r) => {
+      const tt = tokenize(String(r.title || ""));
+      return qTerms.some(t => {
+        const k = String(t);
+        if (k.length < 4) return false;
+        const stem = k.slice(0, Math.max(4, k.length - 2));
+        return tt.some(x => x.startsWith(stem));
+      }) ? 1 : 0;
+    };
+    const dec = finalResults.map((r, i) => ({ r, i, k: titleKey(r) }));
+    if (dec.some(d => d.k === 1) && dec.some(d => d.k === 0)) {
+      dec.sort((a, b) => (b.k - a.k) || ((b.r.score || 0) - (a.r.score || 0)) || (a.i - b.i));
+      finalResults.length = 0;
+      dec.forEach((d, idx) => { d.r.id = idx + 1; finalResults.push(d.r); });
+      degradedStages.push("title_relevance_order");
+    }
+  }
+
   // v58.2: ƏHATƏ qaydası — başlıq+mətnində sorğunun DAHA ÇOX fərqli termini olan nəticə
   // üstündür. "Azərbaycanın ən böyük gölü" → yalnız "azerbaycan" sözünə uyğun gələn
   // "Azərbaycan milli futbol komandası" 1-ci idi; "Türkiyənin ən böyük şəhəri" → yalnız
@@ -917,25 +937,6 @@ async function handleSearch(body, req) {
       degradedStages.push("coverage_order");
     }
   }
-  if (finalResults.length > 1 && qTerms.length) {
-    const titleKey = (r) => {
-      const tt = tokenize(String(r.title || ""));
-      return qTerms.some(t => {
-        const k = String(t);
-        if (k.length < 4) return false;
-        const stem = k.slice(0, Math.max(4, k.length - 2));
-        return tt.some(x => x.startsWith(stem));
-      }) ? 1 : 0;
-    };
-    const dec = finalResults.map((r, i) => ({ r, i, k: titleKey(r) }));
-    if (dec.some(d => d.k === 1) && dec.some(d => d.k === 0)) {
-      dec.sort((a, b) => (b.k - a.k) || ((b.r.score || 0) - (a.r.score || 0)) || (a.i - b.i));
-      finalResults.length = 0;
-      dec.forEach((d, idx) => { d.r.id = idx + 1; finalResults.push(d.r); });
-      degradedStages.push("title_relevance_order");
-    }
-  }
-
   // v29: rəqəm ziddiyyəti — eyni vahid üçün müxtəlif nəticələrdə fərqli dəyərlər
   // v30.1 (P2 hazır olana qədər): vahid çarpanı (min/milyon) və il ölçüsü olmadığı üçün
   // saxta ziddiyyət istehsal edir → default SÖNDÜRÜLDÜ. ENABLE_CONFLICTS=1 ilə yandırılır.
