@@ -18,6 +18,7 @@ import { cleanContent, pickAnswer, cutWord, dedupeSnippet, normalizeColloquialAz
 import { matchAzertagItems, azertagLangFor } from "../lib/azertag.js";
 import { newsTrustBoost, AZ_NEWS_TRUSTED } from "../lib/router.js";
 import { matchFact } from "../lib/facts.js";
+import { parseSitemap, parseArticleHtml, matchSitemapItems } from "../lib/sitemapnews.js";
 import { normalizeUrl, decodeEntities, stripQuestionWords, parseDDGLite, normalizeMwmbl, parseYahooJP, parseMilliArxiv, isArchiveTopic } from "../lib/search.js";
 import { parseJinaMarkdown } from "../lib/extract.js";
 import { expandQuery, expandQueryAsync, rewriteSearchIntentAz, stripMetaInstructions, isMetaQuery } from "../lib/expand.js";
@@ -951,6 +952,27 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v56.3: 'hansı ölkədədir' country faktı kimi tanınır", m.hit && m.kind === "country", JSON.stringify(m.kind || null));
     const b = matchFact("Bakı hansı ölkədədir");
     assert("v56.3: Bakı da country faktıdır", b.hit && b.kind === "country", JSON.stringify(b.kind || null));
+  }
+
+
+  // === v57: sitemap əsaslı xəbər mənbələri (icma.az, iqtisadiyyat.az) ===
+  {
+    const xml = `<?xml version="1.0"?><urlset><url><loc>https://icma.az/news/uefa-milletler-liqasi-danimarka-norvecle-hec-hece-edib-2174632</loc><lastmod>2026-11-18T01:58:18+04:00</lastmod></url><url><loc>https://icma.az/news/brent-neftinin-qiymeti-91-dollar-2174500</loc><lastmod>2026-11-17T22:10:00+04:00</lastmod></url></urlset>`;
+    const items = parseSitemap(xml);
+    assert("v57: sitemap parse 2 link", items.length === 2, String(items.length));
+    assert("v57: sitemap ən təzə əvvəldə", /uefa/.test(items[0].url));
+    assert("v57: slug sözləri çıxarılır", items[0].slugWords.includes("uefa") && items[0].slugWords.includes("liqasi"), JSON.stringify(items[0].slugWords.slice(0, 5)));
+    const m = matchSitemapItems(items, "UEFA Millətlər Liqası nəticə", 3);
+    assert("v57: slug uyğunluğu işləyir", m.length === 1 && /uefa/.test(m[0].url), String(m.length));
+    assert("v57: əlaqəsiz sorğu boş qaytarır", matchSitemapItems(items, "böyrək daşı", 3).length === 0);
+
+    const html = `<html><head><meta property="og:title" content="Brent neftinin qiyməti düşdü"><meta property="og:description" content="Bir barel 91,69 dollar"><meta property="article:published_time" content="2026-11-17T22:10:00+04:00"><meta property="og:image" content="https://icma.az/media/x.webp"></head><body><article><p>Brent markalı neftin qiyməti bir barel üçün 91,69 dollara düşüb.</p><p>Bu barədə AZƏRTAC məlumat verib.</p></article></body></html>`;
+    const a = parseArticleHtml(html);
+    assert("v57: og:title oxunur", a.title === "Brent neftinin qiyməti düşdü", a.title);
+    assert("v57: og:description oxunur", /91,69/.test(a.description));
+    assert("v57: real tarix ISO-ya çevrilir", a.published_at === "2026-11-17T18:10:00.000Z", String(a.published_at));
+    assert("v57: məqalə mətni <article>-dən", /91,69 dollara düşüb/.test(a.text) && a.text.length > 40);
+    assert("v57: şəkil URL-i götürülür", /x\.webp$/.test(a.image));
   }
 
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);
