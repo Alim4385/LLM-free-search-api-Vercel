@@ -118,3 +118,12 @@ Deploy-dan sonra URL belə olacaq:
 - Rate limit Upstash olmadan per-instance-dir (Vercel serverless xüsusiyyəti) — dəqiq 30/dəq üçün Upstash əlavə et.
 - **Mahiyyət (privacy):** uzun Azərbaycan dili sorğuları (3+ söz) üçün EN tərcümə (anchor) almaq məqsədilə sorğu mətni **MyMemory**-ə (api.mymemory.translated.net) göndərilir — üçüncü tərəf xidmətidir, API key tələb etmir. Qısa sorğular üçün heç bir xarici tərcümə xidməti çağırılmır.
 - Hər web nəticə `untrusted: true` işarəsi daşır — məzmun istehsalçı səhifələrdən gəlir, LLM ona data kimi yanaşmalıdır (təlimat kimi yox).
+
+## Üçüncü tərəf data və lisenziyalar
+
+- **AZ kök ayırıcı (stemmer) leksikonu** — `lib/data/azlex.js` faylı
+  [aznlp-disc/stemmer](https://github.com/aznlp-disc/stemmer) layihəsindən götürülüb
+  (MIT, Copyright (c) 2018 AzerbaijaniNLP Research Group): `words.txt` (75 670 söz)
+  və `suffix.txt` (101 şəkilçi). `tools/gen-azlex.mjs` ilə `normalizeAz` üzərindən
+  ASCII formaya salınır. Lisenziya mətni: `lib/data/AZ-STEM-LICENSE.md`.
+  İstifadə yeri: `lib/azstem.js` → `lib/rank.js` `tokenize()`.
