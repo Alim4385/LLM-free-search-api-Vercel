@@ -17,7 +17,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 88; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 89; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -231,6 +231,17 @@ async function handleSearch(body, req) {
   scored = scored.map(r => isBoilerplateOnly(r.snippet) ? { ...r, score: r.score - 3, junk_content: true } : r);
 
   // v39: AZ kontekstli sualda rəsmi mənbələr (e-qanun, edu.gov.az, stat.gov.az…) önə
+  // v44.2: hava sualında hava API-si cavab vermədikdə "hava limanı" tipli səhv uyğunluqlar aşağı düşsün
+  if (intentName === "weather" && !weatherData) {
+    scored = scored.map(r => {
+      const t = String(r.title || "").toLowerCase();
+      if (/(hava\s+liman|aeroport|airport|aviaşirkət)/.test(t)) return { ...r, score: r.score - 4 };
+      if (/(hava\s+proqnoz|proqnoz|temperatur|weather)/.test(t)) return { ...r, score: r.score + 2 };
+      return r;
+    });
+    degradedStages.push("weather_fallback_search");
+  }
+
   // v41.5: Vikipediya "səhv uyğunluq"ları — başlıqda sorğunun BİR sözü də yoxdursa at
   // ("saç bakımı ipuçları" → "John Romero", "cildə qulluq" → "Şaqun Şarma")
   const laxEq = (a, b) => String(a || "").toLowerCase().includes(String(b || "").toLowerCase());
