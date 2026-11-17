@@ -22,7 +22,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 132; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 133; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -444,7 +444,15 @@ async function handleSearch(body, req) {
         const rsWList = Array.isArray(rsW) ? rsW : [];
         const tW = [...new Set([...qTerms, ...tokenize(coreAz)])];
         const extraW = rsWList.filter(r => /wikipedia\.org/i.test(r.url) && !isSpamDomain(r.url))
-          .map(r => ({ ...r, score: scoreResult(r, tW, qLang, normQuery) }))
+          .map(r => {
+            const sc0 = scoreResult(r, tW, qLang, normQuery);
+            // v55: "Azərbaycan X" sualında X baş sözünü başlığında daşıyan məqalə önə
+            // ("Azərbaycan mədəniyyəti" yox, "Bakı metrosu" — metro sualında)
+            const head = tW.filter(t => t !== "azerbaycan" && t.length >= 4);
+            const titleT = tokenize(r.title || "");
+            const headHit = head.some(h => titleT.some(t => t.startsWith(h.slice(0, Math.max(4, h.length - 2)))));
+            return { ...r, score: sc0 + (headHit ? 1.4 : 0) };
+          })
           .filter(r => r.score >= 1.3);
         if (extraW.length) {
           degradedStages.push("azwiki_hint");
@@ -540,6 +548,7 @@ async function handleSearch(body, req) {
   const currentIntent = /(?<![\p{L}])(ən\s+çox|son|bu\s+gün|bugün|hazırda|indiki|yeni|top|best|most\s+visited|most\s+popular|latest|current)(?![\p{L}])/iu.test(normQuery) && !/\b(1\d{3}|20[01]\d)\b/.test(normQuery);
   const junkPool = [];
   const finalResults = [];
+  let contentOffTopic = false; // v55: mətni sorğuya aidiyyəti olmayan səhifə
   let totalChars = 0;
   const basePerSource = Math.ceil(maxChars / maxResults);
 
@@ -600,6 +609,22 @@ async function handleSearch(body, req) {
       if (rawHead && !isBoilerplateOnly(rawHead)) { content = rawHead; degradedStages.push("raw_text_fallback"); }
     }
     const clippedContent = content.slice(0, itemBudget);
+    // v55: sayt açıldı, mətn gəldi — AMMA sorğu ilə heç bir əlaqəsi yoxdursa (JS ilə
+    // yüklənən tibbi saytın yalnız şüarı gəlir: "Biz pasiyent mərkəzli qayğıya..."),
+    // nəticə zibil hovuzuna düşür. Yalnız mətn sorğu dilindədirsə tətbiq olunur ki,
+    // tərcümə olunmamış EN səhifələr təsadüfən silinməsin.
+    if (clippedContent && clippedContent.length > 200) {
+      const cNorm = cleanContent(clippedContent).toLowerCase();
+      const contentInQueryLang = qLang === "en" || /[əğışöüç]/.test(cNorm);
+      const offTopic = contentInQueryLang && qTerms.length > 0 && !qTerms.some(t => {
+        const key = String(t).toLowerCase();
+        return key.length >= 3 && cNorm.includes(key.slice(0, Math.max(4, key.length - 2)));
+      });
+      if (offTopic) {
+        contentOffTopic = true;
+        degradedStages.push("content_off_topic");
+      }
+    }
     // Əgər axtarış motorunun snippet-i kəsik/xətalıdırsa ("url_to_copy Sorry!..."), saytın rəsmi yerli ön-izləməsini (meta_description) götür
     const rawSnipSource = (ex && ex.meta_description && (!base.snippet || base.snippet.length < 35 || /url_to_copy|requires a keyboard/i.test(base.snippet)))
       ? ex.meta_description
@@ -629,11 +654,12 @@ async function handleSearch(body, req) {
     // v41.6: zibil səhifə YALNIZ 2 nəticə artıq varsa atılır — tək nəticə qalmaqdansa,
     // zəif content göstərmək yaxşıdır (n=1 problemi 15 sualda idi)
     const canSkip = finalResults.length >= 2 && (toFetch.length - i - 1) >= 1;
-    if (canSkip && isBoilerplateOnly(clippedContent) && (isBoilerplateOnly(rawSnippet) || !rawSnippet.trim())) {
-      degradedStages.push("junk_page_skipped");
-      junkPool.push(out);
+    if (canSkip && (contentOffTopic || (isBoilerplateOnly(clippedContent) && (isBoilerplateOnly(rawSnippet) || !rawSnippet.trim())))) {
+      if (!contentOffTopic) degradedStages.push("junk_page_skipped");
+      junkPool.push({ ...out, content_off_topic: contentOffTopic || undefined });
       continue;
     }
+    if (contentOffTopic) out.content_off_topic = true;
     finalResults.push(out);
     if (totalChars >= maxChars) break;
   }
