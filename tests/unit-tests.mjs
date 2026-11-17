@@ -987,5 +987,14 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v57.1: təzə xəbər köhnədən yuxarı", freshR > staleR, `fresh=${freshR} stale=${staleR}`);
   }
 
+
+  // === v57.2: ümumi "son xəbərlər" sorğusu → ən təzə sitemap elementləri ===
+  {
+    const items = parseSitemap(`<urlset><url><loc>https://icma.az/news/a-2174632</loc><lastmod>2026-11-18T02:00:00+04:00</lastmod></url><url><loc>https://icma.az/news/b-2174600</loc><lastmod>2026-11-18T01:00:00+04:00</lastmod></url></urlset>`);
+    const g = matchSitemapItems(items, "son xəbərlər Azərbaycan", 2);
+    assert("v57.2: ümumi xəbər sorğusunda ən təzə 2 xəbər", g.length === 2 && /\/a-/.test(g[0].url), String(g.length));
+    assert("v57.2: konkret sorğuda generic fallback işləmir", matchSitemapItems(items, "böyrək daşı", 2).length === 0);
+  }
+
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);
 process.exit(fail?1:0);
