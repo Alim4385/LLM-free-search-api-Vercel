@@ -16,7 +16,7 @@ import { isChallengePage } from "../lib/extract.js";
 import { scoreResult, isSpamDomain, hostMatches, diversifyByDomain, isJunkDomain, computeConfidence, looksLikeGibberish } from "../lib/score.js";
 import { cleanContent, pickAnswer, cutWord, dedupeSnippet, normalizeColloquialAz, detectQueryLanguage, acceptLanguageHeader, wikiExtractUrl, restoreAsciiAz } from "../lib/clean.js";
 import { matchAzertagItems, azertagLangFor } from "../lib/azertag.js";
-import { newsTrustBoost, AZ_NEWS_TRUSTED } from "../lib/router.js";
+import { newsTrustBoost, AZ_NEWS_TRUSTED, howtoTrustBoost, isHowtoQuery, HOWTO_TRUSTED } from "../lib/router.js";
 import { matchFact } from "../lib/facts.js";
 import { parseSitemap, parseArticleHtml, matchSitemapItems } from "../lib/sitemapnews.js";
 import { normalizeUrl, decodeEntities, stripQuestionWords, parseDDGLite, normalizeMwmbl, parseYahooJP, parseMilliArxiv, isArchiveTopic } from "../lib/search.js";
@@ -1054,6 +1054,18 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     const src = readFileSync(new URL("../lib/search.js", import.meta.url), "utf8");
     assert("v59.1: iPhone batareya CANON qaydası var", /iphone\[\\s\\S\]\{0,30\}\(batareya\|battery\)/.test(src) || /iphone battery health tips apple support/.test(src));
     assert("v59.1: quş qripi CANON qaydası var", /bird flu H5N1 symptoms causes who\.int/.test(src));
+  }
+
+
+  // === v60: how-to mənbələri ===
+  {
+    assert("v60: 'necə' sorğusu how-to sayılır", isHowtoQuery("divarı necə düzgün rəngləyim"));
+    assert("v60: 'how to' sorğusu how-to sayılır", isHowtoQuery("how to marinate chicken"));
+    assert("v60: 'Naxçıvan' how-to deyil", !isHowtoQuery("Naxçıvan"));
+    assert("v60: wikiHow boost alır", howtoTrustBoost("https://www.wikihow.com/Make-Yogurt") > 0);
+    assert("v60: rei.com boost alır", howtoTrustBoost("https://www.rei.com/learn/expert-advice/bike-chain.html") > 0);
+    assert("v60: xəbər saytı how-to boost almır", howtoTrustBoost("https://report.az/idman-xeberleri") === 0);
+    assert("v60: HOWTO_TRUSTED siyahısı 20+", HOWTO_TRUSTED.length >= 20, String(HOWTO_TRUSTED.length));
   }
 
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);

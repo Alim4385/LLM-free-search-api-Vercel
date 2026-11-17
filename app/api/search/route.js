@@ -11,7 +11,7 @@ import { matchMath, mathToText } from "../../../lib/math.js";
 import { matchSports, fetchLastMatch, lastMatchToText } from "../../../lib/sports.js";
 import { matchNutrition, fetchNutrient, nutrientToText } from "../../../lib/nutrition.js";
 import { leadAnswerSentence } from "../../../lib/rank.js";
-import { classifyType, officialBoost, wantsFresh, sameDayCue, newsTrustBoost, AZ_NEWS_TRUSTED } from "../../../lib/router.js";
+import { classifyType, officialBoost, wantsFresh, sameDayCue, newsTrustBoost, AZ_NEWS_TRUSTED, howtoTrustBoost, isHowtoQuery } from "../../../lib/router.js";
 import { scoreResult, diversifyByDomain, extractQuotedPhrases, containsPhrase, isSpamDomain, hostMatches, computeConfidence, isNewsQuery, looksLikeGibberish } from "../../../lib/score.js";
 import { cleanContent, cutWord, dedupeSnippet, detectQueryLanguage, isBoilerplateOnly, stripBoilerplateHead } from "../../../lib/clean.js";
 import { expandQuery, isMetaQuery, stripMetaInstructions, rewriteSearchIntentAz } from "../../../lib/expand.js";
@@ -22,7 +22,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 152; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 153; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -330,6 +330,17 @@ async function handleSearch(body, req) {
       const b = newsTrustBoost(r.url);
       return b ? { ...r, score: r.score + b, trusted_news: true } : r;
     });
+  }
+
+  // v60: how-to sorğusunda addım-addım təlimat verən saytlar (wikiHow, iFixit, REI...) önə.
+  // Ümumi qayda: yalnız "necə / how to" niyyətində işləyir, siyahı + çəki ilə.
+  const howtoQ = isHowtoQuery(normQuery);
+  if (howtoQ) {
+    scored = scored.map(r => {
+      const b = howtoTrustBoost(r.url);
+      return b ? { ...r, score: r.score + b, trusted_howto: true } : r;
+    });
+    scored.sort((a, b) => (b.score - a.score) || ((b.voteCount || 0) - (a.voteCount || 0)) || a.url.localeCompare(b.url));
   }
 
   let usedFallback = false;
