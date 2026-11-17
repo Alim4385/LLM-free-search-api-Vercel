@@ -923,5 +923,12 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v54.4: uyğun nəticə skor alır", scoreResult(ok, ["vitamin", "qida"], "az", "C vitamini hansı qidalarda var") > 1, String(scoreResult(ok, ["vitamin", "qida"], "az", "C vitamini hansı qidalarda var")));
   }
 
+
+  // === v54.5: superlativ sözlər skor termini deyil ===
+  {
+    assert("v54.5: 'ən böyük gölü' → 'boyuk' termini yoxdur", !tokenize("Azərbaycanın ən böyük gölü hansıdır").includes("boyuk"), JSON.stringify(tokenize("Azərbaycanın ən böyük gölü hansıdır")));
+    assert("v54.5: göl sorğusunda 'gol' termini qalır", tokenize("Azərbaycanın ən böyük gölü hansıdır").includes("gol"));
+  }
+
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);
 process.exit(fail?1:0);
