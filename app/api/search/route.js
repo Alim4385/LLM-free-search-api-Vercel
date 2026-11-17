@@ -17,7 +17,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 90; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 91; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -368,10 +368,15 @@ async function handleSearch(body, req) {
 
   // v42.4: skor qapısı HƏR ŞEYİ atdısa (AZ-da tez-tez: "dinozavrlar haqqında faktlar"),
   // boş cavab yerine provayderin ən yaxşı 3 namizədini göstər
-  if (!scored.length && results.length) {
+  if (!scored.length && results.length && !/site:([a-z0-9.-]+\.[a-z]{2,})/i.test(query) && !/"([^"]+)"/.test(query)) {
     degradedStages.push("score_gate_bypassed");
     const byRaw = results
-      .filter(r => !isSpamDomain(r.url))
+      .filter(r => !isSpamDomain(r.url) && !ERR_PAGE.test(String(r.title || "").trim()))
+      .filter(r => {
+        if (!/wikipedia\.org/.test(r.url || "")) return true;
+        const t = String(r.title || "").toLowerCase();
+        return qTerms.some(x => x.length >= 4 && t.includes(String(x).slice(0, Math.max(4, x.length - 3)).toLowerCase()));
+      })
       .map(r => ({ ...r, score: scoreResult(r, qTerms, qLang, normQuery) }))
       .sort((a, b) => b.score - a.score)
       .slice(0, 3);
@@ -514,7 +519,7 @@ async function handleSearch(body, req) {
       const t = Date.parse(r.published_at || "");
       return Number.isNaN(t) || (Date.now() - t) / 86400000 <= days;
     });
-    if (kept.length >= 2 && kept.length < finalResults.length) {
+    if (kept.length >= 1 && kept.length < finalResults.length) {
       degradedStages.push("freshness_filter");
       finalResults.length = 0;
       kept.forEach((r, idx) => { r.id = idx + 1; finalResults.push(r); });
@@ -583,7 +588,8 @@ async function handleSearch(body, req) {
       : /429/.test(v) ? "rate_limited"
       : /403|401/.test(v) ? "blocked"
       : /400/.test(v) ? "bad_request"
-      : /no results/.test(v) ? "no_results"
+      : /skip|unsupported/i.test(v) ? "skipped"
+      : /no results|parse empty/i.test(v) ? "no_results"
       : /timeout|abort/i.test(v) ? "timeout"
       : "error";
   }
@@ -591,6 +597,11 @@ async function handleSearch(body, req) {
   // v29: rəqəm ziddiyyəti — eyni vahid üçün müxtəlif nəticələrdə fərqli dəyərlər
   // v30.1 (P2 hazır olana qədər): vahid çarpanı (min/milyon) və il ölçüsü olmadığı üçün
   // saxta ziddiyyət istehsal edir → default SÖNDÜRÜLDÜ. ENABLE_CONFLICTS=1 ilə yandırılır.
+  // v45: site: / dırnaqlı dəqiq sorğuda nəticə çıxmasa → fallback:true (LLM uydurmasın)
+  if (!finalResults.length && (/site:([a-z0-9.-]+\.[a-z]{2,})/i.test(query) || /"[^"]+"/.test(query))) {
+    usedFallback = true;
+    degradedStages.push("scoped_empty");
+  }
   const conflicts = /^(1|true|on)$/i.test(String(process.env.ENABLE_CONFLICTS || "0")) ? detectConflicts(finalResults, query) : [];
   const confidence = computeConfidence(finalResults, safeErrors, usedFallback);
   const datedResults = finalResults.filter(r => r.published_at || r.updated_at).length;
@@ -627,7 +638,8 @@ async function handleSearch(body, req) {
   };
 
   const cacheable = !NO_CACHE && !skipFetch && intent !== "time" && finalResults.length > 0;
-  const degraded = usedFallback || Object.keys(errors).length >= 3;
+  const hardErrCount = Object.entries(safeErrors).filter(([, v]) => v !== "skipped" && v !== "no_results").length;
+  const degraded = usedFallback || hardErrCount >= 3;
   const freshSensitive = intent === "weather" || intent === "currency" || isNewsQuery(query);
   const ttl = degraded ? 30 : (freshSensitive ? 120 : 300);
   if (cacheable) await cacheSet(cKey, responseObj, ttl);

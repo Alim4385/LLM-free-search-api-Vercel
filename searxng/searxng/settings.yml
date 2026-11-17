@@ -10,9 +10,9 @@ general:
 
 server:
   port: 8888
-  bind_address: "127.0.0.1"   # v44: yalnız lokal
+  bind_address: "0.0.0.0"   # konteyner içi (kənara çıxış docker-compose-da 127.0.0.1-ə bağlanır)
   secret_key: ""   # v44: boş qalır — docker-compose SEARXNG_SECRET-dən götürülür (default şifrə silindi)
-  limiter: true    # v44: botsuz limit aktiv
+  limiter: false   # valkey tələb edir; xarici giriş onsuz da bağlıdır (127.0.0.1 mapping)
   image_proxy: true
 
 search:
