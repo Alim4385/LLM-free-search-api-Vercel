@@ -22,7 +22,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 127; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 128; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -423,6 +423,29 @@ async function handleSearch(body, req) {
           degradedStages.push("news_site_hint");
           const seenN = new Set(scored.map(r => r.url));
           for (const r of extraN.sort((a, b) => b.score - a.score)) if (!seenN.has(r.url)) scored.push(r);
+          scored.sort((a, b) => b.score - a.score);
+        }
+      }
+    } catch {}
+  }
+
+  // v54.1: AZ kontekstli tarix/say sualında az.wikipedia-da hədəfli cəhd.
+  // "Azərbaycanda ilk metro nə vaxt açılıb" → Çikaqo metrosu + Subway sandviçi gəlirdi;
+  // səbəb "metro" sözünün beynəlxalq qarışıqlığıdır. Azərbaycan ensiklopediyası həll edir.
+  if (!hasStructured && qType.azContext && (qType.type === "date" || qType.type === "count") &&
+      Date.now() - started < 2800 && !scored.some(r => /(^|\.)az\.wikipedia\.org$/i.test((() => { try { return new URL(r.url).hostname; } catch { return ""; } })()))) {
+    try {
+      const coreAz = tokenize(normQuery).filter(t => t.length >= 3).slice(0, 4).join(" ");
+      if (coreAz) {
+        const rsW = await withTimeout(searchAll(`${coreAz} site:az.wikipedia.org`, Math.min(6, maxResults), { freshness, excludeDomains }), 1500, "azwiki hint timeout");
+        const tW = [...new Set([...qTerms, ...tokenize(rsW.anchorQuery || "")])];
+        const extraW = (rsW.results || []).filter(r => /wikipedia\.org/i.test(r.url) && !isSpamDomain(r.url))
+          .map(r => ({ ...r, score: scoreResult(r, tW, qLang, normQuery) }))
+          .filter(r => r.score >= 1.3);
+        if (extraW.length) {
+          degradedStages.push("azwiki_hint");
+          const seenW = new Set(scored.map(r => r.url));
+          for (const r of extraW.sort((a, b) => b.score - a.score)) if (!seenW.has(r.url)) scored.push(r);
           scored.sort((a, b) => b.score - a.score);
         }
       }
