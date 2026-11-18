@@ -1254,6 +1254,13 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v90: 'neçədir' say markeridir", hasCountMarker("Bu neçədir") === true);
     assert("v90: 'necədir' say deyil", hasCountMarker("Bakıda hava necədir") === false);
     assert("v90: 'neçə manatdır' rewrite olunmur", countSearchQuery("Bu neçə manatdır") === null);
+    // v104: şifahi riyaziyyat + kök/üstə + temperatur yazılışları
+    assert("v104: şifahi vurma", String(matchMath("12 vurulsun 3").result) === "36");
+    assert("v104: şifahi toplama (EN)", String(matchMath("50 plus 50").result) === "100");
+    assert("v104: 'kökü' (kvadrat sözü olmadan)", String(matchMath("16-nın kökü").result) === "4");
+    assert("v104: 'üstü' dərəcəsi", String(matchMath("2 üstü 10").result) === "1024");
+    assert("v104: farengeyt (AZ yazılışı)", (() => { const r = matchUnits("30 dərəcə Selsi neçə Farengeyt"); return r.hit && r.from === "c" && r.to === "f"; })());
+    assert("v104: temperatur 2 onluq", unitsToText(matchUnits("100 farengeyt neçə selsi")) === "100 °F = 37,78 °C (temperatur çevirməsi).");
     // v102: güclü anchor yalnız bitişik tokenlərdir
     assert("v102: anchor aşkarlanması", strongAnchor("GPT-5 nə vaxt çıxdı") === "gpt5" && strongAnchor("iPhone 15 qiyməti") === "iphone15" && strongAnchor("best sci-fi movies 2025") === null && strongAnchor("Formula 1 Azərbaycan Qran Prisi") === null);
     // v102: anchor EYNİ cümlədəki tarix qonşu cümlədəkindən üstündür
