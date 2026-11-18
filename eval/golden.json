@@ -30,12 +30,13 @@
    ],
    "page": [
     "wikipedia.org"
-   ]
+   ],
+   "answerNum": 27
   },
   "sources": [
    "wikipedia.org"
   ],
-  "note": "27 stansiya (B-04 hələ açılmayıb)"
+  "note": "27 stansiya — seçilmiş cavabda rəqəm yoxlanılır (v111)"
  },
  {
   "q": "Xəzər dənizinin sahəsi nə qədərdir",
@@ -584,20 +585,23 @@
   "q": "Bakı metropoliteni hansı ildə açılıb",
   "type": "date",
   "expect": {
-   "num": null,
-   "unit": null,
+   "year": 1967,
    "requiresDigits": true,
+   "contains": [
+    "1967"
+   ],
+   "answerContains": [
+    "1967"
+   ],
+   "answerYear": 1967,
    "page": [
     "metro.gov.az",
     "wikipedia.org"
-   ],
-   "contains": [
-    "1967"
    ]
   },
   "sources": [
    "metro.gov.az"
   ],
-  "note": "ilk xətt 1967 (v109: 'açılıb' → ən erkən il)"
+  "note": "ilk xətt 1967 — həm mənbədə, həm SEÇİLMİŞ cavabda yoxlanılır (v111)"
  }
 ]

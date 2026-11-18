@@ -80,7 +80,12 @@ async function worker() {
       q: it.q,
       words: it.q.trim().split(/\s+/).length,
       status: r.status, ms: r.ms, n: (j.results || []).length,
-      answer: (j.answer || "").slice(0, 200) || null,
+      // v111: API-də top-level "answer" sahəsi YOXDUR — çıxarılmış cavab
+      // results[0] kimi gəlir (extracted:true). Əvvəl bu sütun həmişə 0% idi.
+      answer: (() => {
+        const ex = (j.results || []).find(x => x && (x.extracted === true || /\(mətndən çıxarıldı\)/.test(String(x.title || ""))));
+        return ex ? String(ex.title || "").slice(0, 200) : null;
+      })(),
       conf: meta.confidence || null, fb: !!meta.fallback,
       stages: meta.degraded_stages || [],
       hosts: (j.results || []).slice(0, 3).map(x => { try { return new URL(x.url).hostname.replace(/^www\./, ""); } catch { return "?"; } }),

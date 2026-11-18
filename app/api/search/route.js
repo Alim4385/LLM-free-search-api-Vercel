@@ -33,7 +33,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 224; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 225; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -1224,6 +1224,39 @@ async function handleSearch(body, req) {
   // v29: rəqəm ziddiyyəti — eyni vahid üçün müxtəlif nəticələrdə fərqli dəyərlər
   // v30.1 (P2 hazır olana qədər): vahid çarpanı (min/milyon) və il ölçüsü olmadığı üçün
   // saxta ziddiyyət istehsal edir → default SÖNDÜRÜLDÜ. ENABLE_CONFLICTS=1 ilə yandırılır.
+  // v110: BOŞ NƏTİCƏ OLMASIN. 100 sorğuluk testdə 3–5 sorğu tam boş qayıdırdı
+  // (bütün provayderlər cooldown/429 olanda). Son şans: vikipediya birbaşa axtarışı —
+  // sorğunun dilinə uyğun (AZ→az.wiki TR/RU→tr.wiki EN→en.wiki), sonra EN.
+  // v111: sayt məhdudiyyəti (site: və ya exclude_domains) varsa, ehtiyat mənbə
+  // istifadəçinin filtrinə zidd olmamalıdır — əvvəl bu blok site_filter-dən SONRA idi
+  // və "site:metro.gov.az" sorğusuna wikipedia qaytarırdı.
+  const lastResortBlocked = !!query.match(/site:[a-z0-9.-]+\.[a-z]{2,}/i) || (excludeDomains && excludeDomains.length > 0);
+  if (!finalResults.length && !unintelligible && !lastResortBlocked) {
+    try {
+      const tries = qLang === "en" ? ["en", "simple"] : qLang === "tr" ? ["tr", "az"] : ["az", "tr"];
+      for (const wl of tries) {
+        const u = `https://${wl}.wikipedia.org/w/api.php?action=query&list=search&format=json&srlimit=3` +
+          `&srsearch=${encodeURIComponent(coreSearchQuery(normQuery, 5))}`;
+        const rr = await withTimeout(fetch(u, { headers: { "User-Agent": "LLM-free-search-api/1.5 (keyless)" } }), 1200, "last resort");
+        if (!rr || !rr.ok) continue;
+        const jj = await rr.json();
+        const hits = jj?.query?.search || [];
+        if (!hits.length) continue;
+        for (const h of hits) {
+          finalResults.push({
+            id: finalResults.length + 1,
+            title: String(h.title || ""),
+            url: `https://${wl}.wikipedia.org/wiki/${encodeURIComponent(String(h.title || "").replace(/ /g, "_"))}`,
+            snippet: String(h.snippet || "").replace(/<[^>]*>/g, "").slice(0, 200),
+            source: "wikipedia", score: 2, voteCount: 1, rescued: true,
+            published_at: null, updated_at: null, date_info: buildDateInfo(null, null, reqLang)
+          });
+        }
+        degradedStages.push("wiki_last_resort");
+        break;
+      }
+    } catch {}
+  }
   // v45: site: sorğusunda başqa domenli nəticələr QALMAMALIDIR (provayder site: -i saya salmır)
   const siteM = query.match(/site:([a-z0-9.-]+\.[a-z]{2,})/i);
   if (siteM) {
@@ -1255,35 +1288,6 @@ async function handleSearch(body, req) {
       // anchor qapısı hər şeyi atdısa — boş cavab məqaviləyə uyğun olmalıdır (fallback:true)
       if (!finalResults.length) { usedFallback = true; degradedStages.push("anchor_empty"); }
     }
-  }
-  // v110: BOŞ NƏTİCƏ OLMASIN. 100 sorğuluk testdə 3–5 sorğu tam boş qayıdırdı
-  // (bütün provayderlər cooldown/429 olanda). Son şans: vikipediya birbaşa axtarışı —
-  // sorğunun dilinə uyğun (AZ→az.wiki TR/RU→tr.wiki EN→en.wiki), sonra EN.
-  if (!finalResults.length && !unintelligible) {
-    try {
-      const tries = qLang === "en" ? ["en", "simple"] : qLang === "tr" ? ["tr", "az"] : ["az", "tr"];
-      for (const wl of tries) {
-        const u = `https://${wl}.wikipedia.org/w/api.php?action=query&list=search&format=json&srlimit=3` +
-          `&srsearch=${encodeURIComponent(coreSearchQuery(normQuery, 5))}`;
-        const rr = await withTimeout(fetch(u, { headers: { "User-Agent": "LLM-free-search-api/1.5 (keyless)" } }), 1200, "last resort");
-        if (!rr || !rr.ok) continue;
-        const jj = await rr.json();
-        const hits = jj?.query?.search || [];
-        if (!hits.length) continue;
-        for (const h of hits) {
-          finalResults.push({
-            id: finalResults.length + 1,
-            title: String(h.title || ""),
-            url: `https://${wl}.wikipedia.org/wiki/${encodeURIComponent(String(h.title || "").replace(/ /g, "_"))}`,
-            snippet: String(h.snippet || "").replace(/<[^>]*>/g, "").slice(0, 200),
-            source: "wikipedia", score: 2, voteCount: 1, rescued: true,
-            published_at: null, updated_at: null, date_info: buildDateInfo(null, null, reqLang)
-          });
-        }
-        degradedStages.push("wiki_last_resort");
-        break;
-      }
-    } catch {}
   }
   // v101: çıxarılmış cavab (say/ölçü/tarix) reorder mərhələlərindən sonra yenidən başa çəkilir —
   // əvvəl limit kəsməsi onu qurban verə bilirdi (məs. pambıq istehsalı: cavab var, siyahıda yox).

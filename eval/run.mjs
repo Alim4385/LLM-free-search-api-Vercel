@@ -19,10 +19,23 @@ try { KNOWN = JSON.parse(fs.readFileSync("eval/known-gaps.json", "utf8")); } cat
 const norm = (e) => (typeof e === "string" ? { q: e } : (e && typeof e === "object" ? e : { q: String(e) }));
 
 // v98: golden.json sxeminin TAM yoxlanması (num/tol/year/all/any/must_not/codeTokens/page/unit)
+// v111: TANINMAYAN test şərti SƏSSİZCƏ ötürülməməlidir — əvvəl `contains` yazılmışdı,
+// skript onu oxumurdu və metro testi "keçdi" görünə bilərdi.
+const KNOWN_EXPECT_KEYS = new Set([
+  "num", "tol", "unit", "requiresDigits", "year", "all", "any", "must_not", "codeTokens", "page",
+  "contains", "answerContains", "answerNum", "answerYear", "answerUnit"
+]);
+
 function checkExpect(entry, d) {
   const ex = entry.expect;
   if (!ex) return { ok: true, why: "" };
   const results = d?.results || [];
+  // SEÇİLMİŞ CAVAB (rəqəm) mənbələrdən AYRICA yoxlanılır:
+  // cavab = mətndən çıxarılıb önə çəkilmiş element (yoxdursa ilk nəticə).
+  const answerItem = results.find(r => r && (r.extracted === true || /\(mətndən çıxarıldı\)/.test(String(r.title || "")))) || results[0] || null;
+  const answerText = answerItem ? `${answerItem.title || ""} ${answerItem.content || ""} ${answerItem.snippet || ""}`.toLowerCase() : "";
+  const answerNums = [...answerText.matchAll(/\d{1,3}(?:[ \u00a0\u202f.]\d{3})+(?:[.,]\d+)?|\d+(?:[.,]\d+)?/g)]
+    .map(m => Number(m[0].replace(/[ \u00a0\u202f]/g, "").replace(/\.(?=\d{3}\b)/g, "").replace(",", ".")));
   const text = results.map(r => `${r.title || ""} ${r.snippet || ""} ${r.content || ""}`).join(" ").toLowerCase();
   const urls = results.map(r => String(r.url || "").toLowerCase());
   // v98.1: minlik ayırıcıları ("386 400", "1.234.567") TƏK rəqəm kimi oxunur
@@ -31,6 +44,9 @@ function checkExpect(entry, d) {
   const years = [...text.matchAll(/\b(1[5-9]\d{2}|20\d{2})\b/g)].map(m => Number(m[0]));
   const fails = [];
 
+  for (const k of Object.keys(ex)) {
+    if (!KNOWN_EXPECT_KEYS.has(k)) fails.push(`naməlum test şərti: ${k}`);
+  }
   if (ex.requiresDigits && !nums.length) fails.push("rəqəm yoxdur");
   if (ex.unit) {
     let okUnit = false;
@@ -60,6 +76,26 @@ function checkExpect(entry, d) {
   }
   if (Array.isArray(ex.page) && ex.page.length && !urls.some(u => ex.page.some(h => u.includes(String(h).toLowerCase())))) {
     fails.push(`səhifə gözlənilirdi: ${ex.page.join("/")}`);
+  }
+  // v111: mənbədə olması kifayət deyil — `contains` mənbə mətnində axtarılır
+  if (Array.isArray(ex.contains) && ex.contains.length && !ex.contains.every(w => text.includes(flat(w)))) {
+    fails.push(`mənbədə yoxdur: ${ex.contains.join("/")}`);
+  }
+  // SEÇİLMİŞ CAVABIN özü düzgündürmü? (mənbədə ilin olması ≠ seçilmiş cavabın düzgünlüyü)
+  if (Array.isArray(ex.answerContains) && ex.answerContains.length) {
+    if (!answerItem) fails.push("cavab seçilməyib (structured cavab yoxdur)");
+    else if (!ex.answerContains.every(w => answerText.includes(flat(w)))) {
+      fails.push(`seçilmiş cavab səhvdir: "${String(answerItem.title || "").slice(0, 60)}"`);
+    }
+  }
+  if (Number.isFinite(ex.answerNum)) {
+    const at = Number.isFinite(ex.tol) ? ex.tol : 0;
+    if (!answerNums.some(n => Math.abs(n - ex.answerNum) <= at)) {
+      fails.push(`seçilmiş cavabda rəqəm səhvdir (${ex.answerNum}±${at} gözlənilirdi)`);
+    }
+  }
+  if (Number.isFinite(ex.answerYear) && !new RegExp(`(?<!\\d)${ex.answerYear}(?!\\d)`).test(answerText)) {
+    fails.push(`seçilmiş cavabda il səhvdir: ${ex.answerYear}`);
   }
   return { ok: fails.length === 0, why: fails.join("; ") };
 }

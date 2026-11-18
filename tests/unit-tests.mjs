@@ -1263,6 +1263,23 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v104: 'üstü' dərəcəsi", String(matchMath("2 üstü 10").result) === "1024");
     assert("v104: farengeyt (AZ yazılışı)", (() => { const r = matchUnits("30 dərəcə Selsi neçə Farengeyt"); return r.hit && r.from === "c" && r.to === "f"; })());
     assert("v104: temperatur 2 onluq", unitsToText(matchUnits("100 farengeyt neçə selsi")) === "100 °F = 37,78 °C (temperatur çevirməsi).");
+    // v111: per-unit quruluşu say kimi qəbul edilmir
+    assert("v111: 'hər stansiya üçün 17 avtobus' say deyil", (() => {
+      const r = extractCount("Hər stansiya üçün 17 avtobus ayrılıb.", "stansiya", { query: "neçə stansiya var" });
+      const r2 = extractCount("Bakı metrosunda 27 stansiya var. Hər stansiya üçün 17 avtobus ayrılıb.", "stansiya", { query: "neçə stansiya var" });
+      return r === null && r2 && r2.value === 27;
+    })());
+    assert("v111: 'hər min nəfərə 17 həkim' say deyil", extractCount("Hər min nəfərə 17 həkim düşür.", "həkim", { query: "neçə həkim var" }) === null);
+    // v111: təkrar mənbələr ayrı səs sayılmır
+    assert("v111: eyni host iki dəfə sayılmır", (() => {
+      const mk = (url, sentence) => ({ url, title: "x", content: sentence });
+      const r = extractCountFromResults([
+        mk("https://news.az/a1", "Bakı metrosunda 27 stansiya var."),
+        mk("https://news.az/a2", "Bakı metrosunda 27 stansiya var."),
+        mk("https://baku.ws/b1", "Metropolitendə 18 stansiya tikilir.")
+      ], "stansiya", "neçə stansiya var");
+      return r && r.value === 27 && (r.confirmations ?? 0) <= 2;
+    })());
     // v109: Next.js hydration payload (metro.gov.az kimi client-rendered səhifələr)
     assert("v109: RSC payload-dan mətn çıxarılır", (() => {
       const html = `<html><body><div id="root"></div><script>self.__next_f.push([1,"[\\"$\\",\\"p\\",null,{\\"children\\\":\\\"Bu gün isə Bakı metropoliteni 3 xətt, 27 stansiya və 40,7 kilometrlik şəbəkəsi ilə.\\\"}]"])</script></body></html>`;
