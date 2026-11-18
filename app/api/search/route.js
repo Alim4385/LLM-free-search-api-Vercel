@@ -27,7 +27,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 187; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 188; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -589,9 +589,11 @@ async function handleSearch(body, req) {
   // paralel 5.5s gözləyirdi və took_ms 8s-i keçirdi. İndi qalan vaxtla RACE olunur.
   // v86 (sürət): 2000 → 1700ms — səhifə oxunuşu cavabı 300ms tez bitirir,
   // uzun gözləmə yalnız yavaş saytlarda olurdu.
-  const extractBudget = Math.max(700, Math.min(1700, HARD_DEADLINE_MS - (Date.now() - started) - 1200));
+  // v89: 1700 → 1200ms. Səhifə oxunuşu paraleldir; 1.2s-də cavab verməyən sayt
+  // onsuz da snippet ilə təmsil olunur (debug timing: bu mərhələ ən böyük gecikmə idi).
+  const extractBudget = Math.max(600, Math.min(1200, HARD_DEADLINE_MS - (Date.now() - started) - 1200));
   const extractAll = Promise.allSettled(
-    toFetch.map((r, i) => fetchAndExtract(r.url, extractQuery, Math.min(2200, extractBudget), reqLang, { jina: i < 2 }))
+    toFetch.map((r, i) => fetchAndExtract(r.url, extractQuery, Math.min(1500, extractBudget), reqLang, { jina: i < 2 }))
   );
   const extracted = skipFetch
     ? toFetch.map(() => ({ status: "fulfilled", value: null }))
@@ -990,7 +992,7 @@ async function handleSearch(body, req) {
   // v15/v16 (Alim qaydası): sual hansı dildə verilibsə, cavab məzmununu da həmin dilə çevirib qaytar!
   let resultsTranslated = false;
   if (shouldTranslateResults && finalResults.length > 0 && format !== "simple" && Date.now() - started < HARD_DEADLINE_MS - 1600) {
-    const trBudget = Math.max(400, Math.min(2200, HARD_DEADLINE_MS - 1200 - (Date.now() - started)));
+    const trBudget = Math.max(400, Math.min(1500, HARD_DEADLINE_MS - 1200 - (Date.now() - started)));
     // v30 (P1): texniki/məzmunca EN olan suallarda NƏTİCƏ tərcüməsi söndürülür.
     // Səbəb: "React state management" → "dövlət idarəetməsi" təhrifi məhz buradan gəlirdi.
     // v33: STRUKTUR siqnal — sadalanmış söz regex-i yerinə nəticələrə bax:
@@ -1011,7 +1013,7 @@ async function handleSearch(body, req) {
       // "mətndən çıxarıldı" → "mətndən silindi" kimi təhrif olunurdu.
       const OWN_SOURCES = new Set(["count-extract", "livestat-extract", "measure-extract", "date-extract", "holiday-table", "coingecko", "wikidata", "usda", "open-meteo", "daxili-hesablama", "cbar.az"]);
       const toTranslate = finalResults.filter(r => !OWN_SOURCES.has(r.source) && !r.extracted);
-      resultsTranslated = await translateResultsToQueryLang(toTranslate, reqLang, trBudget, 1600, protTerms);
+      resultsTranslated = await translateResultsToQueryLang(toTranslate, reqLang, trBudget, 1200, protTerms);
     }
     if (resultsTranslated) {
       for (const r of finalResults) {
