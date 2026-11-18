@@ -1236,6 +1236,9 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v82: '2 min 166 məscid' → 2166", extractCount("Azərbaycanda 2 min 166 məscid var.", "məscid").value === 2166);
     assert("v82: 'burada 140 məscid' ölkə sayı deyil", extractCount("“Burada 140 məscid var. Ölkə ərazisində ümumilikdə 2389 məscid mövcuddur.", "məscid", { query: "Azərbaycanda neçə məscid var" }).value === 2389);
     assert("v82: tarixə il əlavə olunur", extractDateAnswer("Azərbaycan 1992-ci ilin 2 mart tarixində BMT-yə qəbul edildi.", "Azərbaycan BMT-yə nə vaxt üzv olub").dateText === "2 mart 1992");
+    // v83: pul kəsr/minlik fərqi
+    assert("v83: '579.2 manat' kəsr kimi", extractMoneySentence("The average pension in Azerbaijan will be 579.2 manat in 2026.", "pensiya", 2026).value === 579.2);
+    assert("v83: '25.000 manat' minlik kimi", extractMoneySentence("Minimum əmək haqqı 2026-cı ildə 25.000 manat olacaq.", "minwage", 2026).value === 25000);
     // v75: hissə saylarının cəmi
     const bk = extractCount("Hazırda Azərbaycanda 2 dövlət bankı və 19 kommersiya bankı fəaliyyət göstərir.", "bank");
     assert("v75: '2 dövlət və 19 kommersiya bankı' → 21", bk && bk.value === 21 && bk.summed === true, JSON.stringify(bk));
