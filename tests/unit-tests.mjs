@@ -1262,6 +1262,14 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v104: 'üstü' dərəcəsi", String(matchMath("2 üstü 10").result) === "1024");
     assert("v104: farengeyt (AZ yazılışı)", (() => { const r = matchUnits("30 dərəcə Selsi neçə Farengeyt"); return r.hit && r.from === "c" && r.to === "f"; })());
     assert("v104: temperatur 2 onluq", unitsToText(matchUnits("100 farengeyt neçə selsi")) === "100 °F = 37,78 °C (temperatur çevirməsi).");
+    // v107: dil "blok deyil, preferensiya" — başqa dildə/mətnli səhifə cəza alır, silinmir
+    assert("v107: kiril mətni bloklanmır, sadəcə aşağı düşür", (() => {
+      const q = "Xocalı soyqırımı nə vaxt olub";
+      const terms = tokenize(q);
+      const ru = scoreResult({ title: "Xocalı — Ходжалинская резня", url: "https://ru.wikipedia.org/wiki/Hodzaly", snippet: "Xocalı soyqırımı 26 fevral 1992; Ходжалинская резня", source: "wikipedia" }, terms, "az", q);
+      const az = scoreResult({ title: "Xocalı soyqırımı", url: "https://az.wikipedia.org/wiki/Xocali", snippet: "Xocalı soyqırımı 26 fevral 1992-ci ildə baş verib", source: "wikipedia" }, terms, "az", q);
+      return ru > 0 && az > ru;
+    })());
     // v106: dil körpüsü — saf funksiyalar
     assert("v106: wiki URL-dən dil+başlıq", (() => {
       const w = wikiTitleFromUrl("https://az.wikipedia.org/wiki/Bak%C4%B1_metrosu");
