@@ -1252,6 +1252,13 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v90: 'neçədir' say markeridir", hasCountMarker("Bu neçədir") === true);
     assert("v90: 'necədir' say deyil", hasCountMarker("Bakıda hava necədir") === false);
     assert("v90: 'neçə manatdır' rewrite olunmur", countSearchQuery("Bu neçə manatdır") === null);
+    // v98.2: güclü anchor (hərf+rəqəm) nəticədə olmalıdır
+    assert("v98.2: anchor olmayan nəticə cəzalanır", (() => {
+      const snip = "GPT modelləri OpenAI tərəfindən hazırlanır.";
+      const a = scoreResult({ title: "GPT-5 release date", url: "https://example.com/a", snippet: snip }, ["gpt"], "az", "GPT-5 nə vaxt çıxdı");
+      const b = scoreResult({ title: "PS5 release date", url: "https://example.com/b", snippet: snip }, ["gpt"], "az", "GPT-5 nə vaxt çıxdı");
+      return a > b;
+    })());
     // v97.1: inzibati siyahı cəm sayılmır ("64 rayon, 12 şəhər rayonu" → 80 deyil, 64)
     assert("v97.1: inzibati siyahı cəmlənmir", extractCount("Azərbaycanın inzibati bölgüsü — Azərbaycanda 64 rayon, 11 respublika tabeli şəhər, 12 şəhər rayonu var.", "rayon", { query: "Azərbaycanda neçə rayon var" }).value === 64);
     // v97: finalize modulu — limitlər və təzəlik qaydası

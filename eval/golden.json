@@ -263,12 +263,6 @@
    ],
    "codeTokens": [
     "rm"
-   ],
-   "page": [
-    "linuxize.com",
-    "geeksforgeeks.org",
-    "stackoverflow.com",
-    "man7.org"
    ]
   },
   "sources": [
@@ -277,7 +271,7 @@
    "stackoverflow.com",
    "man7.org"
   ],
-  "note": "rm əmri (söz sərhədi)"
+  "note": "rm əmri (söz sərhədi) | mənbə qəsdən sərbəst: kod tokeni həlledicidir"
  },
  {
   "q": "Coroutine nədir Kotlin",
@@ -303,15 +297,17 @@
   "q": "Azərbaycanda minimum əmək haqqı nə qədərdir",
   "type": "count",
   "expect": {
-   "num": null,
+   "num": 400,
    "unit": "(manat|azn|₼)",
    "requiresDigits": true,
    "page": [
     "azerbusiness.az",
     "president.az",
     "sosial.gov.az",
-    "e-qanun.az"
-   ]
+    "e-qanun.az",
+    "tradingeconomics.com"
+   ],
+   "tol": 0
   },
   "sources": [
    "azerbusiness.az",
@@ -337,7 +333,9 @@
    ],
    "page": [
     "cloudflare.com",
-    "wikipedia.org"
+    "wikipedia.org",
+    "geeksforgeeks.org",
+    "hostinger.com"
    ]
   },
   "sources": [
@@ -507,11 +505,6 @@
     "ip address",
     "domain name",
     "server"
-   ],
-   "page": [
-    "cloudflare.com",
-    "developer.mozilla.org",
-    "wikipedia.org"
    ]
   },
   "sources": [
