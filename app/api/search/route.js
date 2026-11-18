@@ -27,7 +27,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 184; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 185; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -390,7 +390,7 @@ async function handleSearch(body, req) {
       const unquoted = query.replace(/"([^"]+)"/g, "$1");
       if (unquoted !== query) {
         try {
-          const retry = await withTimeout(searchAll(unquoted, maxResults, { freshness, excludeDomains }), 3000, "retry timeout");
+          const retry = await withTimeout(searchAll(unquoted, maxResults, { freshness, excludeDomains }), 1500, "retry timeout");
           const retryTerms = [...new Set([...qTerms, ...tokenize(retry.anchorQuery || "")])];
           let retryScored = retry.results.filter(r => !isSpamDomain(r.url)).map(r => ({ ...r, score: scoreResult(r, retryTerms, qLang, query) })).filter(r => r.score >= 1.5);
           retryScored.sort((a, b) => (b.score - a.score) || ((b.voteCount || 0) - (a.voteCount || 0)) || a.url.localeCompare(b.url));
@@ -421,7 +421,7 @@ async function handleSearch(body, req) {
       const core = tokenize(query).slice(0, 3).join(" ");
       if (core && core !== normQuery) {
         // v52.2: retry də ümumi deadline-a sığmalıdır (əvvəl 8195-10925 ms çıxırdı)
-        const retryBudget = Math.min(2500, Math.max(600, HARD_DEADLINE_MS - 2600 - (Date.now() - started)));
+        const retryBudget = Math.min(1400, Math.max(500, HARD_DEADLINE_MS - 3000 - (Date.now() - started)));
         const retry2 = await withTimeout(searchAll(core, maxResults, { freshness, excludeDomains }), retryBudget, "retry2 timeout");
         const t2 = [...new Set([...qTerms, ...tokenize(retry2.anchorQuery || "")])];
         const extra = retry2.results.filter(r => !isSpamDomain(r.url))
@@ -438,10 +438,10 @@ async function handleSearch(body, req) {
   }
 
   // v39: AZ kontekstli sualda rəsmi mənbə heç gəlməyibsə → sayt-hədəfli bir cəhd
-  if (!hasStructured && qType.siteHint && !scored.some(r => officialBoost(r.url)) && Date.now() - started < 2600) {
+  if (!hasStructured && qType.siteHint && !scored.some(r => officialBoost(r.url)) && Date.now() - started < 2000) {
     try {
       const coreQ = `${tokenize(normQuery).slice(0, 5).join(" ")} site:${qType.siteHint}`;
-      const rs = await withTimeout(searchAll(coreQ, maxResults, { freshness, excludeDomains }), 2500, "site hint timeout");
+      const rs = await withTimeout(searchAll(coreQ, maxResults, { freshness, excludeDomains }), 1300, "site hint timeout");
       const tS = [...new Set([...qTerms, ...tokenize(rs.anchorQuery || "")])];
       const extraS = rs.results.filter(r => !isSpamDomain(r.url)).map(r => ({ ...r, score: scoreResult(r, tS, qLang, normQuery) })).filter(r => r.score >= 1.5);
       if (extraS.length) {
@@ -455,13 +455,13 @@ async function handleSearch(body, req) {
 
   // v53: xəbər sorğusunda tanınmış AZ mənbəsindən HEÇ NƏ gəlməyibsə → sayt-hədəfli
   // bir cəhd (AZƏRTAC + Report OR ilə). Sual "xəbər" olsa da nəticə xarici sayt olurdu.
-  if (newsQ && !hasStructured && Date.now() - started < 2600 && !scored.some(r => newsTrustBoost(r.url) > 0)) {
+  if (newsQ && !hasStructured && Date.now() - started < 2000 && !scored.some(r => newsTrustBoost(r.url) > 0)) {
     try {
       const coreN = tokenize(normQuery).filter(t => t.length >= 3).slice(0, 5).join(" ");
       if (coreN) {
         const doms = AZ_NEWS_TRUSTED.slice(0, 2);
         const qSite = `${coreN} (site:${doms[0]} OR site:${doms[1]})`;
-        const rsN = await withTimeout(searchAll(qSite, Math.min(6, maxResults), { freshness, excludeDomains }), 1600, "news site hint timeout");
+        const rsN = await withTimeout(searchAll(qSite, Math.min(6, maxResults), { freshness, excludeDomains }), 1000, "news site hint timeout");
         const tN = [...new Set([...qTerms, ...tokenize(rsN.anchorQuery || "")])];
         const extraN = (rsN.results || []).filter(r => !isSpamDomain(r.url))
           .map(r => ({ ...r, score: scoreResult(r, tN, qLang, normQuery) + newsTrustBoost(r.url) }))
@@ -487,7 +487,7 @@ async function handleSearch(body, req) {
       if (coreAz) {
         // v54.4: "site:" operatorunu provayderlər atırdı → hint heç vaxt işə düşmürdü.
         // İndi az.wikipedia API-nin özü, 4 namizəd sorğu ilə.
-        const rsW = await withTimeout(searchAzWikiHint(normQuery, qTerms, Math.min(6, maxResults)), 1200, "azwiki hint timeout");
+        const rsW = await withTimeout(searchAzWikiHint(normQuery, qTerms, Math.min(6, maxResults)), 900, "azwiki hint timeout");
         const rsWList = Array.isArray(rsW) ? rsW : [];
         const tW = [...new Set([...qTerms, ...tokenize(coreAz)])];
         const extraW = rsWList.filter(r => /wikipedia\.org/i.test(r.url) && !isSpamDomain(r.url))
@@ -582,9 +582,11 @@ async function handleSearch(body, req) {
   const extractQuery = effAnchor ? `${normQuery} ${effAnchor}` : normQuery;
   // v26: çıxarış mərhələsi ümumi deadline-a sığmalıdır — əvvəl jina fallback 5 nəticədə
   // paralel 5.5s gözləyirdi və took_ms 8s-i keçirdi. İndi qalan vaxtla RACE olunur.
-  const extractBudget = Math.max(700, Math.min(2000, HARD_DEADLINE_MS - (Date.now() - started) - 1200));
+  // v86 (sürət): 2000 → 1700ms — səhifə oxunuşu cavabı 300ms tez bitirir,
+  // uzun gözləmə yalnız yavaş saytlarda olurdu.
+  const extractBudget = Math.max(700, Math.min(1700, HARD_DEADLINE_MS - (Date.now() - started) - 1200));
   const extractAll = Promise.allSettled(
-    toFetch.map((r, i) => fetchAndExtract(r.url, extractQuery, Math.min(2600, extractBudget), reqLang, { jina: i < 2 }))
+    toFetch.map((r, i) => fetchAndExtract(r.url, extractQuery, Math.min(2200, extractBudget), reqLang, { jina: i < 2 }))
   );
   const extracted = skipFetch
     ? toFetch.map(() => ({ status: "fulfilled", value: null }))
@@ -718,6 +720,22 @@ async function handleSearch(body, req) {
     const challengePage = /client\s*challenge|a\s+required\s+part\s+of\s+this\s+site|required\s+part\s+of\s+this\s+site|enable\s+javascript|just\s+a\s+moment|checking\s+your\s+browser|tələb\s+olunan\s+bir\s+hissəsi\s+yüklənmədi/i
       .test(`${clippedContent || ""} ${rawSnippet || ""}`.slice(0, 1200));
     if (challengePage) { degradedStages.push("challenge_page_skipped"); continue; }
+    // v86: səhifə mətni kənar mövzudursa, AMMA axtarış snippet-i sorğuya uyğundursa —
+    // nəticə ATILMIR: məzmun snippet-lə əvəzlənir (əvvəl n=0/1-ə düşürdü).
+    if (contentOffTopic) {
+      const snipNorm = String(rawSnippet || "").toLowerCase();
+      const snipRelevant = qTerms.some(t => {
+        const k = String(t).toLowerCase();
+        return k.length >= 3 && snipNorm.includes(k.slice(0, Math.max(4, k.length - 2)));
+      });
+      if (snipRelevant && snipNorm.length >= 60) {
+        out.content = String(rawSnippet).slice(0, itemBudget);
+        out.content_off_topic = true;
+        out.score = (out.score ?? 1.5) - 1;
+        degradedStages.push("content_replaced_by_snippet");
+        contentOffTopic = false;
+      }
+    }
     if (contentOffTopic || (canSkip && isBoilerplateOnly(clippedContent) && (isBoilerplateOnly(rawSnippet) || !rawSnippet.trim()))) {
       if (!contentOffTopic) degradedStages.push("junk_page_skipped");
       junkPool.push({ ...out, content_off_topic: contentOffTopic || undefined });
@@ -784,19 +802,22 @@ async function handleSearch(body, req) {
     let added = 0;
     const rescueStop = started + HARD_DEADLINE_MS - 700; // 8s deadline-ı aşmamaq
     const leftMs = () => rescueStop - Date.now();
-    for (const rq of rescueQs.slice(0, 2)) {
-      if (finalResults.length >= maxResults || added >= 2) break;
-      if (leftMs() < 1400) break;
-      try {
-        const rs = await Promise.race([
+    // v86 (sürət): əvvəl 2 ehtiyat sorğu ARDI-ARDA gedirdi → 2×2400ms (bir sual 8.2s çəkdi).
+    // İndi paralel və ÜMUMİ büdcə ilə: ən çoxu 1600ms.
+    const rescueTimeout = Math.max(500, Math.min(1600, leftMs() - 300));
+    if (leftMs() > 1000) {
+      const settledRescue = await Promise.allSettled(rescueQs.slice(0, 2).map(rq =>
+        Promise.race([
           searchAll(rq, Math.min(6, maxResults + 3), { freshness, excludeDomains }),
-          new Promise((_, rej) => setTimeout(() => rej(new Error("rescue timeout")), Math.min(2400, Math.max(600, leftMs()))))
-        ]);
-        if (rs && rs.results) {
-          const ranked = rs.results.slice().sort((a, b) => (b.voteCount || 0) - (a.voteCount || 0));
-          for (const c of ranked) { if (addCandidate(c)) added++; if (added >= 2) break; }
-        }
-      } catch {}
+          new Promise((_, rej) => setTimeout(() => rej(new Error("rescue timeout")), rescueTimeout))
+        ])
+      ));
+      for (const sr of settledRescue) {
+        if (added >= 2 || finalResults.length >= maxResults) break;
+        if (sr.status !== "fulfilled" || !sr.value || !sr.value.results) continue;
+        const ranked = sr.value.results.slice().sort((a, b) => (b.voteCount || 0) - (a.voteCount || 0));
+        for (const c of ranked) { if (addCandidate(c)) added++; if (added >= 2) break; }
+      }
     }
     // rəsmi mənbə: Milli Arxiv (yavaş sayt — yalnız burada, vaxt qalanda)
     if (added < 2 && isArchiveTopic(normQuery) && leftMs() > 2600) {
@@ -905,7 +926,10 @@ async function handleSearch(body, req) {
         });
       }
     }
-    } catch { /* v81: ekstraksiya heç vaxt axtarışı 500 etməməlidir */ }
+    } catch (e) {
+      // v86: səssiz udma yerinə log — səbəb görünsün, istifadəçi 500 görməsin
+      try { console.log(JSON.stringify({ stage: "count_extract_error", err: String((e && e.message) || e).slice(0, 160) })); } catch {}
+    }
   }
   // v77: ÖLÇÜ cavabı — "işsizlik səviyyəsi nə qədərdir" (5,50 faiz), "orta ömür uzunluğu" (75 yaş),
   // "dövlət borcu" (25,7 milyard manat). Say çıxarılmadıqda işə düşür.

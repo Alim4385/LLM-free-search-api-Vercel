@@ -1,129 +1,120 @@
-# 🔍 Qaqa Search API — LLM üçün Key-siz Axtarış
+# 🔍 Qaqa Search API — LLM üçün key-siz axtarış
 
-Bu sistem **LLM-in özünün çağırıb istifadə edəcəyi** axtarış API-sidir.
-İçində LLM yoxdur — sən LLM-i qoşursan, o bu API-ni tool kimi çağırır.
-
-**Key lazım deyil. Vercel-də işləyir.**
-
-## Necə işləyir?
+LLM-in **tool kimi çağırdığı** axtarış API-si. İçində LLM yoxdur, API açarı tələb etmir, Vercel-də işləyir.
 
 ```
-LLM sual alır → qaqa_search tool-un çağırır → POST /api/search
-→ 8 keyless provayderdən paralel axtarış (Tavily keyless, DDG, Bing, Brave HTML, Google News, Wikipedia, HN Algolia, GitHub)
-→ Multi-provider vote + Azərbaycan stemming ilə sırala
-→ Hava sualıdırsa Open-Meteo-dan dəqiq məlumat
-→ JSON / JSONL qaytar → LLM [1], [2] ilə cavab verir
+LLM sual alır → qaqa_search çağırır → GET/POST /api/search
+→ keyless provayderlərdən paralel axtarış + səs (RRF) → AZ stemming ilə sıralama
+→ sual tipinə görə struktur cavab (say / ölçü / tarix / hava / valyuta / fakt / tədbir)
+→ JSON | JSONL | simple
 ```
 
-> **Prinsip: heç bir API key yoxdur.** Tavily keyless rəsmi açarsız rejimdir (header ilə işləyir). HN Algolia və GitHub Search rəsmi keyless JSON API-lərdir. Bing RSS və DuckDuckGo Lite datacenter IP-dən bloklanır (testdə təsdiqləndi), ona görə HTML versiyalar istifadə olunur.
+## Endpoint-lər
 
-## API
+| Metod | Yol | Nə edir |
+|---|---|---|
+| GET | `/api/search?q=...&count=5` | axtarış |
+| POST | `/api/search` | `{ "query": "...", "max_results": 5, "max_chars": 4000, "format": "json" }` |
+| GET | `/api/health` | sağlamlıq yoxlaması |
+| GET | `/api/engines` | provayder/circuit statistikası |
 
-### POST /api/search
-```json
-{ "query": "Bakı hava bu gün necədir?", "max_results": 5, "max_chars": 4000, "format": "json" }
-```
+Formatlar: `json` (default), `jsonl` (sətir-sətir stream), `simple` (yalnız title/url/snippet).
 
-### GET /api/search?q=Bakı hava
-### GET /api/health
+## Cavab kontraktı (dəyişməz)
 
-### Cavab (JSON)
 ```json
 {
-  "query": "Bakı hava bu gün necədir?",
-  "intent": "weather",
+  "query": "...",
+  "intent": "general",
   "results": [
-    { "id": 1, "title": "Bakı - hava (Open-Meteo)", "url": "https://open-meteo.com", "content": "Bakı hazırda: temperatur 18°C..." },
-    { "id": 2, "title": "...", "url": "https://...", "content": "aidiyyəti abzas...", "answer": "sorğuya ən uyğun cavab cümləsi..." }
+    {
+      "id": 1,
+      "title": "...",
+      "url": "https://...",
+      "snippet": "...",
+      "content": "...",
+      "source": "wikipedia",
+      "providers": ["wikipedia", "brave"],
+      "voteCount": 2,
+      "published_at": "2026-03-01T10:00:00.000Z",
+      "updated_at": null,
+      "date_info": "fresh",
+      "untrusted": true
+    }
   ],
-  "meta": { "providers_used": ["bing","wikipedia"], "took_ms": 1200 }
+  "meta": { "providers_used": [], "took_ms": 0, "confidence": "high", "fallback": false, "degraded_stages": [] }
 }
 ```
 
-### Cavab (JSONL) — `format: "jsonl"`
-Hər sətir bir JSON obyektidir (stream üçün):
+Qaydalar:
+
+- **`top_answer` / hər nəticədə `answer` sahəsi yoxdur** — cavab çıxarma yalnız `extracted: true` strukturlu sətirlərdə (`source` = `count-extract`, `measure-extract`, `date-extract`, `livestat-extract`, `holiday-table`, ...) olur və həmişə mənbə cümləsi ilə birlikdə verilir.
+- `published_at` yalnız **həqiqi** nəşr tarixidir; redaktə tarixi `updated_at`-ə düşür. Bilinmirsə `null`.
+- `no_results` xəta deyil və `confidence`-u aşağı salmır. Hamısı filtrdən keçmirsə: `results: []`, `fallback: true`, `confidence: "none"`.
+- `confidence` = mənbə razılığı + aktuallıq (cavabın həqiqət zəmanəti deyil).
+- `untrusted: true` — məzmun xarici saytlardandır, LLM ona data kimi yanaşmalıdır.
+- DDG və Tavily default **söndürülüb** (keyless rejimdə etibarsız).
+
+## Provayderlər (keyless)
+
+`brave`, `yahoo`, `bing`/`bing-rss`/`bing-news`, `google-news`, `wikipedia` (AZ/EN/TR), `mwmbl`, `hacker-news`, `github`, `stackoverflow` (yalnız texniki sorğu), `arxiv`, `az-news` (AZ RSS), `azertag`, `sitemap-news` (icma.az, iqtisadiyyat.az), `ddg-instant`/`ddg-lite` (env ilə).
+
+Struktur mənbələr: Open-Meteo (hava), CBAR (valyuta), CoinGecko (kripto), Wikidata (fakt), USDA (qida), TheSportsDB (idman), president.az (bayram təqvimi), daxili hesablama (riyaziyyat/vahid).
+
+## Struktur
+
 ```
-{"type":"meta","query":"..."}
-{"type":"result","id":1,"title":"...","content":"..."}
-{"type":"result","id":2,...}
-{"type":"done","count":2}
+app/api/search/route.js     ← əsas boru xətti (axtarış → filtr → çıxarma → cavab)
+app/api/{health,engines}/   ← köməkçi endpoint-lər
+lib/
+  search.js      provayder fan-out, RRF səs, URL normalizasiya
+  score.js       dil-üzrə sıralama, spam/domen qaydaları, confidence
+  rank.js        tokenizasiya, AZ stemming, abzas seçimi
+  extract.js     səhifə oxunuşu (readability + linkedom + SSRF qoruması)
+  clean.js       mətn təmizliyi, dil aşkarlama, boilerplate
+  countextract.js  "neçə X" say çıxarma (dil qaydaları)
+  measure.js     ölçü (faiz/yaş/manat) və tarix cavabı
+  livestat.js    canlı rəsmi rəqəmlər (pensiya, əmək haqqı...)
+  facts.js       Wikidata faktları   holidays.js  bayram təqvimi
+  weather.js currency.js crypto.js math.js units.js nutrition.js sports.js
+  router.js translate.js expand.js azertag.js sitemapnews.js suggest.js
+  cache.js ratelimit.js circuit.js conflict.js
+lib/data/        AZ stemmer leksikonu (+ lisenziya)
+tests/           unit testlər (npm test)
+eval/            canlı API-də sual dəstləri (golden.json, round1/2.json)
+scripts/         provayder testi
+tools/           leksikon/qida ID generatorları
+searxng/         ixtiyari: öz SearXNG instance-ı
+docs/            daxili sənədlər (memarlıq, deploy qeydləri)
 ```
 
-## LLM-ə necə qoşmaq olar?
-
-### 1. OpenAI / OpenAI-uyğun (Function Calling)
-`lib/tool-schema.json`-dakı şemanı tool kimi ver:
-
-```js
-const tools = [{
-  type: "function",
-  function: {
-    name: "qaqa_search",
-    description: "Key-siz veb axtarışı...",
-    parameters: { /* tool-schema.json içindəki */ }
-  }
-}];
-
-// LLM tool çağırsa:
-// OpenAI-da toolCall.function.arguments ARTIQI JSON string-dir -
-// JSON.stringify(toolCall.arguments) ikiqat kodlaşdırar və API "missing_query" qaytarar!
-const args = typeof toolCall.function.arguments === "string"
-  ? toolCall.function.arguments
-  : JSON.stringify(toolCall.function.arguments);
-const res = await fetch("https://SENIN-PROEKTIN.vercel.app/api/search", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: args
-});
-if (!res.ok) throw new Error(`Search API ${res.status}`); // 429/504 cavabı HTML ola bilər
-const data = await res.json();
-// data.results-i LLM-ə ver, o [1][2] ilə cavab versin
-```
-
-### 2. İstənilən LLM (Pollinations, Groq, Gemini...)
-Eyni məntiq: LLM-ə de "axtarış lazımdırsa bu URL-ə POST et", cavabı ona qaytar.
-
-## Vercel-də Deploy
+## Dev
 
 ```bash
 npm install
-npm run test:providers   # əvvəlcə provayderləri test et
-npx vercel               # və ya GitHub-a push et, Vercel avtomatik deploy edir
+npm test           # unit testlər (offline, key-less)
+npm run dev        # localhost:3000
+node eval/run.mjs eval/golden.json 3   # canlı API-də sual dəsti
 ```
 
-Deploy-dan sonra URL belə olacaq:
-`https://qaqa-search-api.vercel.app/api/search`
+Deploy: GitHub-a push → Vercel avtomatik. Ətraflı: [DEPLOY.md](DEPLOY.md).
 
-## Xüsusiyyətlər
-- ✅ Key-siz: DDG HTML + Bing HTML + Google News RSS + Wikipedia (+ SearXNG ehtiyat)
-- ✅ Azərbaycan stemming: Bakı/Bakıda eyni sayılır
-- ✅ Cavab keyfiyyəti (v12): Wikipedia üçün təmiz TextExtracts API (heç bir `[n]`/`[edit]`/TOC zibilli), məzmun junk-cleaner (cədvəl/tarix/symbol-soup sətirləri, boilerplate başlıqlar), hər nəticədə `answer` field (sorğuya ən uyğun cümlə), B2B directory domenlərinin qadağası (rocketreach/linkedin və s.), dil uyğunsuzluğu cəzası (AZ sorğuda EN-only nəticələr arxaya düşür), mövzu qaydaları (film sorğusunda GitHub/HN demoted), domen diversifikasiyası (hər sayt top-N-də 1 dəfə — Google tərzi), Bing `mkt`/Tavily `country` sorğu dilinə görə (AZ/TR lokal rank)
-- ✅ linkedom + readability ilə sayt təmizləmə + SSRF qorunması (yalnız public IP; redirect-lər hər hop-da yoxlanılır, port 80/443)
-- ✅ Open-Meteo ilə hava (scraping yoxdur)
-- ✅ Upstash Redis cache (optional, olmasa in-memory)
-- ✅ Rate limit (IP başına 30/dəq) + prompt injection qorunması
-- ✅ JSON + JSONL (real stream) + simple format
-- ✅ Circuit breaker + soft-fail (boş nəticə provayderi cooldown-a salmır)
+## Env (hamısı ixtiyari)
 
-## Opsional Env Dəyərləri (Vercel → Settings → Environment Variables)
 | Env | Nə edir |
-|-----|---------|
-| `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` | **Tövsiyə olunur.** Cache + rate limit shared counter olur (bütün serverless instance-lar eyni 30/dəq limitini görür; olmasa limit per-instance olur və soyuq startda sıfırlanır) |
-| `SEARXNG_URL` | Öz SearXNG instance-ın (self-hosted) — ən etibarlı keyless provider |
-| `ENGINES_API_KEY` | `/api/engines` endpoint-ini `x-api-key` header ilə qoruyur (qoymasan açıq qalır) |
+|---|---|
+| `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` | paylaşılan cache + dəqiq rate limit |
+| `SEARXNG_URL` | öz SearXNG instance-ın |
+| `ENGINES_API_KEY` | `/api/engines`-i qoruyur |
+| `ENABLE_DDG`, `TAVILY_API_KEY`, `USDA_API_KEY` | default söndürülmüş mənbələr |
 
 ## Limitlər
-- Vercel Hobby: funksiya ~10-60 saniyə (route `maxDuration: 30` qoyulub). Sistem paralel fetch edir, adətən 2-4 saniyəyə cavab verir.
-- Bəzi saytlar bot qorumasına görə açılmaya bilər — o zaman snippet istifadə olunur.
-- Rate limit Upstash olmadan per-instance-dir (Vercel serverless xüsusiyyəti) — dəqiq 30/dəq üçün Upstash əlavə et.
-- **Mahiyyət (privacy):** uzun Azərbaycan dili sorğuları (3+ söz) üçün EN tərcümə (anchor) almaq məqsədilə sorğu mətni **MyMemory**-ə (api.mymemory.translated.net) göndərilir — üçüncü tərəf xidmətidir, API key tələb etmir. Qısa sorğular üçün heç bir xarici tərcümə xidməti çağırılmır.
-- Hər web nəticə `untrusted: true` işarəsi daşır — məzmun istehsalçı səhifələrdən gəlir, LLM ona data kimi yanaşmalıdır (təlimat kimi yox).
 
-## Üçüncü tərəf data və lisenziyalar
+- Vercel funksiyası `maxDuration: 30`; sistem adətən 2–5 saniyəyə cavab verir.
+- Bəzi saytlar bot qoruması verir — o zaman snippet istifadə olunur.
+- Rate limit: IP başına 30/dəq (Upstash olmadan per-instance).
+- Uzun AZ sorğuları EN anchor üçün MyMemory-ə göndərilir (keyless üçüncü tərəf).
 
-- **AZ kök ayırıcı (stemmer) leksikonu** — `lib/data/azlex.js` faylı
-  [aznlp-disc/stemmer](https://github.com/aznlp-disc/stemmer) layihəsindən götürülüb
-  (MIT, Copyright (c) 2018 AzerbaijaniNLP Research Group): `words.txt` (75 670 söz)
-  və `suffix.txt` (101 şəkilçi). `tools/gen-azlex.mjs` ilə `normalizeAz` üzərindən
-  ASCII formaya salınır. Lisenziya mətni: `lib/data/AZ-STEM-LICENSE.md`.
-  İstifadə yeri: `lib/azstem.js` → `lib/rank.js` `tokenize()`.
+## Lisenziyalar
+
+AZ stemmer leksikonu — [aznlp-disc/stemmer](https://github.com/aznlp-disc/stemmer) (MIT), `lib/data/AZ-STEM-LICENSE.md`. İstifadə: `lib/azstem.js` → `lib/rank.js`.
