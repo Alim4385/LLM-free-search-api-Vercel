@@ -14,7 +14,7 @@ edilmədi (səbəbi ilə).
 | İddia | Hökm | Qeyd |
 |---|---|---|
 | `route.js ~1200`, `lib/search.js ~1233` sətir | 🟡 | real: **1261** və **1304**. Böyük fayl riski doğrudur. |
-| route.js-i `lib/pipeline/*`-a bölmək | ⏳ təxirə | Geniş refactor; testlər 509 olsa da, Next route davranışı yalnız canlı yoxlamayla görünür. İlk addım artıq atıldı: `lib/finalize.js` ayrıldı. |
+| route.js-i `lib/pipeline/*`-a bölmək | 🟡 başladı | Geniş refactor; testlər 509 olsa da, Next route davranışı yalnız canlı yoxlamayla görünür. İlk addım artıq atıldı: `lib/finalize.js` ayrıldı. |
 | Provayderləri `lib/providers/*`-a çıxarmaq | ⏳ təxirə | Mexaniki iş, riski aşağı, amma davranış dəyişmir — sürət/korrektlikdən sonra. |
 | GET `count` oxunmur | ✅ **doğru** | GET yalnız `max_results` oxuyurdu. İndi `max_results → count → limit` (həm GET, həm POST body). |
 | jsonl keşdə `confidence`/`fallback` itir | ✅ **doğru** | Keşlənmiş jsonl cavabı yalnız providers/took_ms verirdi; indi confidence + fallback də ötürülür. |
@@ -79,3 +79,13 @@ edilmədi (səbəbi ilə).
 3. Tərcümənin real işlədiyini canlı ölçmək (uzun AZ sual → EN açar sözlərlə axtarış).
 4. Upstash tələbini `DEPLOY.md`-də məcburi addım kimi yazmaq.
 5. Next.js yüksəltməsi ayrı budaqda: `build` + 15 suallıq canlı dəst keçməzsə geri qaytarmaq.
+
+
+---
+
+## v100 — pipeline bölgüsünün ilk addımı
+
+- `lib/pipeline/params.js` (giriş normallaşdırması) və `lib/pipeline/respond.js`
+  (cavab formatları + başlıqlar) ayrıldı; `route.js` onları import edir.
+- `route.js` 1261 → **1240 sətir**, 522 unit test, canlı formatlar yoxlanıldı (json/jsonl/simple/400).
+- Qalan mərhələlər: `docs/PIPELINE.md`.

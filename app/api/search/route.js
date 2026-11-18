@@ -19,6 +19,8 @@ import { leadAnswerSentence } from "../../../lib/rank.js";
 import { classifyType, officialBoost, wantsFresh, sameDayCue, newsTrustBoost, AZ_NEWS_TRUSTED, howtoTrustBoost, isHowtoQuery } from "../../../lib/router.js";
 import { scoreResult, diversifyByDomain, extractQuotedPhrases, containsPhrase, isSpamDomain, hostMatches, computeConfidence, isNewsQuery, looksLikeGibberish } from "../../../lib/score.js";
 import { applyFinalLimits, filterByFreshness } from "../../../lib/finalize.js";
+import { CORS_HEADERS, makeJsonResponse, makeJsonlResponse, makeSimpleResponse, rateLimitHeaders as makeRateLimitHeaders } from "../../../lib/pipeline/respond.js";
+import { parseMaxResults, parseMaxChars, parseFormat, parseFreshness, parseExcludeDomains, parseBool, parseTranslateResults, parseLang } from "../../../lib/pipeline/params.js";
 import { cleanContent, cutWord, dedupeSnippet, detectQueryLanguage, isBoilerplateOnly, stripBoilerplateHead } from "../../../lib/clean.js";
 import { expandQuery, isMetaQuery, stripMetaInstructions, rewriteSearchIntentAz } from "../../../lib/expand.js";
 import { translateResultsToQueryLang } from "../../../lib/translate.js";
@@ -28,7 +30,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 200; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 201; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -38,31 +40,17 @@ const FILTER_VERSION = 200; // v19: necə/neçə bug fix, valyuta hesabı, WMO h
 //   valyuta/hava tarixi sual tələləri (dollar nə vaxt yarandı) düzəldildi.
 export const dynamic = "force-dynamic";
 
-const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
-  "Access-Control-Expose-Headers": "X-RateLimit-Limit, X-RateLimit-Remaining, X-Request-Id"
-};
-
-function jsonResponse(obj, status = 200, extraHeaders = {}) {
-  return new Response(JSON.stringify(obj, null, 2), {
-    status,
-    headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", ...CORS_HEADERS, ...extraHeaders }
-  });
-}
+// v100: cavab qatı lib/pipeline/respond.js-ə köçdü (CORS_HEADERS, jsonResponse, jsonlResponse,
+// rateLimitHeaders artıq oradadır). Bu fayl yalnız axını idarə edir.
+const jsonResponse = makeJsonResponse;
+const rateLimitHeaders = (rl, requestId) => makeRateLimitHeaders(rl, requestId, RATE_LIMIT);
+const jsonlResponse = makeJsonlResponse;
 
 function logReq(rid, q, ms, extra) {
   try { console.log(JSON.stringify({ rid, q: String(q).slice(0, 40), ms, ...extra })); } catch {}
 }
 
-function rateLimitHeaders(rl, requestId) {
-  return {
-    "X-RateLimit-Limit": String(RATE_LIMIT),
-    "X-RateLimit-Remaining": String(rl.remaining ?? 0),
-    "X-Request-Id": requestId
-  };
-}
+
 
 function withTimeout(promise, ms, label) {
   let t;
@@ -82,30 +70,6 @@ function searchAllShared(q, n, opts) {
     searchInflight.set(key, p);
   }
   return p;
-}
-
-function jsonlResponse(results, meta, extraHeaders = {}) {
-  const lines = [];
-  lines.push(JSON.stringify({ type: "meta", ...meta }));
-  for (const r of results) lines.push(JSON.stringify({ type: "result", ...r }));
-  lines.push(JSON.stringify({ type: "done", count: results.length }));
-  const encoder = new TextEncoder();
-  const stream = new ReadableStream({
-    start(controller) {
-      let i = 0;
-      const next = () => {
-        if (i < lines.length) {
-          controller.enqueue(encoder.encode(lines[i++] + "\n"));
-          setTimeout(next, 0);
-        } else controller.close();
-      };
-      next();
-    }
-  });
-  return new Response(stream, {
-    status: 200,
-    headers: { "Content-Type": "application/x-ndjson; charset=utf-8", "Cache-Control": "no-store", ...CORS_HEADERS, ...extraHeaders }
-  });
 }
 
 async function handleSearch(body, req) {
@@ -132,19 +96,17 @@ async function handleSearch(body, req) {
   const query = sanitizeQuery(rawQuery);
   if (!query) return jsonResponse({ error: "missing_query", message: "query sahəsi tələb olunur" }, 400);
 
-  const maxResults = Math.min(Math.max(parseInt(body.max_results || body.maxResults || body.count || body.limit || "5", 10) || 5, 1), 8);
-  const NO_CACHE = /^(1|true|on)$/i.test(String(body.no_cache || body.noCache || ""));
-  const maxChars = Math.min(Math.max(parseInt(body.max_chars || body.maxChars || "4000", 10) || 4000, 500), 8000);
-  const fmt = (typeof body.format === "string" ? body.format : "json").toLowerCase();
-  const format = ["json", "jsonl", "simple"].includes(fmt) ? fmt : "json";
-  const fr = (typeof body.freshness === "string" ? body.freshness : "").toLowerCase();
+  // v100: parametr normallaşdırması lib/pipeline/params.js-də (unit testlə qorunur)
+  const maxResults = parseMaxResults(body);
+  const NO_CACHE = parseBool(body.no_cache ?? body.noCache);
+  const maxChars = parseMaxChars(body);
+  const format = parseFormat(body);
   // v41.4: "bu gün / live / son dəqiqə" → provayderə avtomatik günlük təzəlik filtri
-  const autoFresh = !["day","week","month","year"].includes(fr) && sameDayCue(query) ? "day" : null;
-  const freshness = ["day","week","month","year"].includes(fr) ? fr : autoFresh;
-  const excludeDomains = Array.isArray(body.exclude_domains) ? body.exclude_domains.filter(d => typeof d === "string").map(d => d.toLowerCase().replace(/^www\./, "")).slice(0, 20) : [];
+  const freshness = parseFreshness(body, query, sameDayCue);
+  const excludeDomains = parseExcludeDomains(body);
   const qLang = detectQueryLanguage(rewriteSearchIntentAz(query) || query);
-  const reqLang = typeof body.lang === "string" && ["az", "tr", "en", "ru"].includes(body.lang.toLowerCase()) ? body.lang.toLowerCase() : qLang;
-  const shouldTranslateResults = body.translate_results !== false && body.translate_results !== "0" && body.translate_results !== 0;
+  const reqLang = parseLang(body, qLang);
+  const shouldTranslateResults = parseTranslateResults(body.translate_results);
 
   const cKey = cacheKey("search", { q: query.toLowerCase(), n: maxResults, c: maxChars, l: reqLang, tr: shouldTranslateResults ? 1 : 0, v: FILTER_VERSION, f: freshness || "", x: excludeDomains.join(",") });
   const cached = NO_CACHE ? null : await cacheGet(cKey);
@@ -155,7 +117,7 @@ async function handleSearch(body, req) {
       return jsonlResponse(obj.results, { query: obj.query, intent: obj.intent, providers_used: obj.meta.providers_used, took_ms: obj.meta.took_ms, cached: true, confidence: obj.confidence, fallback: obj.fallback === true }, rateLimitHeaders(rl, requestId));
     }
     if (format === "simple") {
-      return jsonResponse({ query: obj.query, results: (obj.results || []).map(r => ({ title: r.title, url: r.url, snippet: (r.snippet || r.content || "").slice(0, 200) })) }, 200, rateLimitHeaders(rl, requestId));
+      return makeSimpleResponse(obj.query, obj.results, rateLimitHeaders(rl, requestId));
     }
     return jsonResponse(obj, 200, rateLimitHeaders(rl, requestId));
   }

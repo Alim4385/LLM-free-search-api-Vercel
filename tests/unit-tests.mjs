@@ -14,6 +14,8 @@ import { protectTokens, restoreTokens, protectWithTerms } from "../lib/translate
 import { detectConflicts, parseNum } from "../lib/conflict.js";
 import { isChallengePage } from "../lib/extract.js";
 import { applyFinalLimits, filterByFreshness } from "../lib/finalize.js";
+import { parseMaxResults, parseMaxChars, parseFormat, parseFreshness, parseExcludeDomains, parseLang } from "../lib/pipeline/params.js";
+import { makeJsonResponse, makeJsonlResponse, jsonlLines } from "../lib/pipeline/respond.js";
 import { scoreResult, isSpamDomain, hostMatches, diversifyByDomain, isJunkDomain, computeConfidence, looksLikeGibberish } from "../lib/score.js";
 import { cleanContent, pickAnswer, cutWord, dedupeSnippet, normalizeColloquialAz, detectQueryLanguage, acceptLanguageHeader, wikiExtractUrl, restoreAsciiAz } from "../lib/clean.js";
 import { matchAzertagItems, azertagLangFor } from "../lib/azertag.js";
@@ -1252,6 +1254,24 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v90: 'neçədir' say markeridir", hasCountMarker("Bu neçədir") === true);
     assert("v90: 'necədir' say deyil", hasCountMarker("Bakıda hava necədir") === false);
     assert("v90: 'neçə manatdır' rewrite olunmur", countSearchQuery("Bu neçə manatdır") === null);
+    // v100: pipeline qatı — params (giriş normallaşdırması)
+    assert("v100: max_results sərhədləri", parseMaxResults({ max_results: "99" }) === 8 && parseMaxResults({ max_results: "0" }) === 1 && parseMaxResults({}) === 5);
+    assert("v100: count/limit aliasları", parseMaxResults({ count: "2" }) === 2 && parseMaxResults({ limit: 4 }) === 4);
+    assert("v100: max_chars sərhədləri", parseMaxChars({ max_chars: "999999" }) === 8000 && parseMaxChars({ max_chars: "10" }) === 500);
+    assert("v100: format ağ siyahısı", parseFormat({ format: "JSONL" }) === "jsonl" && parseFormat({ format: "xml" }) === "json");
+    assert("v100: freshness + avtomatik gün", parseFreshness({ freshness: "week" }, "x", () => false) === "week" && parseFreshness({}, "bu gün nə var", () => true) === "day" && parseFreshness({}, "react nədir", () => false) === null);
+    assert("v100: exclude_domains təmizlənir", JSON.stringify(parseExcludeDomains({ exclude_domains: ["WWW.Foo.az", 5, "bar.com"] })) === JSON.stringify(["foo.az", "bar.com"]));
+    assert("v100: lang ağ siyahısı", parseLang({ lang: "EN" }, "az") === "en" && parseLang({ lang: "de" }, "az") === "az");
+    // v100: pipeline qatı — respond (cavab formatları)
+    assert("v100: json cavabı", (() => {
+      const res = makeJsonResponse({ a: 1 }, 201);
+      return res.status === 201 && res.headers.get("content-type").includes("application/json") && res.headers.get("access-control-allow-origin") === "*";
+    })());
+    assert("v100: jsonl sətirləri meta+nəticə+done", (() => {
+      const lines = jsonlLines([{ title: "a" }, { title: "b" }], { query: "q" });
+      const parsed = lines.map(l => JSON.parse(l));
+      return lines.length === 4 && parsed[0].type === "meta" && parsed[1].type === "result" && parsed[3].type === "done" && parsed[3].count === 2;
+    })());
     // v99: ingilis dilli mənbədən tarix cavabı + AZ söz sırası
     assert("v99: ingilis ay adı oxunur", (() => {
       const r = extractDateAnswer("GPT-5 is a multimodal model. It was released on August 7, 2025.", "GPT-5 nə vaxt çıxdı");
