@@ -1247,6 +1247,10 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v84: 'və'dən sonra təyinedici sayılmır", extractCount("Bakı metropoliteni 3 xəttdən, 27 işləyən və dörd tikilən stansiyadan ibarətdir.", "stansiya", { query: "Bakı metrosunda neçə stansiya var" }).value === 27);
     // v85: alt-qrup göstəricisi başlıqda saxlanılır
     assert("v85: 'kişi müəllim' göstəricisi qaytarılır", (() => { const g = extractCount("30615 nəfər kişi müəllim çalışır.", "müəllim", { query: "neçə müəllim" }); return g && Array.isArray(g.qualifier) && g.qualifier[0] === "kişi"; })());
+    // v90: "neçədir" say, "necədir" say deyil; valyuta sualı rewrite olunmur
+    assert("v90: 'neçədir' say markeridir", hasCountMarker("Bu neçədir") === true);
+    assert("v90: 'necədir' say deyil", hasCountMarker("Bakıda hava necədir") === false);
+    assert("v90: 'neçə manatdır' rewrite olunmur", countSearchQuery("Bu neçə manatdır") === null);
     // v75: hissə saylarının cəmi
     const bk = extractCount("Hazırda Azərbaycanda 2 dövlət bankı və 19 kommersiya bankı fəaliyyət göstərir.", "bank");
     assert("v75: '2 dövlət və 19 kommersiya bankı' → 21", bk && bk.value === 21 && bk.summed === true, JSON.stringify(bk));
