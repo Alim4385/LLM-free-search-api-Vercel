@@ -7,6 +7,7 @@ import { matchTime, fetchTime, timeToText } from "../../../lib/time.js";
 import { matchCurrency, fetchCBAR, currencyToText } from "../../../lib/currency.js";
 import { matchUnits, unitsToText } from "../../../lib/units.js";
 import { extractCountFromResults, countNounFromQuery } from "../../../lib/countextract.js";
+import { matchCrypto, fetchCryptoPrice, cryptoToText } from "../../../lib/crypto.js";
 import { matchFact, fetchFact, factToText } from "../../../lib/facts.js";
 import { matchMath, mathToText } from "../../../lib/math.js";
 import { matchSports, fetchLastMatch, lastMatchToText } from "../../../lib/sports.js";
@@ -23,7 +24,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 167; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 168; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -155,12 +156,12 @@ async function handleSearch(body, req) {
     return jsonResponse(obj, 200, rateLimitHeaders(rl, requestId));
   }
 
-  const intentMatches = { weather: matchWeather(query), time: matchTime(query), currency: matchCurrency(query), units: matchUnits(query), fact: matchFact(query), math: matchMath(query), sports: matchSports(query), nutrition: matchNutrition(query) };
+  const intentMatches = { weather: matchWeather(query), time: matchTime(query), currency: matchCurrency(query), crypto: matchCrypto(query), units: matchUnits(query), fact: matchFact(query), math: matchMath(query), sports: matchSports(query), nutrition: matchNutrition(query) };
   // v47.1: "90 dəqiqə neçə saat" time intentinə düşürdü ("saat" tokeni) → units əvvəl yoxlanılır
   // v51.5: units currenc-dən ƏVVƏL — "1 funt neçə kiloqram" valyuta (GBP) kimi
   // tutulurdu. "dollar/lirə/manat" kimi sözlər vahid cədvəlində yoxdur, ona görə
   // valyuta sualları təsirlənmir.
-  const INTENT_ORDER = ["weather", "units", "currency", "math", "sports", "nutrition", "fact", "time"];
+  const INTENT_ORDER = ["weather", "units", "currency", "crypto", "math", "sports", "nutrition", "fact", "time"];
   const intentName = INTENT_ORDER.find(k => intentMatches[k].hit) || null;
   const intentExact = intentName ? intentMatches[intentName].exact : false;
   let intent = intentName || "general";
@@ -168,6 +169,7 @@ async function handleSearch(body, req) {
   let weather = null, weatherText = "";
   let timeData = null, timeText = "";
   let currencyData = null, currencyText = "";
+  let cryptoData = null, cryptoText = "";
   let unitsData = null, unitsText = "";
   let factData = null, factText = "";
   let mathData = null, mathText = "";
@@ -184,6 +186,10 @@ async function handleSearch(body, req) {
     } catch {}
   } else if (intentName === "currency") {
     try { currencyData = await fetchCBAR(); currencyText = currencyToText(currencyData, query); } catch {}
+  } else if (intentName === "crypto") {
+    // v68: kripto qiyməti — CoinGecko (açarsız); alınmasa adi axtarışa düşür
+    try { cryptoData = await fetchCryptoPrice(intentMatches.crypto, 1600); cryptoText = cryptoToText(cryptoData); } catch { cryptoData = null; }
+    if (!cryptoData) intent = "general";
   } else if (intentName === "math") {
     // v48: riyazi hesablama — şəbəkəsiz, daxili (LLM kalkulyator kimi istifadə edir)
     try { mathData = intentMatches.math; mathText = mathToText(mathData); } catch { mathData = null; }
@@ -214,6 +220,7 @@ async function handleSearch(body, req) {
   const qType = classifyType(normQuery);
 
   const hasStructured = intentExact && (
+    (intentName === "crypto" && cryptoData) ||
     (intentName === "weather" && weather) ||
     (intentName === "time" && timeData) ||
     (intentName === "currency" && currencyData) ||
@@ -826,6 +833,7 @@ async function handleSearch(body, req) {
   if (weather && weatherText) structured.push({ title: `${weather.city} - hava məlumatı (Open-Meteo)`, url: "https://open-meteo.com", snippet: undefined, content: weatherText, sources: ["open-meteo"], source: "open-meteo", published_at: weather.fetched_at, updated_at: null, date_info: buildDateInfo(weather.fetched_at, null, reqLang), untrusted: false });
   if (timeData && timeText && intentExact) structured.push({ title: `${timeData.place || "Azərbaycan"} üçün hazırkı vaxt (${timeData.timezone})`, url: "https://time.is", snippet: undefined, content: timeText, sources: ["asia-baku-time"], source: "asia-baku-time", published_at: timeData.fetched_at, updated_at: null, date_info: buildDateInfo(timeData.fetched_at, null, reqLang), untrusted: false });
   if (nutriData && nutriText) structured.push({ title: `${nutriData.food} — qida tərkibi (USDA)`, url: "https://fdc.nal.usda.gov/", snippet: undefined, content: nutriText, sources: ["usda.gov"], source: "usda", published_at: nutriData.fetched_at, updated_at: null, date_info: buildDateInfo(nutriData.fetched_at, null, reqLang), untrusted: false });
+  if (cryptoData && cryptoText && intentExact) structured.push({ title: `${cryptoData.sym} hazırkı qiyməti (CoinGecko)`, url: "https://www.coingecko.com/", snippet: undefined, content: cryptoText, sources: ["coingecko.com"], source: "coingecko", published_at: cryptoData.fetched_at, updated_at: null, date_info: buildDateInfo(cryptoData.fetched_at, null, reqLang), untrusted: false });
   if (mathData && mathText) structured.push({ title: `Hesablama (daxili)`, url: "https://www.wolframalpha.com/", snippet: undefined, content: mathText, sources: ["daxili-hesablama"], source: "hesablama", published_at: null, updated_at: null, date_info: buildDateInfo(null, null, reqLang), untrusted: false });
   if (sportsData && sportsText) structured.push({ title: `${sportsData.team} — son oyun (TheSportsDB)`, url: "https://www.thesportsdb.com/", snippet: undefined, content: sportsText, sources: ["thesportsdb.com"], source: "thesportsdb", published_at: sportsData.fetched_at, updated_at: null, date_info: buildDateInfo(sportsData.fetched_at, null, reqLang), untrusted: false });
   if (factData && factText) structured.push({ title: factData.kind === "works" ? `${factData.entity} — əsərləri (Wikidata)` : factData.kind === "capital" ? `${factData.entity} — paytaxtı (Wikidata)` : factData.kind === "country" ? `${factData.entity} — hansı ölkədə (Wikidata)` : factData.kind === "currency_of" ? `${factData.entity} — valyutası (Wikidata)` : factData.kind === "area" ? `${factData.entity} — sahəsi (Wikidata)` : `${factData.entity} — əhalisi (Wikidata)`, url: `https://www.wikidata.org/wiki/${factData.qid}`, snippet: undefined, content: factText, sources: ["wikidata.org"], source: "wikidata", published_at: factData.fetched_at, updated_at: null, date_info: buildDateInfo(factData.fetched_at, null, reqLang), untrusted: false });

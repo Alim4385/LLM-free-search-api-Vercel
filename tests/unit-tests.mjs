@@ -19,6 +19,7 @@ import { matchAzertagItems, azertagLangFor } from "../lib/azertag.js";
 import { newsTrustBoost, AZ_NEWS_TRUSTED, howtoTrustBoost, isHowtoQuery, HOWTO_TRUSTED } from "../lib/router.js";
 import { matchFact } from "../lib/facts.js";
 import { matchNutrition } from "../lib/nutrition.js";
+import { matchCrypto, cryptoToText } from "../lib/crypto.js";
 import { extractCount, extractCountFromResults, countNounFromQuery } from "../lib/countextract.js";
 import { parseSitemap, parseArticleHtml, matchSitemapItems } from "../lib/sitemapnews.js";
 import { normalizeUrl, decodeEntities, stripQuestionWords, parseDDGLite, normalizeMwmbl, parseYahooJP, parseMilliArxiv, isArchiveTopic, providerTermGate } from "../lib/search.js";
@@ -1149,6 +1150,12 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v67: tarixi kontekst cari saydan geri qalır (15)", qr && qr.value === 15, JSON.stringify(qr));
     assert("v67: sahə rule işləyir", matchFact("Azərbaycanın sahəsi nə qədərdir").kind === "area");
     assert("v67: valyuta rule işləyir", matchFact("Rusiyanın valyutası nədir").kind === "currency_of");
+    // v68: kripto qiyməti
+    assert("v68: 'Bitcoin-in qiyməti' → bitcoin", matchCrypto("Bitcoin-in qiyməti nə qədərdir").id === "bitcoin", JSON.stringify(matchCrypto("Bitcoin-in qiyməti nə qədərdir")));
+    assert("v68: 'ethereum qiymeti' → ethereum", matchCrypto("ethereum qiymeti").id === "ethereum");
+    assert("v68: 'bitcoin nədir' qiymət deyil", matchCrypto("bitcoin nədir").hit === false);
+    assert("v68: 'manat neçə dollar' kripto deyil", matchCrypto("Azərbaycan manatı neçə dollardır").hit === false);
+    assert("v68: kripto mətni qiymət saxlayır", /64 571 USD/.test(cryptoToText({ sym: "BTC", usd: 64571, azn: 109770, fetched_at: "2026-11-18T01:13:00Z" })));
     assert("v62: tək sözlü sorğuda gate işləmir", providerTermGate([{ title: "MANY definition", url: "u", snippet: "x" }], "many").length === 1);
   }
 
