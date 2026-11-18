@@ -1193,6 +1193,10 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v74: 'iki körpü var' sayılır", (extractCount("Rayonda iki körpü var.", "körpü") || {}).value === 2);
     assert("v74: say sorğusu '<X> sayı' formasına çevrilir", countSearchQuery("Azərbaycanda neçə xəstəxana var") === "Azərbaycanda xəstəxana sayı", String(countSearchQuery("Azərbaycanda neçə xəstəxana var")));
     assert("v74: artıq 'sayı' varsa toxunulmur", countSearchQuery("Azərbaycanda rayon sayı") === null);
+    // v75: hissə saylarının cəmi
+    const bk = extractCount("Hazırda Azərbaycanda 2 dövlət bankı və 19 kommersiya bankı fəaliyyət göstərir.", "bank");
+    assert("v75: '2 dövlət və 19 kommersiya bankı' → 21", bk && bk.value === 21 && bk.summed === true, JSON.stringify(bk));
+    assert("v75: fərqli isimlər cəmlənmir", extractCount("Ölkədə 24 teatr və 3 muzey fəaliyyət göstərir.", "teatr").value === 24);
     assert("v62: tək sözlü sorğuda gate işləmir", providerTermGate([{ title: "MANY definition", url: "u", snippet: "x" }], "many").length === 1);
   }
 
