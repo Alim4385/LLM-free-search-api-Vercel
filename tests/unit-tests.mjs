@@ -20,7 +20,7 @@ import { newsTrustBoost, AZ_NEWS_TRUSTED, howtoTrustBoost, isHowtoQuery, HOWTO_T
 import { matchFact } from "../lib/facts.js";
 import { extractCount, extractCountFromResults, countNounFromQuery } from "../lib/countextract.js";
 import { parseSitemap, parseArticleHtml, matchSitemapItems } from "../lib/sitemapnews.js";
-import { normalizeUrl, decodeEntities, stripQuestionWords, parseDDGLite, normalizeMwmbl, parseYahooJP, parseMilliArxiv, isArchiveTopic } from "../lib/search.js";
+import { normalizeUrl, decodeEntities, stripQuestionWords, parseDDGLite, normalizeMwmbl, parseYahooJP, parseMilliArxiv, isArchiveTopic, providerTermGate } from "../lib/search.js";
 import { parseJinaMarkdown } from "../lib/extract.js";
 import { expandQuery, expandQueryAsync, rewriteSearchIntentAz, stripMetaInstructions, isMetaQuery } from "../lib/expand.js";
 import { isLongAzQuery, detectContentLanguage } from "../lib/translate.js";
@@ -1087,6 +1087,30 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
       { url: "https://c.az/3", title: "C", content: "Bakıda 12 rayon var." }
     ], "rayon");
     assert("v61: səsvermə 66-nı seçir", multi && multi.value === 66 && multi.sources.length === 2, JSON.stringify(multi && { v: multi.value, n: multi.sources.length }));
+  }
+
+  // === v62: mürəkkəb isim, sifət, Bing tək-söz gate ===
+  {
+    // "neçə elmi institut var" → sayılan isim "institut", sifət "elmi" deyil
+    assert("v62: sifət isim sayılmır (elmi institut)", countNounFromQuery("AMEA-da neçə elmi institut var") === "institut", String(countNounFromQuery("AMEA-da neçə elmi institut var")));
+    // mürəkkəb isim orijinal yazılışda qayıdır
+    assert("v62: mürəkkəb isim orijinal formada", countNounFromQuery("Bakıda neçə metrostansiyası var") === "metrostansiyası", String(countNounFromQuery("Bakıda neçə metrostansiyası var")));
+    // "rayon tabeli şəhər" → 6 rayonun sayı deyil
+    const c = extractCount("Azərbaycanda 64 rayon, 11 respublika tabeli şəhər, 6 rayon tabeli şəhər var.", "rayon");
+    assert("v62: 'tabeli' bağlayıcısı 6-nı rədd edir, 64 qalır", c && c.value === 64, JSON.stringify(c));
+    const d = extractCount("AMEA-da 30 institut daxil olmaqla 100 elmi tədqiqat müəssisəsi var.", "institut");
+    assert("v62: 'daxil olmaqla' rədd ETMİR (30)", d && d.value === 30, JSON.stringify(d));
+    const e = extractCount("Bakı metrosunda 27 işləyən stansiya, dörd tikilən stansiya var.", "metrostansiyası");
+    assert("v62: mürəkkəb isim mətndə tapılır (27)", e && e.value === 27, JSON.stringify(e));
+    assert("v62: 'nə qədər peyk var' → 'peyk'", countNounFromQuery("Mars planetində nə qədər peyk var") === "peyk", String(countNounFromQuery("Mars planetində nə qədər peyk var")));
+    assert("v62: 'nə qədərdir' say sualı sayılmır", countNounFromQuery("Qaraçayın uzunluğu nə qədərdir") === null, String(countNounFromQuery("Qaraçayın uzunluğu nə qədərdir")));
+    // Bing tək-söz zibili kəsilir, 2+ sözə uyğun nəticə qalır
+    const g1 = providerTermGate([
+      { title: "MANY Definition & Meaning - Merriam-Webster", url: "https://m-w.com", snippet: "many meaning" },
+      { title: "List of Baku Metro stations - Wikipedia", url: "https://en.wikipedia.org/x", snippet: "Baku metro station list" }
+    ], "how many metro stations baku");
+    assert("v62: Bing tək-söz nəticəsi kəsilir", g1.length === 1 && /Baku/.test(g1[0].title), JSON.stringify(g1.map(x => x.title)));
+    assert("v62: tək sözlü sorğuda gate işləmir", providerTermGate([{ title: "MANY definition", url: "u", snippet: "x" }], "many").length === 1);
   }
 
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);
