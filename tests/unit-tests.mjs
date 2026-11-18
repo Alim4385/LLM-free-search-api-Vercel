@@ -19,6 +19,8 @@ import { matchAzertagItems, azertagLangFor } from "../lib/azertag.js";
 import { newsTrustBoost, AZ_NEWS_TRUSTED, howtoTrustBoost, isHowtoQuery, HOWTO_TRUSTED } from "../lib/router.js";
 import { matchFact } from "../lib/facts.js";
 import { matchNutrition } from "../lib/nutrition.js";
+import { matchMath } from "../lib/math.js";
+import { matchHoliday } from "../lib/holidays.js";
 import { matchCrypto, cryptoToText } from "../lib/crypto.js";
 import { extractCount, extractCountFromResults, countNounFromQuery } from "../lib/countextract.js";
 import { parseSitemap, parseArticleHtml, matchSitemapItems } from "../lib/sitemapnews.js";
@@ -1156,6 +1158,16 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v68: 'bitcoin nədir' qiymət deyil", matchCrypto("bitcoin nədir").hit === false);
     assert("v68: 'manat neçə dollar' kripto deyil", matchCrypto("Azərbaycan manatı neçə dollardır").hit === false);
     assert("v68: kripto mətni qiymət saxlayır", /64 571 USD/.test(cryptoToText({ sym: "BTC", usd: 64571, azn: 109770, fetched_at: "2026-11-18T01:13:00Z" })));
+    // v69: tarix formatı və pi sabiti
+    assert("v69: '2025/7/29 - ... 29 qonşusu' say deyil", extractCount("2025/7/29 - Hazırda Azərbaycanın şimal qonşusu Rusiya ilə münasibətlər gərgindir.", "qonşu") === null, JSON.stringify(extractCount("2025/7/29 - Hazırda Azərbaycanın şimal qonşusu Rusiya ilə münasibətlər gərgindir.", "qonşu")));
+    assert("v69: 'Pi neçəyə bərabərdir' → sabit", matchMath("Pi neçəyə bərabərdir").kind === "constant", JSON.stringify(matchMath("Pi neçəyə bərabərdir")));
+    assert("v69: 'piti necə bişirilir' sabit deyil", matchMath("piti necə bişirilir").hit === false);
+    // v70: sabit tarixli bayramlar
+    assert("v70: Zəfər Günü → 8 noyabr", matchHoliday("Zəfər Günü nə vaxtdır").date === "8 noyabr", JSON.stringify(matchHoliday("Zəfər Günü nə vaxtdır")));
+    assert("v70: Neftçilər günü → 20 sentyabr", matchHoliday("Neftçilər günü nə vaxtdır").date === "20 sentyabr");
+    assert("v70: '8 noyabr nə gündür' → Zəfər Günü", /Zəfər/.test(matchHoliday("8 noyabr nə gündür").note || ""));
+    assert("v70: adi sual bayram sayılmır", matchHoliday("Azərbaycan Prezidenti kimdir").hit === false);
+    assert("v70: hava sualı bayram deyil", matchHoliday("Bakıda hava necədir").hit === false);
     assert("v62: tək sözlü sorğuda gate işləmir", providerTermGate([{ title: "MANY definition", url: "u", snippet: "x" }], "many").length === 1);
   }
 

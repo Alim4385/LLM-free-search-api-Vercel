@@ -8,6 +8,7 @@ import { matchCurrency, fetchCBAR, currencyToText } from "../../../lib/currency.
 import { matchUnits, unitsToText } from "../../../lib/units.js";
 import { extractCountFromResults, countNounFromQuery } from "../../../lib/countextract.js";
 import { matchCrypto, fetchCryptoPrice, cryptoToText } from "../../../lib/crypto.js";
+import { matchHoliday, holidayToText } from "../../../lib/holidays.js";
 import { matchFact, fetchFact, factToText } from "../../../lib/facts.js";
 import { matchMath, mathToText } from "../../../lib/math.js";
 import { matchSports, fetchLastMatch, lastMatchToText } from "../../../lib/sports.js";
@@ -24,7 +25,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 168; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 169; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -170,6 +171,9 @@ async function handleSearch(body, req) {
   let timeData = null, timeText = "";
   let currencyData = null, currencyText = "";
   let cryptoData = null, cryptoText = "";
+  // v70: sabit tarixli bayramlar (Zəfər Günü, Neftçilər Günü) — xəbər saytları yerinə dəqiq tarix
+  const holidayHit = matchHoliday(query);
+  const holidayText = holidayHit.hit ? holidayToText(holidayHit) : "";
   let unitsData = null, unitsText = "";
   let factData = null, factText = "";
   let mathData = null, mathText = "";
@@ -219,7 +223,7 @@ async function handleSearch(body, req) {
   // v39: tip-üzrə router (count / date / list / howto / az-context)
   const qType = classifyType(normQuery);
 
-  const hasStructured = intentExact && (
+  const hasStructured = (holidayHit.hit && holidayText) || (intentExact && (
     (intentName === "crypto" && cryptoData) ||
     (intentName === "weather" && weather) ||
     (intentName === "time" && timeData) ||
@@ -229,7 +233,7 @@ async function handleSearch(body, req) {
     (intentName === "math" && mathData) ||
     (intentName === "sports" && sportsData) ||
     (intentName === "nutrition" && nutriData)
-  );
+  ));
   // v51.4: sorğunun mənalı sözlərinin çoxu klaviatura zibili olsa ("asdfqwer zxcvbnm
   // nonsense", "asdkjqwe zzzz") provayderlər hər şeyi qaytarır və filtrlər zibil
   // keçirir. Belə sorğuda axtarışa HEÇ getmirik: boş cavab + fallback:true.
@@ -833,6 +837,7 @@ async function handleSearch(body, req) {
   if (weather && weatherText) structured.push({ title: `${weather.city} - hava məlumatı (Open-Meteo)`, url: "https://open-meteo.com", snippet: undefined, content: weatherText, sources: ["open-meteo"], source: "open-meteo", published_at: weather.fetched_at, updated_at: null, date_info: buildDateInfo(weather.fetched_at, null, reqLang), untrusted: false });
   if (timeData && timeText && intentExact) structured.push({ title: `${timeData.place || "Azərbaycan"} üçün hazırkı vaxt (${timeData.timezone})`, url: "https://time.is", snippet: undefined, content: timeText, sources: ["asia-baku-time"], source: "asia-baku-time", published_at: timeData.fetched_at, updated_at: null, date_info: buildDateInfo(timeData.fetched_at, null, reqLang), untrusted: false });
   if (nutriData && nutriText) structured.push({ title: `${nutriData.food} — qida tərkibi (USDA)`, url: "https://fdc.nal.usda.gov/", snippet: undefined, content: nutriText, sources: ["usda.gov"], source: "usda", published_at: nutriData.fetched_at, updated_at: null, date_info: buildDateInfo(nutriData.fetched_at, null, reqLang), untrusted: false });
+  if (holidayHit.hit && holidayText) structured.push({ title: `${holidayHit.note} — tarix`, url: "https://president.az/az/pages/view/azerbaijan/holidays", snippet: undefined, content: holidayText, sources: ["president.az"], source: "holiday-table", published_at: null, updated_at: null, date_info: buildDateInfo(null, null, reqLang), untrusted: false });
   if (cryptoData && cryptoText && intentExact) structured.push({ title: `${cryptoData.sym} hazırkı qiyməti (CoinGecko)`, url: "https://www.coingecko.com/", snippet: undefined, content: cryptoText, sources: ["coingecko.com"], source: "coingecko", published_at: cryptoData.fetched_at, updated_at: null, date_info: buildDateInfo(cryptoData.fetched_at, null, reqLang), untrusted: false });
   if (mathData && mathText) structured.push({ title: `Hesablama (daxili)`, url: "https://www.wolframalpha.com/", snippet: undefined, content: mathText, sources: ["daxili-hesablama"], source: "hesablama", published_at: null, updated_at: null, date_info: buildDateInfo(null, null, reqLang), untrusted: false });
   if (sportsData && sportsText) structured.push({ title: `${sportsData.team} — son oyun (TheSportsDB)`, url: "https://www.thesportsdb.com/", snippet: undefined, content: sportsText, sources: ["thesportsdb.com"], source: "thesportsdb", published_at: sportsData.fetched_at, updated_at: null, date_info: buildDateInfo(sportsData.fetched_at, null, reqLang), untrusted: false });
