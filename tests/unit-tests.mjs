@@ -18,6 +18,7 @@ import { cleanContent, pickAnswer, cutWord, dedupeSnippet, normalizeColloquialAz
 import { matchAzertagItems, azertagLangFor } from "../lib/azertag.js";
 import { newsTrustBoost, AZ_NEWS_TRUSTED, howtoTrustBoost, isHowtoQuery, HOWTO_TRUSTED } from "../lib/router.js";
 import { matchFact } from "../lib/facts.js";
+import { extractCount, extractCountFromResults, countNounFromQuery } from "../lib/countextract.js";
 import { parseSitemap, parseArticleHtml, matchSitemapItems } from "../lib/sitemapnews.js";
 import { normalizeUrl, decodeEntities, stripQuestionWords, parseDDGLite, normalizeMwmbl, parseYahooJP, parseMilliArxiv, isArchiveTopic } from "../lib/search.js";
 import { parseJinaMarkdown } from "../lib/extract.js";
@@ -1066,6 +1067,26 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v60: rei.com boost alır", howtoTrustBoost("https://www.rei.com/learn/expert-advice/bike-chain.html") > 0);
     assert("v60: xəbər saytı how-to boost almır", howtoTrustBoost("https://report.az/idman-xeberleri") === 0);
     assert("v60: HOWTO_TRUSTED siyahısı 20+", HOWTO_TRUSTED.length >= 20, String(HOWTO_TRUSTED.length));
+  }
+
+
+  // === v61: say cavabının mətndən çıxarılması ===
+  {
+    assert("v61: 'neçə rayon var' → isim 'rayon'", countNounFromQuery("Azərbaycanda neçə rayon var") === "rayon", String(countNounFromQuery("Azərbaycanda neçə rayon var")));
+    assert("v61: 'neçə stansiya var' → 'stansiya'", countNounFromQuery("Bakı metrosunda neçə stansiya var") === "stansiya");
+    const a = extractCount("Azərbaycanda 66 rayon, 11 şəhər və 1 muxtar respublika var.", "rayon");
+    assert("v61: 66 rayon çıxarılır", a && a.value === 66, JSON.stringify(a));
+    const b = extractCount("Bakı metropoliteni 3 xəttdən, 27 işləyən və dörd tikilən stansiyadan ibarətdir.", "stansiya");
+    assert("v61: 27 stansiya (söz rəqəmi deyil)", b && b.value === 27, JSON.stringify(b));
+    const y = extractCount("2019-cu ildə 15 stansiya açıldı.", "stansiya");
+    assert("v61: il rəqəm kimi sayılmır (2019 deyil, 15)", y && y.value === 15, JSON.stringify(y));
+    assert("v61: faiz sayılmır", extractCount("Rayonların 65%-i dağlıqdır.", "rayon") === null);
+    const multi = extractCountFromResults([
+      { url: "https://a.az/1", title: "A", content: "Azərbaycanda 66 rayon var." },
+      { url: "https://b.az/2", title: "B", content: "Ölkədə 66 rayon fəaliyyət göstərir." },
+      { url: "https://c.az/3", title: "C", content: "Bakıda 12 rayon var." }
+    ], "rayon");
+    assert("v61: səsvermə 66-nı seçir", multi && multi.value === 66 && multi.sources.length === 2, JSON.stringify(multi && { v: multi.value, n: multi.sources.length }));
   }
 
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);

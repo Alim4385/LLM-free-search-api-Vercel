@@ -6,6 +6,7 @@ import { matchWeather, fetchWeather, weatherToText } from "../../../lib/weather.
 import { matchTime, fetchTime, timeToText } from "../../../lib/time.js";
 import { matchCurrency, fetchCBAR, currencyToText } from "../../../lib/currency.js";
 import { matchUnits, unitsToText } from "../../../lib/units.js";
+import { extractCountFromResults, countNounFromQuery } from "../../../lib/countextract.js";
 import { matchFact, fetchFact, factToText } from "../../../lib/facts.js";
 import { matchMath, mathToText } from "../../../lib/math.js";
 import { matchSports, fetchLastMatch, lastMatchToText } from "../../../lib/sports.js";
@@ -22,7 +23,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 154; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 155; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -812,6 +813,30 @@ async function handleSearch(body, req) {
   if (factData && factText) structured.push({ title: factData.kind === "works" ? `${factData.entity} — əsərləri (Wikidata)` : factData.kind === "capital" ? `${factData.entity} — paytaxtı (Wikidata)` : factData.kind === "country" ? `${factData.entity} — hansı ölkədə (Wikidata)` : `${factData.entity} — əhalisi (Wikidata)`, url: `https://www.wikidata.org/wiki/${factData.qid}`, snippet: undefined, content: factText, sources: ["wikidata.org"], source: "wikidata", published_at: factData.fetched_at, updated_at: null, date_info: buildDateInfo(factData.fetched_at, null, reqLang), untrusted: false });
   if (unitsData && unitsText && intentExact) structured.push({ title: `Vahid çevirməsi (daxili hesablama)`, url: "https://www.unitconverters.net/", snippet: undefined, content: unitsText, sources: ["daxili-hesablama"], source: "hesablama", published_at: null, updated_at: null, date_info: buildDateInfo(null, null, reqLang), untrusted: false });
   if (currencyData && currencyText && intentExact) structured.push({ title: `Rəsmi valyuta məzənnəsi (CBAR)`, url: "https://www.cbar.az", snippet: undefined, content: currencyText, sources: ["cbar.az"], source: "cbar.az", published_at: currencyData.fetched_at, updated_at: null, date_info: buildDateInfo(currencyData.fetched_at, null, reqLang), untrusted: false });
+  // v61: SAY sualı — "neçə X var" cavabı mətndən çıxarılır və AYRICA strukturlu nəticə
+  // kimi verilir (rəqəm + tapıldığı cümlə → yoxlanıla bilər, uydurma deyil).
+  if (!hasStructured && /(?<![\p{L}])(ne[çc][əe]|say[ıi]|how\s+many)(?![\p{L}])/iu.test(normQuery) && finalResults.length) {
+    const noun = countNounFromQuery(normQuery);
+    if (noun) {
+      const got = extractCountFromResults(finalResults.slice(0, 5), noun);
+      if (got && got.score >= 1.5) {
+        degradedStages.push("count_extracted");
+        structured.unshift({
+          title: `${got.value} ${noun} (mətndən çıxarıldı)`,
+          url: got.url,
+          snippet: undefined,
+          content: `${got.value} ${noun}. Mənbə cümlə: "${got.sentence}"${got.sources.length > 1 ? ` (${got.sources.length} mənbədə eyni rəqəm)` : ""}`,
+          sources: [new URL(got.url).hostname.replace(/^www\./, "")],
+          source: "count-extract",
+          published_at: null,
+          updated_at: null,
+          date_info: buildDateInfo(null, null, reqLang),
+          untrusted: false,
+          extracted: true
+        });
+      }
+    }
+  }
   if (structured.length) {
     finalResults.unshift(...structured);
     finalResults.forEach((r, idx) => { r.id = idx + 1; });
