@@ -7,7 +7,7 @@ import { matchTime, fetchTime, timeToText } from "../../../lib/time.js";
 import { matchCurrency, fetchCBAR, currencyToText } from "../../../lib/currency.js";
 import { matchUnits, unitsToText } from "../../../lib/units.js";
 import { extractCountFromResults, countNounFromQuery, countSearchQuery, hasCountMarker } from "../../../lib/countextract.js";
-import { extractMeasureFromResults, matchMeasureQuery } from "../../../lib/measure.js";
+import { extractMeasureFromResults, matchMeasureQuery, extractDateFromResults, matchDateQuery } from "../../../lib/measure.js";
 import { matchCrypto, fetchCryptoPrice, cryptoToText } from "../../../lib/crypto.js";
 import { matchHoliday, holidayToText } from "../../../lib/holidays.js";
 import { matchLiveStat, extractLiveStatFromResults, liveStatToText } from "../../../lib/livestat.js";
@@ -27,7 +27,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 178; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 179; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -887,10 +887,10 @@ async function handleSearch(body, req) {
         countHitDone = true;
         degradedStages.push("count_extracted");
         structured.unshift({
-          title: `${got.value} ${noun}${got.summed ? " (cəmi)" : ""} (mətndən çıxarıldı)`,
+          title: `${fmtNum(got.value)} ${noun}${got.summed ? " (cəmi)" : ""} (mətndən çıxarıldı)`,
           url: got.url,
           snippet: undefined,
-          content: `${got.value} ${noun}${got.year && got.year < new Date().getFullYear() ? ` (${got.year} ili məlumatı)` : ""}. Mənbə cümlə: "${got.sentence}"${got.sources.length > 1 ? ` (${got.sources.length} mənbədə eyni rəqəm)` : ""}`,
+          content: `${fmtNum(got.value)} ${noun}${got.year && got.year < new Date().getFullYear() ? ` (${got.year} ili məlumatı)` : ""}. Mənbə cümlə: "${got.sentence}"${got.sources.length > 1 ? ` (${got.sources.length} mənbədə eyni rəqəm)` : ""}`,
           sources: [new URL(got.url).hostname.replace(/^www\./, "")],
           source: "count-extract",
           published_at: null,
@@ -928,6 +928,28 @@ async function handleSearch(body, req) {
       });
     }
   }
+  // v80: TARİX cavabı — "Konstitusiya nə vaxt qəbul olunub", "BMT-yə nə vaxt üzv olub"
+  if (!hasStructured && !countHitDone && finalResults.length && matchDateQuery(normQueryForIntent)) {
+    const dhit = extractDateFromResults(finalResults.slice(0, 5), normQueryForIntent);
+    if (dhit && dhit.score >= 2) {
+      degradedStages.push("date_extracted");
+      structured.unshift({
+        title: `${dhit.dateText} (mətndən çıxarıldı)`,
+        url: dhit.url,
+        snippet: undefined,
+        content: `${dhit.dateText}. Mənbə cümlə: "${dhit.sentence}"${dhit.sources.length > 1 ? ` (${dhit.sources.length} mənbədə eyni tarix)` : ""}`,
+        sources: [(() => { try { return new URL(dhit.url).hostname.replace(/^www\./, ""); } catch { return "mənbə"; } })()],
+        source: "date-extract",
+        published_at: null,
+        updated_at: null,
+        date_info: buildDateInfo(null, null, reqLang),
+        untrusted: false,
+        extracted: true,
+        score: 99,
+        voteCount: 99
+      });
+    }
+  }
   if (structured.length) {
     finalResults.unshift(...structured);
     finalResults.forEach((r, idx) => { r.id = idx + 1; });
@@ -955,7 +977,7 @@ async function handleSearch(body, req) {
       const protTerms = [...new Set((String(query).match(/[A-Za-z][A-Za-z0-9_.:-]{2,}/g) || []))].slice(0, 8);
       // v75: daxili çıxarılmış cavablar (say/fakt/cədvəl) TƏRCÜMƏ OLUNMUR — əvvəl
       // "mətndən çıxarıldı" → "mətndən silindi" kimi təhrif olunurdu.
-      const OWN_SOURCES = new Set(["count-extract", "livestat-extract", "measure-extract", "holiday-table", "coingecko", "wikidata", "usda", "open-meteo", "daxili-hesablama", "cbar.az"]);
+      const OWN_SOURCES = new Set(["count-extract", "livestat-extract", "measure-extract", "date-extract", "holiday-table", "coingecko", "wikidata", "usda", "open-meteo", "daxili-hesablama", "cbar.az"]);
       const toTranslate = finalResults.filter(r => !OWN_SOURCES.has(r.source) && !r.extracted);
       resultsTranslated = await translateResultsToQueryLang(toTranslate, reqLang, trBudget, 1600, protTerms);
     }

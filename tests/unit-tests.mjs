@@ -23,7 +23,7 @@ import { matchMath } from "../lib/math.js";
 import { matchHoliday } from "../lib/holidays.js";
 import { matchLiveStat, extractMoneySentence } from "../lib/livestat.js";
 import { matchCrypto, cryptoToText } from "../lib/crypto.js";
-import { extractMeasure, matchMeasureQuery } from "../lib/measure.js";
+import { extractMeasure, matchMeasureQuery, extractDateAnswer, matchDateQuery } from "../lib/measure.js";
 import { extractCount, extractCountFromResults, countNounFromQuery, countSearchQuery, hasCountMarker } from "../lib/countextract.js";
 import { parseSitemap, parseArticleHtml, matchSitemapItems } from "../lib/sitemapnews.js";
 import { normalizeUrl, decodeEntities, stripQuestionWords, parseDDGLite, normalizeMwmbl, parseYahooJP, parseMilliArxiv, isArchiveTopic, providerTermGate } from "../lib/search.js";
@@ -1221,6 +1221,14 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v79: 'neçə dövlət qoruğu' → qoruq", countNounFromQuery("Azərbaycanda neçə dövlət qoruğu var") === "qoruq");
     assert("v79: şəhər sualında 'bu rayon' cümləsi uduzur", extractCount("Bu rayonun ərazisində 36 park fəaliyyət göstərir. Bakıda 140 park var.", "park", { query: "Bakıda neçə park var" }).value === 140);
     assert("v79: 'ali təhsil müəssisələrinin sayı' universitet sayılır", extractCount("Ölkədə ali təhsil müəssisələrinin sayı 51 olub.", "universitet").value === 51);
+    // v80: tarix cavabı, miqyas, onluq vergül, sıxlıq filtri
+    assert("v80: 'ən böyük 10 rayon' say deyil", extractCount("Azərbaycan ən böyük 10 rayonu. Azərbaycan 64 rayona bölünür.", "rayon", { query: "Azərbaycan neçə rayona bölünür" }).value === 64);
+    assert("v80: '1-nə' tarix günü say deyil", extractCount("2025-ci il sentyabr ayının 1-nə işsizlərin sayı 251 min nəfər olub.", "işsiz").value === 251);
+    assert("v80: 'nəfər/km²' sıxlıq say deyil", extractCount("Sıxlıq ən azı 1500 nəfər/km2. Bakıda 2,3 milyon nəfər var.", "nəfər").value === 2300000);
+    assert("v80: miqyas vurulur", extractCount("Bakıda 2,3 milyon nəfər yaşayır.", "nəfər").value === 2300000);
+    assert("v80: 'X faizdən Y faizə' → Y", extractMeasure("Yoxsulluq 49 faizdən 5 faizə endi.", "yoxsulluq səviyyəsi nə qədərdir").value === 5);
+    assert("v80: tarix sualı tanınır", matchDateQuery("Azərbaycan Konstitusiyası nə vaxt qəbul olunub") === true);
+    assert("v80: tarix çıxarılır", extractDateAnswer("Azərbaycan Konstitusiyası 12 noyabr 1995-ci il tarixində referendumla qəbul edilmişdir.", "Azərbaycan Konstitusiyası nə vaxt qəbul olunub").dateText === "12 noyabr 1995");
     // v75: hissə saylarının cəmi
     const bk = extractCount("Hazırda Azərbaycanda 2 dövlət bankı və 19 kommersiya bankı fəaliyyət göstərir.", "bank");
     assert("v75: '2 dövlət və 19 kommersiya bankı' → 21", bk && bk.value === 21 && bk.summed === true, JSON.stringify(bk));
