@@ -6,7 +6,8 @@ import { matchWeather, fetchWeather, weatherToText } from "../../../lib/weather.
 import { matchTime, fetchTime, timeToText } from "../../../lib/time.js";
 import { matchCurrency, fetchCBAR, currencyToText } from "../../../lib/currency.js";
 import { matchUnits, unitsToText } from "../../../lib/units.js";
-import { extractCountFromResults, countNounFromQuery, countSearchQuery } from "../../../lib/countextract.js";
+import { extractCountFromResults, countNounFromQuery, countSearchQuery, hasCountMarker } from "../../../lib/countextract.js";
+import { extractMeasureFromResults, matchMeasureQuery } from "../../../lib/measure.js";
 import { matchCrypto, fetchCryptoPrice, cryptoToText } from "../../../lib/crypto.js";
 import { matchHoliday, holidayToText } from "../../../lib/holidays.js";
 import { matchLiveStat, extractLiveStatFromResults, liveStatToText } from "../../../lib/livestat.js";
@@ -26,7 +27,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 175; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 176; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -876,12 +877,14 @@ async function handleSearch(body, req) {
   if (currencyData && currencyText && intentExact) structured.push({ title: `Rəsmi valyuta məzənnəsi (CBAR)`, url: "https://www.cbar.az", snippet: undefined, content: currencyText, sources: ["cbar.az"], source: "cbar.az", published_at: currencyData.fetched_at, updated_at: null, date_info: buildDateInfo(currencyData.fetched_at, null, reqLang), untrusted: false });
   // v61: SAY sualı — "neçə X var" cavabı mətndən çıxarılır və AYRICA strukturlu nəticə
   // kimi verilir (rəqəm + tapıldığı cümlə → yoxlanıla bilər, uydurma deyil).
-  if (!hasStructured && /(?<![\p{L}])(ne[çc][əe]|say[ıi]|how\s+many)(?![\p{L}])/iu.test(normQueryForIntent) && finalResults.length) {
+  let countHitDone = false;
+  if (!hasStructured && hasCountMarker(normQueryForIntent) && finalResults.length) {
     const noun = countNounFromQuery(normQueryForIntent);
     if (noun) {
       const got = extractCountFromResults(finalResults.slice(0, 5), noun);
       // v62: sözlə yazılmış say ("iki peyk") da qəbul edilir — rəqəmli ilə eyni həddə salmırıq
       if (got && (got.score >= 1.5 || got.fromWord)) {
+        countHitDone = true;
         degradedStages.push("count_extracted");
         structured.unshift({
           title: `${got.value} ${noun}${got.summed ? " (cəmi)" : ""} (mətndən çıxarıldı)`,
@@ -900,6 +903,29 @@ async function handleSearch(body, req) {
           voteCount: 99
         });
       }
+    }
+  }
+  // v77: ÖLÇÜ cavabı — "işsizlik səviyyəsi nə qədərdir" (5,50 faiz), "orta ömür uzunluğu" (75 yaş),
+  // "dövlət borcu" (25,7 milyard manat). Say çıxarılmadıqda işə düşür.
+  if (!hasStructured && !countHitDone && finalResults.length && matchMeasureQuery(normQueryForIntent)) {
+    const mhit = extractMeasureFromResults(finalResults.slice(0, 5), normQueryForIntent);
+    if (mhit && mhit.score >= 2) {
+      degradedStages.push("measure_extracted");
+      structured.unshift({
+        title: `${mhit.text} (mətndən çıxarıldı)`,
+        url: mhit.url,
+        snippet: undefined,
+        content: `${mhit.text}${mhit.year ? ` (${mhit.year})` : ""}. Mənbə cümlə: "${mhit.sentence}"${mhit.sources.length > 1 ? ` (${mhit.sources.length} mənbədə eyni rəqəm)` : ""}`,
+        sources: [(() => { try { return new URL(mhit.url).hostname.replace(/^www\./, ""); } catch { return "mənbə"; } })()],
+        source: "measure-extract",
+        published_at: null,
+        updated_at: null,
+        date_info: buildDateInfo(null, null, reqLang),
+        untrusted: false,
+        extracted: true,
+        score: 99,
+        voteCount: 99
+      });
     }
   }
   if (structured.length) {
@@ -929,7 +955,7 @@ async function handleSearch(body, req) {
       const protTerms = [...new Set((String(query).match(/[A-Za-z][A-Za-z0-9_.:-]{2,}/g) || []))].slice(0, 8);
       // v75: daxili çıxarılmış cavablar (say/fakt/cədvəl) TƏRCÜMƏ OLUNMUR — əvvəl
       // "mətndən çıxarıldı" → "mətndən silindi" kimi təhrif olunurdu.
-      const OWN_SOURCES = new Set(["count-extract", "livestat-extract", "holiday-table", "coingecko", "wikidata", "usda", "open-meteo", "daxili-hesablama", "cbar.az"]);
+      const OWN_SOURCES = new Set(["count-extract", "livestat-extract", "measure-extract", "holiday-table", "coingecko", "wikidata", "usda", "open-meteo", "daxili-hesablama", "cbar.az"]);
       const toTranslate = finalResults.filter(r => !OWN_SOURCES.has(r.source) && !r.extracted);
       resultsTranslated = await translateResultsToQueryLang(toTranslate, reqLang, trBudget, 1600, protTerms);
     }

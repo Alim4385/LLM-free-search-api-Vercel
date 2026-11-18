@@ -23,7 +23,8 @@ import { matchMath } from "../lib/math.js";
 import { matchHoliday } from "../lib/holidays.js";
 import { matchLiveStat, extractMoneySentence } from "../lib/livestat.js";
 import { matchCrypto, cryptoToText } from "../lib/crypto.js";
-import { extractCount, extractCountFromResults, countNounFromQuery, countSearchQuery } from "../lib/countextract.js";
+import { extractMeasure, matchMeasureQuery } from "../lib/measure.js";
+import { extractCount, extractCountFromResults, countNounFromQuery, countSearchQuery, hasCountMarker } from "../lib/countextract.js";
 import { parseSitemap, parseArticleHtml, matchSitemapItems } from "../lib/sitemapnews.js";
 import { normalizeUrl, decodeEntities, stripQuestionWords, parseDDGLite, normalizeMwmbl, parseYahooJP, parseMilliArxiv, isArchiveTopic, providerTermGate } from "../lib/search.js";
 import { parseJinaMarkdown } from "../lib/extract.js";
@@ -1199,6 +1200,17 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v75: 'neçə sığorta şirkəti' → şirkət", countNounFromQuery("neçə sığorta şirkəti fəaliyyət göstərir") === "şirkət");
     assert("v75: 'neçə dövlət muzeyi' → muzey", countNounFromQuery("neçə dövlət muzeyi var") === "muzey");
     assert("v75: 'neçə qapı' toxunulmur", countNounFromQuery("neçə qapı") === "qapı");
+    // v77: necə ≠ neçə, tarixi məlumat cəzası, ölkə miqyası, "dən çox"
+    assert("v77: 'necə saxlamaq' say deyil", hasCountMarker("təzə çörəyi necə saxlamaq olar") === false);
+    assert("v77: 'neçə bank var' saydır", hasCountMarker("neçə bank var") === true);
+    assert("v77: 'necə işləyir' say deyil", hasCountMarker("bu proqram necə işləyir") === false);
+    assert("v77: faiz rəqəmi say deyil (5.30%)", extractCount("Ölkə ərazisinin 5.30% təşkil edən 12 milli park var.", "milli park").value === 12);
+    assert("v77: '300-dən çox' aşağı sərhəd", extractCount("Azərbaycanda 300-dən çox poçt şöbəsi fəaliyyət göstərir.", "poçt şöbəsi").atLeast === true);
+    assert("v77: cari məlumat köhnəni üstələyir", extractCount("Əvvəl 50 aptek var idisə, indi onların sayı 2900-a çatıb.", "aptek").value === 2900);
+    assert("v77: ölkə sualında şəhər cümləsi uduzur", extractCount("Bakı ərazisinə 59 qəsəbə daxildir. Azərbaycanda 262 qəsəbə var.", "qəsəbə", { query: "Azərbaycanda neçə qəsəbə var" }).value === 262);
+    assert("v77: faiz ölçüsü çıxarılır", extractMeasure("İşsizlik səviyyəsi 2025-ci ildə 5,50 faizə enib.", "işsizlik səviyyəsi nə qədərdir").text === "5,50 faiz");
+    assert("v77: yaş ölçüsü çıxarılır", extractMeasure("Gözlənilən ömür uzunluğu 75 yaş olub.", "orta ömür uzunluğu nə qədərdir").value === 75);
+    assert("v77: ölçü sualı tanınır", matchMeasureQuery("işsizlik səviyyəsi nə qədərdir") === true && matchMeasureQuery("neçə bank var") === true);
     // v75: hissə saylarının cəmi
     const bk = extractCount("Hazırda Azərbaycanda 2 dövlət bankı və 19 kommersiya bankı fəaliyyət göstərir.", "bank");
     assert("v75: '2 dövlət və 19 kommersiya bankı' → 21", bk && bk.value === 21 && bk.summed === true, JSON.stringify(bk));
