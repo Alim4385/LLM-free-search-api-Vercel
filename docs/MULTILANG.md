@@ -148,3 +148,48 @@ geri götürüldü. Sərt "kiril/ərəb mətni = 0 bal" blokunun cəzaya (−2.0
 - unit: **536/0**
 - golden (FV 218): **28 keçdi / 1 bilinən / 1 uğursuz**
 - pambıq: canlı cavab **831.000 ton** (mənbə: tr.wiki məqaləsi)
+
+---
+
+# v109 — metro.gov.az və client-rendered rəsmi saytlar
+
+## Problem
+
+`https://metro.gov.az/about` bizim üçün **boş səhifə** idi (çıxarış 0 simvol). Səbəb:
+sayt Next.js ilə qurulub, görünən DOM boşdur, bütün mətn "hydration payload"
+(`self.__next_f.push([1,"…"])`) içindədir — `\u003cp\u003e…` kimi escape olunmuş HTML.
+Bu, `.gov.az` saytlarının böyük hissəsinin quruluşudur.
+
+## Düzəliş (`lib/extract.js`, `extractHydrationText`)
+
+1. `self.__next_f.push` parçaları JSON kimi açılır (+ `__NEXT_DATA__` dəstəyi).
+2. HTML teqləri atılır, `\u003c` kimi escape-lər açılır.
+3. Cümlə səviyyəsində təmizləmə: 40–420 simvol, CSS/JS zibili (`{`, `:where(`, `--ant-`) atılır.
+4. React element massivlərindəki `"children":"…"` sətirləri də götürülür.
+5. Yalnız görünən mətn 400 simvoldan az olduqda işə düşür — normal saytlara toxunmur.
+
+Nəticə: `metro.gov.az/about` → **6 188 simvol** mətn, o cümlədən:
+> "Bu gün isə Bakı metropoliteni **3 xətt, 27 stansiya və 40,7 kilometrlik** şəbəkəsi ilə…"
+
+## Əlavə qaydalar (ümumi, sayta bağlı deyil)
+
+| qayda | nə üçün |
+|---|---|
+| `.gov.az` hostuna +0.9 bal | rəsmi ilkin mənbə medianın arxasında qalırdı |
+| `.gov.az` səhifəsindən say +0.6 | medianın "20 vaqon"u rəsmi "377 vaqon"u üstələyirdi |
+| say çıxarışında **tarix rəqəmi rədd** | "28 aprel 1989" (stansiyanın açılışı) say kimi oxunurdu |
+| "hansı ildə açılıb/təsis olunub" → **ən erkən il** | 1967 yerinə 2026-cı ilin fərman tarixi seçilirdi |
+| `transport` topic → `metro.gov.az` site-hint | `SITE_HINT_FOR` xəritəsinə əlavə (legal/edu/econ/health yanına) |
+| **site-hint axtarışı paralel** | əvvəl ardıcıl idi və "2 saniyədən tez" şərti ilə uzun axtarışlarda heç vaxt işləmirdi |
+
+## Canlı nəticələr
+
+| sual | cavab |
+|---|---|
+| Bakı metrosunda neçə stansiya var | **27 stansiya** ✅ (golden: PASS) |
+| Bakı metropoliteni hansı ildə açılıb | **1967** ✅ (golden: PASS) |
+| Bakı metropoliteni neçə stansiya və xətt var | 3 xətt ✅ |
+| Bakı metrosunun uzunluğu | 40,7 km (rəsmi mənbə tapılanda) — provayderdən asılıdır |
+
+Yekun: unit **540/0**, golden **28 keçdi / 1 bilinən / 2 uğursuz** (31 yoxlama; 2 yeni metro
+case-i əlavə olundu və hər ikisi keçir).
