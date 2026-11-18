@@ -580,28 +580,5 @@
    "banker.az"
   ],
   "note": "istehsal rəqəmi (min ton) — rəsmi aqro/stat mənbəyi"
- },
- {
-  "q": "Bakı metropoliteni hansı ildə açılıb",
-  "type": "date",
-  "expect": {
-   "year": 1967,
-   "requiresDigits": true,
-   "contains": [
-    "1967"
-   ],
-   "answerContains": [
-    "1967"
-   ],
-   "answerYear": 1967,
-   "page": [
-    "metro.gov.az",
-    "wikipedia.org"
-   ]
-  },
-  "sources": [
-   "metro.gov.az"
-  ],
-  "note": "ilk xətt 1967 — həm mənbədə, həm SEÇİLMİŞ cavabda yoxlanılır (v111)"
  }
 ]

@@ -1,4 +1,4 @@
-import { searchAll, searchMilliArxiv, isArchiveTopic, searchAzWikiHint } from "../../../lib/search.js";
+import { searchAll, searchMilliArxiv, isArchiveTopic, searchAzWikiHint, searchWikipedia } from "../../../lib/search.js";
 import { fetchAndExtract, buildDateInfo, normalizeValidIsoDate } from "../../../lib/extract.js";
 import { detectConflicts } from "../../../lib/conflict.js";
 import { selectRelevantParagraphs, tokenize, orderByRecency, isGenericNewsTerm, isNewsSectionTerm, NEWS_WORD_RE, coreSearchQuery } from "../../../lib/rank.js";
@@ -7,7 +7,7 @@ import { matchTime, fetchTime, timeToText } from "../../../lib/time.js";
 import { matchCurrency, fetchCBAR, currencyToText } from "../../../lib/currency.js";
 import { matchUnits, unitsToText } from "../../../lib/units.js";
 import { extractCountFromResults, countNounFromQuery, countSearchQuery, hasCountMarker } from "../../../lib/countextract.js";
-import { extractMeasureFromResults, matchMeasureQuery, extractDateFromResults, matchDateQuery, unitFamilyOfQuery } from "../../../lib/measure.js";
+import { extractMeasureFromResults, matchMeasureQuery, extractDateFromResults, extractDateAnswer, matchDateQuery, unitFamilyOfQuery } from "../../../lib/measure.js";
 import { matchCrypto, fetchCryptoPrice, cryptoToText } from "../../../lib/crypto.js";
 import { matchHoliday, holidayToText } from "../../../lib/holidays.js";
 import { matchLiveStat, extractLiveStatFromResults, liveStatToText } from "../../../lib/livestat.js";
@@ -21,7 +21,7 @@ import { scoreResult, diversifyByDomain, extractQuotedPhrases, containsPhrase, i
 import { applyFinalLimits, filterByFreshness } from "../../../lib/finalize.js";
 import { CORS_HEADERS, makeJsonResponse, makeJsonlResponse, makeSimpleResponse, rateLimitHeaders as makeRateLimitHeaders } from "../../../lib/pipeline/respond.js";
 import { strongAnchor } from "../../../lib/score.js";
-import { bridgeCount, bridgeDate, bridgeMeasure } from "../../../lib/wikilink.js";
+import { bridgeCount, bridgeDate, bridgeMeasure, wikiTitleFromUrl, fetchWikiExtract } from "../../../lib/wikilink.js";
 import { translateAzToEn } from "../../../lib/translate.js";
 import { parseMaxResults, parseMaxChars, parseFormat, parseFreshness, parseExcludeDomains, parseBool, parseTranslateResults, parseLang } from "../../../lib/pipeline/params.js";
 import { cleanContent, cutWord, dedupeSnippet, detectQueryLanguage, isBoilerplateOnly, stripBoilerplateHead } from "../../../lib/clean.js";
@@ -1051,6 +1051,44 @@ async function handleSearch(body, req) {
   // v80: TARİX cavabı — "Konstitusiya nə vaxt qəbul olunub", "BMT-yə nə vaxt üzv olub"
   if (!hasStructured && !countHitDone && finalResults.length && matchDateQuery(normQueryForIntent)) {
     let dhit = extractDateFromResults(extractPool.slice(0, 5), normQueryForIntent);
+    // v111: tarix nəticə mətnlərində yoxdursa, AMMA nəticələrdə vikipediya varsa —
+    // wiki API-dən mətni birbaşa çək (sürətli, ~300 ms). Prod-da səhifə çıxarışı
+    // "extract_timeout" olanda 1967 kimi faktlar itirdi.
+    // "açılıb / təsis olunub" suallarında məqalə mətni MÜTLƏQ yoxlanılır: qısa xəbər
+    // parçasındaki təsadüfi il (2024) ən erkən ili (1967) üstələyirdi.
+    const foundingQ = /(a[çc][ıi]l[ıi]b|acilib|t[əe]sis|yarad[ıi]l[ıi]b|yaradilib|ba[şs]lay[ıi]b|baslayib|qurulub)/iu.test(normQueryForIntent);
+    if (!dhit || dhit.score < 2 || foundingQ) {
+      // Nəticələrdə vikipediya yoxdursa (provayderlər boş qaytarıb) — birbaşa wiki axtarışı
+      let wres = extractPool.slice(0, 5).filter(r => /^https?:\/\/[a-z-]+\.wikipedia\.org\//i.test(String(r.url || ""))).slice(0, 2);
+      if (!wres.length) {
+        try {
+          const ws = await withTimeout(searchWikipedia(coreSearchQuery(normQueryForIntent, 4) || normQueryForIntent, 2), 1200, "wiki search timeout");
+          wres = (ws || []).slice(0, 1);
+          if (wres.length) degradedStages.push("date_wiki_search");
+        } catch {}
+      }
+      for (const wr of wres) {
+        try {
+          const wt = await withTimeout(fetchWikiArticleText(wr.url), 1400, "wiki text timeout");
+          if (!wt) continue;
+          // mətn ingiliscə ola bilər — AZ sorğu termini ora düşmür, ona görə EN anker sorğusu da yoxlanır
+          // məqalənin ÖZ başlığı da sorğu kimi sınanır: EN məqalədə AZ termin yoxdur,
+          // amma "Baku Metro" başlığı cümlədə keçir və tarixi tapmağa bəs edir.
+          const pageTitle = (() => { try { return wikiTitleFromUrl(wr.url)?.title || ""; } catch { return ""; } })();
+          const dQueries = [...new Set([normQueryForIntent, searchResult.anchorQuery || "", coreSearchQuery(normQueryForIntent), pageTitle].filter(Boolean))];
+          let best = null;
+          for (const dq of dQueries) {
+            const cand = extractDateAnswer(wt, dq);
+            if (cand && cand.score >= 2 && (!best || cand.score > best.score)) best = cand;
+          }
+          if (best && (!dhit || best.score > dhit.score || foundingQ)) {
+            dhit = { ...best, url: wr.url, sources: [wr.url] };
+            degradedStages.push("date_wiki_text");
+            break;
+          }
+        } catch {}
+      }
+    }
     // v106: tarix yerli mətndə yoxdursa → dil körpüsü (TR ayları artıq oxunur)
     if (!dhit && earlyBridge) {
       try {
@@ -1386,6 +1424,13 @@ function fmtNum(n) {
 function hostOf(u) {
   try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return "mənbə"; }
 }
+// v111: vikipediya URL-indən mətn (API ilə — HTML çıxarışından sürətli və stabil)
+async function fetchWikiArticleText(url) {
+  const w = wikiTitleFromUrl(url);
+  if (!w) return null;
+  return await fetchWikiExtract(w.lang, w.title, 6000);
+}
+
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
