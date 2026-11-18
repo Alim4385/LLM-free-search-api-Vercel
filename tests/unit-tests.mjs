@@ -23,7 +23,7 @@ import { matchMath } from "../lib/math.js";
 import { matchHoliday } from "../lib/holidays.js";
 import { matchLiveStat, extractMoneySentence } from "../lib/livestat.js";
 import { matchCrypto, cryptoToText } from "../lib/crypto.js";
-import { extractMeasure, matchMeasureQuery, extractDateAnswer, matchDateQuery } from "../lib/measure.js";
+import { extractMeasure, extractMeasureFromResults, matchMeasureQuery, extractDateAnswer, matchDateQuery } from "../lib/measure.js";
 import { extractCount, extractCountFromResults, countNounFromQuery, countSearchQuery, hasCountMarker } from "../lib/countextract.js";
 import { parseSitemap, parseArticleHtml, matchSitemapItems } from "../lib/sitemapnews.js";
 import { normalizeUrl, decodeEntities, stripQuestionWords, parseDDGLite, normalizeMwmbl, parseYahooJP, parseMilliArxiv, isArchiveTopic, providerTermGate } from "../lib/search.js";
@@ -1251,6 +1251,13 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v90: 'neçədir' say markeridir", hasCountMarker("Bu neçədir") === true);
     assert("v90: 'necədir' say deyil", hasCountMarker("Bakıda hava necədir") === false);
     assert("v90: 'neçə manatdır' rewrite olunmur", countSearchQuery("Bu neçə manatdır") === null);
+    // v95.1: extractMeasureFromResults heç vaxt partlamamalıdır (prod-da 500 xətası olmuşdu)
+    assert("v95.1: ölçü ekstraksiyası 500 vermir", (() => {
+      try {
+        const r = extractMeasureFromResults([{ title: "Dövlət borcu", url: "https://x.az/a", snippet: "Azərbaycanın dövlət borcu 26 milyard manatdır." }], "Azərbaycanın dövlət borcu nə qədərdir");
+        return r === null || typeof r.value === "number";
+      } catch { return false; }
+    })());
     // v95: 3 anlayışlı sualda ƏSAS MÖVZU tutulubsa nəticə atılmır ("React" 0 bal alırdı)
     assert("v95: mövzu məqaləsi sıfırlanmır (əvvəl sərt 0 idi)", scoreResult({ title: "React", url: "https://az.wikipedia.org/wiki/React", snippet: "React JavaScript kitabxanasıdır, komponent əsaslıdır." }, ["react", "state", "idareetme"], "az", "React state idarəetməsi nədir") > 0);
     assert("v95: mövzusuz səhifə yenə atılır", scoreResult({ title: "Hava proqnozu", url: "https://example.az/x", snippet: "Sabah hava günəşli olacaq." }, ["react", "state", "idareetme"], "az", "React state idarəetməsi nədir") === 0);
