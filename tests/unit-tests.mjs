@@ -1229,6 +1229,9 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v80: 'X faizdən Y faizə' → Y", extractMeasure("Yoxsulluq 49 faizdən 5 faizə endi.", "yoxsulluq səviyyəsi nə qədərdir").value === 5);
     assert("v80: tarix sualı tanınır", matchDateQuery("Azərbaycan Konstitusiyası nə vaxt qəbul olunub") === true);
     assert("v80: tarix çıxarılır", extractDateAnswer("Azərbaycan Konstitusiyası 12 noyabr 1995-ci il tarixində referendumla qəbul edilmişdir.", "Azərbaycan Konstitusiyası nə vaxt qəbul olunub").dateText === "12 noyabr 1995");
+    // v81: dativ hal sayı ləğv etmir, tarix dəqiqliyi
+    assert("v81: '300-ə çatıb' saydır", extractCount("Bakıda park və bağların sayı 300-ə çatıb.", "park").value === 300);
+    assert("v81: tam tarix üstün tutulur", extractDateAnswer("1918-ci il mayın 28-də müstəqillik elan olundu. Azərbaycan Konstitusiyası 12 noyabr 1995-ci il tarixində referendumla qəbul edilmişdir.", "Azərbaycan Konstitusiyası nə vaxt qəbul olunub").dateText === "12 noyabr 1995");
     // v75: hissə saylarının cəmi
     const bk = extractCount("Hazırda Azərbaycanda 2 dövlət bankı və 19 kommersiya bankı fəaliyyət göstərir.", "bank");
     assert("v75: '2 dövlət və 19 kommersiya bankı' → 21", bk && bk.value === 21 && bk.summed === true, JSON.stringify(bk));
