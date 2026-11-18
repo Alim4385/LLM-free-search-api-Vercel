@@ -26,7 +26,7 @@ import { matchMath } from "../lib/math.js";
 import { matchHoliday } from "../lib/holidays.js";
 import { matchLiveStat, extractMoneySentence } from "../lib/livestat.js";
 import { matchCrypto, cryptoToText } from "../lib/crypto.js";
-import { extractMeasure, extractMeasureFromResults, matchMeasureQuery, extractDateAnswer, matchDateQuery } from "../lib/measure.js";
+import { extractMeasure, extractMeasureFromResults, matchMeasureQuery, extractDateAnswer, matchDateQuery, extractDateFromResults } from "../lib/measure.js";
 import { extractCount, extractCountFromResults, countNounFromQuery, countSearchQuery, hasCountMarker } from "../lib/countextract.js";
 import { parseSitemap, parseArticleHtml, matchSitemapItems } from "../lib/sitemapnews.js";
 import { normalizeUrl, decodeEntities, stripQuestionWords, parseDDGLite, normalizeMwmbl, parseYahooJP, parseMilliArxiv, isArchiveTopic, providerTermGate } from "../lib/search.js";
@@ -1261,6 +1261,14 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v104: 'üstü' dərəcəsi", String(matchMath("2 üstü 10").result) === "1024");
     assert("v104: farengeyt (AZ yazılışı)", (() => { const r = matchUnits("30 dərəcə Selsi neçə Farengeyt"); return r.hit && r.from === "c" && r.to === "f"; })());
     assert("v104: temperatur 2 onluq", unitsToText(matchUnits("100 farengeyt neçə selsi")) === "100 °F = 37,78 °C (temperatur çevirməsi).");
+    // v105: versiya fərqi — "GPT-5.2"-nin tarixi "GPT-5" sualına cavab deyil
+    assert("v105: URL-də dəqiq anchor olan mənbə üstündür", (() => {
+      const r = extractDateFromResults([
+        { url: "https://en.wikipedia.org/wiki/GPT-5", title: "GPT-5", snippet: "It was released on 7 August 2025.", content: "" },
+        { url: "https://example.com/gpt-5-2", title: "GPT-5.2 news", snippet: "GPT-5.2 released on 13 August 2026", content: "" }
+      ], "GPT-5 nə vaxt çıxdı");
+      return r && r.dateText === "7 avqust 2025";
+    })());
     // v102: güclü anchor yalnız bitişik tokenlərdir
     assert("v102: anchor aşkarlanması", strongAnchor("GPT-5 nə vaxt çıxdı") === "gpt5" && strongAnchor("iPhone 15 qiyməti") === "iphone15" && strongAnchor("best sci-fi movies 2025") === null && strongAnchor("Formula 1 Azərbaycan Qran Prisi") === null);
     // v102: anchor EYNİ cümlədəki tarix qonşu cümlədəkindən üstündür
