@@ -27,7 +27,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 189; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 190; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -245,6 +245,10 @@ async function handleSearch(body, req) {
     (intentName === "sports" && sportsData) ||
     (intentName === "nutrition" && nutriData)
   ));
+  // v91: struktur intent (valyuta/hava/saat...) tanındı, amma API cavab vermədi.
+  // Belə halda bütün "ehtiyat" mərhələləri (hint/retry/rescue) 8s deadline-ı partladırdı.
+  const structuredFailed = !!intentName && !!intentExact && !hasStructured &&
+    ["weather", "currency", "time", "crypto", "fact", "math", "units", "sports", "nutrition"].includes(intentName);
   // v51.4: sorğunun mənalı sözlərinin çoxu klaviatura zibili olsa ("asdfqwer zxcvbnm
   // nonsense", "asdkjqwe zzzz") provayderlər hər şeyi qaytarır və filtrlər zibil
   // keçirir. Belə sorğuda axtarışa HEÇ getmirik: boş cavab + fallback:true.
@@ -420,7 +424,7 @@ async function handleSearch(body, req) {
   // v47.2: structured cavab (vahid/fakt/hava/saat/valyuta) varsa ehtiyat axtarışa HEÇ getmirik
   // v62.1: mənasız sorğuda (unintelligible) sadələşdirilmiş təkrar axtarış da BAĞLANIR —
   // əks halda "asdf qwer zxcvb mmm" → knowyourmeme "asdf" nəticəsi qayıdırdı (v60.1 geri qaytarması).
-  if (!hasStructured && !unintelligible && scored.length < 3 && Date.now() - started < 1800) {  // v39.1: vaxt büdcəsi (8s deadline)
+  if (!hasStructured && !unintelligible && !structuredFailed && scored.length < 3 && Date.now() - started < 1800) {  // v39.1: vaxt büdcəsi (8s deadline)
     try {
       const core = tokenize(query).slice(0, 3).join(" ");
       if (core && core !== normQuery) {
@@ -442,7 +446,7 @@ async function handleSearch(body, req) {
   }
 
   // v39: AZ kontekstli sualda rəsmi mənbə heç gəlməyibsə → sayt-hədəfli bir cəhd
-  if (!hasStructured && qType.siteHint && !scored.some(r => officialBoost(r.url)) && Date.now() - started < 2000 && HARD_DEADLINE_MS - (Date.now() - started) > 2600) {
+  if (!hasStructured && !structuredFailed && qType.siteHint && !scored.some(r => officialBoost(r.url)) && Date.now() - started < 2000 && HARD_DEADLINE_MS - (Date.now() - started) > 2600) {
     try {
       const coreQ = `${tokenize(normQuery).slice(0, 5).join(" ")} site:${qType.siteHint}`;
       const rs = await withTimeout(searchAll(coreQ, maxResults, { freshness, excludeDomains }), 1300, "site hint timeout");
@@ -459,7 +463,7 @@ async function handleSearch(body, req) {
 
   // v53: xəbər sorğusunda tanınmış AZ mənbəsindən HEÇ NƏ gəlməyibsə → sayt-hədəfli
   // bir cəhd (AZƏRTAC + Report OR ilə). Sual "xəbər" olsa da nəticə xarici sayt olurdu.
-  if (newsQ && !hasStructured && Date.now() - started < 2000 && !scored.some(r => newsTrustBoost(r.url) > 0) && HARD_DEADLINE_MS - (Date.now() - started) > 2600) {
+  if (newsQ && !hasStructured && !structuredFailed && Date.now() - started < 2000 && !scored.some(r => newsTrustBoost(r.url) > 0) && HARD_DEADLINE_MS - (Date.now() - started) > 2600) {
     try {
       const coreN = tokenize(normQuery).filter(t => t.length >= 3).slice(0, 5).join(" ");
       if (coreN) {
@@ -484,7 +488,7 @@ async function handleSearch(body, req) {
   // "Azərbaycanda ilk metro nə vaxt açılıb" → Çikaqo metrosu + Subway sandviçi gəlirdi;
   // səbəb "metro" sözünün beynəlxalq qarışıqlığıdır. Azərbaycan ensiklopediyası həll edir.
   const azSuperlative = /(?<![\p{L}])(ən\s+b[öo]y[üu]k|en\s+boyuk|ən\s+uzun|en\s+uzun|ən\s+m[əe][şs]hur|ən\s+[çc]ox|ilk)(?![\p{L}])/iu.test(normQuery);
-  if (!hasStructured && qType.azContext && (qType.type === "date" || qType.type === "count" || qType.type === "list" || azSuperlative) &&
+  if (!hasStructured && !structuredFailed && qType.azContext && (qType.type === "date" || qType.type === "count" || qType.type === "list" || azSuperlative) &&
       Date.now() - started < 3800 && HARD_DEADLINE_MS - (Date.now() - started) > 2400 && !scored.some(r => /(^|\.)az\.wikipedia\.org$/i.test((() => { try { return new URL(r.url).hostname; } catch { return ""; } })()))) {
     try {
       const coreAz = tokenize(normQuery).filter(t => t.length >= 3).slice(0, 4).join(" ");
@@ -768,7 +772,7 @@ async function handleSearch(body, req) {
   // v52.3: score_gate_bypassed (skor qapısı hər şeyi atdı → zəif namizədlər göstərildi)
   // halında da ikinci cəhd edilir; faydalı nəticə gəlsə, zibil namizədlər atılır.
   const bypassFilled = degradedStages.includes("score_gate_bypassed");
-  if (!unintelligible && !hasStructured && (finalResults.length < 2 || bypassFilled) && (HARD_DEADLINE_MS - (Date.now() - started)) > 2400) {
+  if (!unintelligible && !hasStructured && !structuredFailed && (finalResults.length < 2 || bypassFilled) && (HARD_DEADLINE_MS - (Date.now() - started)) > 2400) {
     const have = new Set(finalResults.map(x => String(x.url || "").replace(/\/$/, "")));
     const rescueQs = [];
     if (effAnchor && effAnchor.trim() && effAnchor !== normQuery) rescueQs.push(effAnchor);
