@@ -1143,6 +1143,12 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v65: captcha səhifəsindən say çıxarılmır", ch === null, JSON.stringify(ch));
     const st = extractCount("Bakı Metropoliteni — 27 stansiyanın xidmət etdiyi üç xətt.", "metrostansiyası");
     assert("v66: 'stansiyanın' şəkilçisi ilə də say tapılır (27)", st && st.value === 27, JSON.stringify(st));
+    // v67: tarix rəqəmi və tarixi kontekst
+    assert("v67: '15-də teatra' say deyil", extractCount("1964-cü il aprel ayının 15-də teatra Dövlət statusu verilib.", "teatr") === null);
+    const qr = extractCount("1958-ci ilə qədər 4 qoruq fəaliyyət göstərmişdir. Hazırda 15 qoruq var.", "qoruq");
+    assert("v67: tarixi kontekst cari saydan geri qalır (15)", qr && qr.value === 15, JSON.stringify(qr));
+    assert("v67: sahə rule işləyir", matchFact("Azərbaycanın sahəsi nə qədərdir").kind === "area");
+    assert("v67: valyuta rule işləyir", matchFact("Rusiyanın valyutası nədir").kind === "currency_of");
     assert("v62: tək sözlü sorğuda gate işləmir", providerTermGate([{ title: "MANY definition", url: "u", snippet: "x" }], "many").length === 1);
   }
 
