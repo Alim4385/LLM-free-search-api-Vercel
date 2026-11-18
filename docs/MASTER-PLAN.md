@@ -66,8 +66,11 @@ edilmədi (səbəbi ilə).
 10. GET-də `count` parametri udulurdu.
 11. Keşlənmiş jsonl-də `confidence`/`fallback` itirdi.
 12. Golden runner obyekt girişlərini sındırırdı.
+13. (v97.1, öz yoxlamamda tapıldı) Say cəmləmə qaydası inzibati siyahını cəmləyirdi:
+    "64 rayon, 11 şəhər, 12 şəhər rayonu" → **80 rayon** cavabı. İndi hissə sayı yalnız
+    hər rəqəm öz isim təkrarına bağlı olduqda və inzibati sözlər (şəhər/rayon/kənd) yoxdursa cəmlənir.
 
-**Nəticə:** 509 unit test keçir, build təmiz, `lib/finalize.js` ilk modul ayrılması kimi əlavə olundu.
+**Nəticə:** 510 unit test keçir, build təmiz, `lib/finalize.js` ilk modul ayrılması kimi əlavə olundu.
 
 ## Növbəti addımlar (prioritet sırası ilə)
 
