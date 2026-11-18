@@ -31,7 +31,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 202; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 203; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -220,6 +220,20 @@ async function handleSearch(body, req) {
   const gibberishHits = contentTokens.filter(looksLikeGibberish).length;
   const unintelligible = !hasStructured && contentTokens.length >= 2 && gibberishHits / contentTokens.length >= 0.6;
 
+  // v102: GÜCLÜ ANCHOR ("GPT-5", "iPhone 15") + tarix sualı → anchor-hədəfli axtarış ƏSAS
+  // axtarışla PARALEL başladılır. Əvvəl bu, skorlamadan SONRA ardıcıl işləyirdi və
+  // 6 saniyəlik büdcəni partladırdı ("anchor_retry_error"). İndi latency artmır.
+  const anchorKeyStrong = strongAnchor(query);
+  const anchorRawTok = anchorKeyStrong
+    ? ((query.match(/(?<![\p{L}\d])([\p{L}]{2,}[-]?\d{1,4})(?![\p{L}\d])/u) || [])[1] || anchorKeyStrong)
+    : null;
+  const hasAnchorWord = (r) => !!anchorKeyStrong && `${r.title || ""} ${r.snippet || ""}`.toLowerCase().replace(/[\s-]/g, "").includes(anchorKeyStrong);
+  let anchorPrefetch = null;
+  if (anchorKeyStrong && !hasStructured && !unintelligible) {
+    const aq = qType.type === "date" ? `${anchorRawTok} release date` : anchorRawTok;
+    try { anchorPrefetch = searchAllShared(aq, Math.min(6, maxResults + 2), { freshness, excludeDomains }).catch(() => null); } catch { anchorPrefetch = null; }
+  }
+
   // v88: mərhələ vaxtları (yalnız debug=1) — gələcək optimizasiya üçün ölçü
   const timing = {};
   let searchResult = { results: [], providersUsed: [], errors: {}, anchorQuery: null, translated: false };
@@ -392,14 +406,16 @@ async function handleSearch(body, req) {
   // əks halda "asdf qwer zxcvb mmm" → knowyourmeme "asdf" nəticəsi qayıdırdı (v60.1 geri qaytarması).
   // v101: GÜCLÜ ANCHOR ("GPT-5", "iPhone 15") heç bir nəticədə yoxdursa — anchor-hədəfli
   // bir cəhd. "GPT-5 nə vaxt çıxdı" sualında provayderlər PS5/Anthem məqalələri qaytarırdı.
-  const anchorKeyStrong = strongAnchor(query);
-  const hasAnchorWord = r => `${r.title || ""} ${r.snippet || ""}`.toLowerCase().replace(/[\s-]/g, "").includes(anchorKeyStrong);
-  if (anchorKeyStrong && !hasStructured && !scored.some(hasAnchorWord) && HARD_DEADLINE_MS - (Date.now() - started) > 2600) {
+  const remainingForAnchor = HARD_DEADLINE_MS - (Date.now() - started);
+  // anchor olan nəticə varsa da ZƏİF ola bilər (arxiv "GPT-4o and GPT-5" məqaləsi) —
+  // ona görə anchor nəticələri yalnız GÜCLÜ anchor nəticə olduqda əlavə olunmur.
+  if (anchorKeyStrong && !hasStructured && anchorPrefetch && !scored.some(r => hasAnchorWord(r) && r.score >= 2.5)) {
     try {
-      const rawAnchorTok = (query.match(/(?<![\p{L}\d])([\p{L}]{2,}[-]?\d{1,4})(?![\p{L}\d])/u) || [])[1] || anchorKeyStrong;
-      const anchorQ = qType.type === "date" ? `${rawAnchorTok} release date` : rawAnchorTok;
-      const ra = await withTimeout(searchAll(anchorQ, maxResults, { freshness, excludeDomains }), 1600, "anchor retry timeout");
-      const ta = [...new Set([...qTerms, anchorKeyStrong])];
+      const anchorQ = qType.type === "date" ? `${anchorRawTok} release date` : anchorRawTok;
+      const ra = await withTimeout(anchorPrefetch, Math.min(2000, Math.max(500, remainingForAnchor - 400)), "anchor retry timeout");
+      // terminlər ingilis axtarış sorğusundan götürülür — AZ terminləri ("vaxt", "çıxdı")
+      // ingilis məqaləsində yoxdur və nəticə sıfır bal alırdı
+      const ta = [...new Set([anchorKeyStrong, ...tokenize(anchorQ), ...tokenize(String(ra.anchorQuery || ""))])];
       const extraA = ra.results.filter(r => !isSpamDomain(r.url))
         .map(r => ({ ...r, score: scoreResult(r, ta, qLang, query) }))
         .filter(r => r.score >= 1.5);
@@ -408,8 +424,8 @@ async function handleSearch(body, req) {
         const seenA = new Set(scored.map(r => r.url));
         for (const r of extraA) if (!seenA.has(r.url)) scored.push(r);
         scored.sort((a, b) => b.score - a.score);
-      }
-    } catch {}
+      } else degradedStages.push("anchor_retry_empty");
+    } catch (e) { degradedStages.push("anchor_retry_error"); }
   }
 
   if (!hasStructured && !unintelligible && !structuredFailed && scored.length < 3 && Date.now() - started < 1800) {  // v39.1: vaxt büdcəsi (8s deadline)

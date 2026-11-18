@@ -16,7 +16,7 @@ import { isChallengePage } from "../lib/extract.js";
 import { applyFinalLimits, filterByFreshness } from "../lib/finalize.js";
 import { parseMaxResults, parseMaxChars, parseFormat, parseFreshness, parseExcludeDomains, parseLang } from "../lib/pipeline/params.js";
 import { makeJsonResponse, makeJsonlResponse, jsonlLines } from "../lib/pipeline/respond.js";
-import { scoreResult, isSpamDomain, hostMatches, diversifyByDomain, isJunkDomain, computeConfidence, looksLikeGibberish } from "../lib/score.js";
+import { scoreResult, isSpamDomain, hostMatches, diversifyByDomain, isJunkDomain, computeConfidence, looksLikeGibberish, strongAnchor } from "../lib/score.js";
 import { cleanContent, pickAnswer, cutWord, dedupeSnippet, normalizeColloquialAz, detectQueryLanguage, acceptLanguageHeader, wikiExtractUrl, restoreAsciiAz } from "../lib/clean.js";
 import { matchAzertagItems, azertagLangFor } from "../lib/azertag.js";
 import { newsTrustBoost, AZ_NEWS_TRUSTED, howtoTrustBoost, isHowtoQuery, HOWTO_TRUSTED } from "../lib/router.js";
@@ -1254,6 +1254,13 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v90: 'neçədir' say markeridir", hasCountMarker("Bu neçədir") === true);
     assert("v90: 'necədir' say deyil", hasCountMarker("Bakıda hava necədir") === false);
     assert("v90: 'neçə manatdır' rewrite olunmur", countSearchQuery("Bu neçə manatdır") === null);
+    // v102: güclü anchor yalnız bitişik tokenlərdir
+    assert("v102: anchor aşkarlanması", strongAnchor("GPT-5 nə vaxt çıxdı") === "gpt5" && strongAnchor("iPhone 15 qiyməti") === "iphone15" && strongAnchor("best sci-fi movies 2025") === null && strongAnchor("Formula 1 Azərbaycan Qran Prisi") === null);
+    // v102: anchor EYNİ cümlədəki tarix qonşu cümlədəkindən üstündür
+    assert("v102: anchor cümləsindəki tarix üstün tutulur", (() => {
+      const r = extractDateAnswer("Three were released on November 12, 2025. GPT-5 was released on August 7, 2025 by OpenAI.", "GPT-5 nə vaxt çıxdı");
+      return r && r.dateText === "7 avqust 2025";
+    })());
     // v100: pipeline qatı — params (giriş normallaşdırması)
     assert("v100: max_results sərhədləri", parseMaxResults({ max_results: "99" }) === 8 && parseMaxResults({ max_results: "0" }) === 1 && parseMaxResults({}) === 5);
     assert("v100: count/limit aliasları", parseMaxResults({ count: "2" }) === 2 && parseMaxResults({ limit: 4 }) === 4);
