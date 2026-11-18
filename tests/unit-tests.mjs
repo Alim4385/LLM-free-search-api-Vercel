@@ -13,6 +13,7 @@ import { readFileSync } from "node:fs";
 import { protectTokens, restoreTokens, protectWithTerms } from "../lib/translate.js";
 import { detectConflicts, parseNum } from "../lib/conflict.js";
 import { isChallengePage } from "../lib/extract.js";
+import { applyFinalLimits, filterByFreshness } from "../lib/finalize.js";
 import { scoreResult, isSpamDomain, hostMatches, diversifyByDomain, isJunkDomain, computeConfidence, looksLikeGibberish } from "../lib/score.js";
 import { cleanContent, pickAnswer, cutWord, dedupeSnippet, normalizeColloquialAz, detectQueryLanguage, acceptLanguageHeader, wikiExtractUrl, restoreAsciiAz } from "../lib/clean.js";
 import { matchAzertagItems, azertagLangFor } from "../lib/azertag.js";
@@ -1251,6 +1252,30 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v90: 'neçədir' say markeridir", hasCountMarker("Bu neçədir") === true);
     assert("v90: 'necədir' say deyil", hasCountMarker("Bakıda hava necədir") === false);
     assert("v90: 'neçə manatdır' rewrite olunmur", countSearchQuery("Bu neçə manatdır") === null);
+    // v97: finalize modulu — limitlər və təzəlik qaydası
+    assert("v97: limit tətbiq olunur", applyFinalLimits([1, 2, 3, 4, 5, 6], 4).length === 4);
+    assert("v97: limit 1 olanda yalnız 1 nəticə", applyFinalLimits([1, 2, 3], 1).length === 1);
+    assert("v97: siyahı limiddən qısadırsa toxunulmur", applyFinalLimits([1, 2], 8).length === 2);
+    assert("v97: tarixsiz nəticə təzə sayılmır", (() => {
+      const now = Date.parse("2026-11-16");
+      const rs = [
+        { url: "a", published_at: "2026-11-15" },
+        { url: "b", published_at: "2026-11-14" },
+        { url: "c", published_at: null }
+      ];
+      const out = filterByFreshness(rs, "day", now);
+      return out.results.length === 2 && out.dropped === 1;
+    })());
+    assert("v97: tarixli nəticə azdırsa tarixsiz saxlanılır", (() => {
+      const now = Date.parse("2026-11-16");
+      const out = filterByFreshness([{ url: "a", published_at: "2026-11-15" }, { url: "b" }], "day", now);
+      return out.results.length === 2;
+    })());
+    assert("v97: köhnə nəticə təzəlik filtrindən keçmir", (() => {
+      const now = Date.parse("2026-11-16");
+      const out = filterByFreshness([{ url: "a", published_at: "2026-09-01" }, { url: "b", published_at: "2026-11-15" }], "day", now);
+      return out.results.length === 1 && out.results[0].url === "b";
+    })());
     // v96: provayder konsensusu — eyni nəticəni 2 provayder veribsə bal artır (məhdud: +0.9)
     assert("v96: konsensus bonusu işləyir", (() => {
       const q = ["xezer", "deniz", "sahe"];

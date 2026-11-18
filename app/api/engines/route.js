@@ -11,6 +11,10 @@ export async function GET(req) {
   if (key && req.headers.get("x-api-key") !== key) {
     return Response.json({ error: "unauthorized", message: "x-api-key header tələb olunur" }, { status: 401 });
   }
+  // v97: production-da açar yoxdursa endpoint bağlıdır (provayder sağlamlığı daxili məlumatdır)
+  if (!key && process.env.NODE_ENV === "production" && process.env.ENGINES_PUBLIC !== "1") {
+    return Response.json({ error: "disabled", message: "ENGINES_API_KEY təyin olunmayıb; endpoint bağlıdır (ENGINES_PUBLIC=1 ilə açıla bilər)" }, { status: 403 });
+  }
   return Response.json({
     engines: getCircuitStats(),
     time: new Date().toISOString()

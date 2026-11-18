@@ -18,6 +18,7 @@ import { matchNutrition, fetchNutrient, nutrientToText } from "../../../lib/nutr
 import { leadAnswerSentence } from "../../../lib/rank.js";
 import { classifyType, officialBoost, wantsFresh, sameDayCue, newsTrustBoost, AZ_NEWS_TRUSTED, howtoTrustBoost, isHowtoQuery } from "../../../lib/router.js";
 import { scoreResult, diversifyByDomain, extractQuotedPhrases, containsPhrase, isSpamDomain, hostMatches, computeConfidence, isNewsQuery, looksLikeGibberish } from "../../../lib/score.js";
+import { applyFinalLimits, filterByFreshness } from "../../../lib/finalize.js";
 import { cleanContent, cutWord, dedupeSnippet, detectQueryLanguage, isBoilerplateOnly, stripBoilerplateHead } from "../../../lib/clean.js";
 import { expandQuery, isMetaQuery, stripMetaInstructions, rewriteSearchIntentAz } from "../../../lib/expand.js";
 import { translateResultsToQueryLang } from "../../../lib/translate.js";
@@ -27,7 +28,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 195; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 196; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -131,7 +132,7 @@ async function handleSearch(body, req) {
   const query = sanitizeQuery(rawQuery);
   if (!query) return jsonResponse({ error: "missing_query", message: "query sahəsi tələb olunur" }, 400);
 
-  const maxResults = Math.min(Math.max(parseInt(body.max_results || body.maxResults || "5", 10) || 5, 1), 8);
+  const maxResults = Math.min(Math.max(parseInt(body.max_results || body.maxResults || body.count || body.limit || "5", 10) || 5, 1), 8);
   const NO_CACHE = /^(1|true|on)$/i.test(String(body.no_cache || body.noCache || ""));
   const maxChars = Math.min(Math.max(parseInt(body.max_chars || body.maxChars || "4000", 10) || 4000, 500), 8000);
   const fmt = (typeof body.format === "string" ? body.format : "json").toLowerCase();
@@ -151,7 +152,7 @@ async function handleSearch(body, req) {
     const obj = { ...cached, meta: { ...cached.meta, cached: true, took_ms: Date.now() - started } };
     logReq(requestId, query, obj.meta.took_ms, { status: 200, cached: true });
     if (format === "jsonl") {
-      return jsonlResponse(obj.results, { query: obj.query, intent: obj.intent, providers_used: obj.meta.providers_used, took_ms: obj.meta.took_ms, cached: true }, rateLimitHeaders(rl, requestId));
+      return jsonlResponse(obj.results, { query: obj.query, intent: obj.intent, providers_used: obj.meta.providers_used, took_ms: obj.meta.took_ms, cached: true, confidence: obj.confidence, fallback: obj.fallback === true }, rateLimitHeaders(rl, requestId));
     }
     if (format === "simple") {
       return jsonResponse({ query: obj.query, results: (obj.results || []).map(r => ({ title: r.title, url: r.url, snippet: (r.snippet || r.content || "").slice(0, 200) })) }, 200, rateLimitHeaders(rl, requestId));
@@ -598,7 +599,9 @@ async function handleSearch(body, req) {
   // v89: 1700 → 1200ms. Səhifə oxunuşu paraleldir; 1.2s-də cavab verməyən sayt
   // onsuz da snippet ilə təmsil olunur (debug timing: bu mərhələ ən böyük gecikmə idi).
   const extractBudget = Math.max(600, Math.min(1200, HARD_DEADLINE_MS - (Date.now() - started) - 1200));
-  const extractAll = Promise.allSettled(
+  // v97: skipFetch olduqda heç bir şəbəkə sorğusu BAŞLAMIR — əvvəl Promise.allSettled
+  // yuxarıda qurulurdu və format=simple/deadline halında da fetch-lər arxa fonda gedirdi.
+  const extractAll = skipFetch ? null : Promise.allSettled(
     toFetch.map((r, i) => fetchAndExtract(r.url, extractQuery, Math.min(1500, extractBudget), reqLang, { jina: i < 2 }))
   );
   const extracted = skipFetch
@@ -857,15 +860,14 @@ async function handleSearch(body, req) {
 
   // v43: istifadəçi "son 1 gün/həftə" istəyibsə, çıxarışdan sonra REAL tarixi yoxla
   if (freshness && finalResults.length > 2) {
-    const days = freshness === "day" ? 2 : freshness === "week" ? 9 : freshness === "month" ? 40 : 400;
-    const kept = finalResults.filter(r => {
-      const t = Date.parse(r.published_at || "");
-      return Number.isNaN(t) || (Date.now() - t) / 86400000 <= days;
-    });
-    if (kept.length >= 1 && kept.length < finalResults.length) {
+    // v97: qayda lib/finalize.js-ə köçdü (test olunur). Tarixi təsdiqlənməyən nəticə
+    // açıq freshness sorğusunda "təzə" sayılmır (ən azı 2 tarixli nəticə varsa).
+    const fr = filterByFreshness(finalResults, freshness);
+    if (fr.results.length >= 1 && fr.results.length < finalResults.length) {
       degradedStages.push("freshness_filter");
+      if (fr.undatedKept) degradedStages.push("undated_kept");
       finalResults.length = 0;
-      kept.forEach((r, idx) => { r.id = idx + 1; finalResults.push(r); });
+      fr.results.forEach((r, idx) => { r.id = idx + 1; finalResults.push(r); });
     }
   }
 
@@ -902,7 +904,7 @@ async function handleSearch(body, req) {
   if (weather && weatherText) structured.push({ title: `${weather.city} - hava məlumatı (Open-Meteo)`, url: "https://open-meteo.com", snippet: undefined, content: weatherText, sources: ["open-meteo"], source: "open-meteo", published_at: weather.fetched_at, updated_at: null, date_info: buildDateInfo(weather.fetched_at, null, reqLang), untrusted: false });
   if (timeData && timeText && intentExact) structured.push({ title: `${timeData.place || "Azərbaycan"} üçün hazırkı vaxt (${timeData.timezone})`, url: "https://time.is", snippet: undefined, content: timeText, sources: ["asia-baku-time"], source: "asia-baku-time", published_at: timeData.fetched_at, updated_at: null, date_info: buildDateInfo(timeData.fetched_at, null, reqLang), untrusted: false });
   if (nutriData && nutriText) structured.push({ title: `${nutriData.food} — qida tərkibi (USDA)`, url: "https://fdc.nal.usda.gov/", snippet: undefined, content: nutriText, sources: ["usda.gov"], source: "usda", published_at: nutriData.fetched_at, updated_at: null, date_info: buildDateInfo(nutriData.fetched_at, null, reqLang), untrusted: false });
-  if (liveStatHit) structured.push({ title: `${liveStatQ.label} (mətndən çıxarıldı)`, url: liveStatHit.url, snippet: undefined, content: liveStatToText(liveStatHit, liveStatQ.label), sources: [(() => { try { return new URL(liveStatHit.url).hostname.replace(/^www\./, ""); } catch { return "mənbə"; } })()], source: "livestat-extract", extracted: true, score: 99, voteCount: 99, published_at: liveStatHit.published_at || null, updated_at: null, date_info: buildDateInfo(liveStatHit.published_at || null, null, reqLang), untrusted: false });
+  if (liveStatHit) structured.push({ title: `${liveStatQ.label} (mətndən çıxarıldı)`, url: liveStatHit.url, snippet: undefined, content: liveStatToText(liveStatHit, liveStatQ.label), sources: [(() => { try { return new URL(liveStatHit.url).hostname.replace(/^www\./, ""); } catch { return "mənbə"; } })()], source: "livestat-extract", extracted: true, score: 99, voteCount: 1, published_at: liveStatHit.published_at || null, updated_at: null, date_info: buildDateInfo(liveStatHit.published_at || null, null, reqLang), untrusted: true });
   if (holidayHit.hit && holidayText) structured.push({ title: `${holidayHit.note} — tarix`, url: "https://president.az/az/pages/view/azerbaijan/holidays", snippet: undefined, content: holidayText, sources: ["president.az"], source: "holiday-table", published_at: null, updated_at: null, date_info: buildDateInfo(null, null, reqLang), untrusted: false });
   if (cryptoData && cryptoText && intentExact) structured.push({ title: `${cryptoData.sym} hazırkı qiyməti (CoinGecko)`, url: "https://www.coingecko.com/", snippet: undefined, content: cryptoText, sources: ["coingecko.com"], source: "coingecko", published_at: cryptoData.fetched_at, updated_at: null, date_info: buildDateInfo(cryptoData.fetched_at, null, reqLang), untrusted: false });
   if (mathData && mathText) structured.push({ title: `Hesablama (daxili)`, url: "https://www.wolframalpha.com/", snippet: undefined, content: mathText, sources: ["daxili-hesablama"], source: "hesablama", published_at: null, updated_at: null, date_info: buildDateInfo(null, null, reqLang), untrusted: false });
@@ -932,11 +934,12 @@ async function handleSearch(body, req) {
           published_at: null,
           updated_at: null,
           date_info: buildDateInfo(null, null, reqLang),
-          untrusted: false,
+          untrusted: true,   // v97: mətndən çıxarılıb — sənədləşdirilmiş "untrusted" müqaviləsi
           extracted: true,
           // v62.3: çıxarılan cavab sıralama mərhələlərində AŞAĞI düşməsin (əvvəl 6-cı yerdə idi)
+          // v97: voteCount 99 süni "razılaşma" idi → 1 (tək mənbə tək səsdir)
           score: 99,
-          voteCount: 99
+          voteCount: 1
         });
       }
     }
@@ -1017,7 +1020,7 @@ async function handleSearch(body, req) {
       const protTerms = [...new Set((String(query).match(/[A-Za-z][A-Za-z0-9_.:-]{2,}/g) || []))].slice(0, 8);
       // v75: daxili çıxarılmış cavablar (say/fakt/cədvəl) TƏRCÜMƏ OLUNMUR — əvvəl
       // "mətndən çıxarıldı" → "mətndən silindi" kimi təhrif olunurdu.
-      const OWN_SOURCES = new Set(["count-extract", "livestat-extract", "measure-extract", "date-extract", "holiday-table", "coingecko", "wikidata", "usda", "open-meteo", "daxili-hesablama", "cbar.az"]);
+      const OWN_SOURCES = new Set(["count-extract", "livestat-extract", "measure-extract", "date-extract", "holiday-table", "coingecko", "wikidata", "usda", "open-meteo", "daxili-hesablama", "hesablama", "cbar.az"]);
       const toTranslate = finalResults.filter(r => !OWN_SOURCES.has(r.source) && !r.extracted);
       resultsTranslated = await translateResultsToQueryLang(toTranslate, reqLang, trBudget, 1200, protTerms);
     }
@@ -1155,6 +1158,14 @@ async function handleSearch(body, req) {
     usedFallback = true;
     degradedStages.push("scoped_empty");
   }
+  // v97: max_results MÜQAVİLƏSİ — structured cavablar siyahının başındadır, ona görə
+  // kəsmə onlardan SONRA edilir: cəm nəticə sayı heç vaxt max_results-ı keçmir.
+  if (finalResults.length > maxResults) {
+    const limited = applyFinalLimits(finalResults, maxResults);
+    finalResults.length = 0;
+    finalResults.push(...limited);
+    if (!degradedStages.includes("limit_applied")) degradedStages.push("limit_applied");
+  }
   const conflicts = /^(1|true|on)$/i.test(String(process.env.ENABLE_CONFLICTS || "0")) ? detectConflicts(finalResults, query) : [];
   const confidence = computeConfidence(finalResults, safeErrors, usedFallback);
   const datedResults = finalResults.filter(r => r.published_at || r.updated_at).length;
@@ -1243,7 +1254,7 @@ export async function GET(req) {
     const { searchParams } = new URL(req.url);
     const body = {
       query: searchParams.get("q") || searchParams.get("query") || "",
-      max_results: searchParams.get("max_results") || "5",
+      max_results: searchParams.get("max_results") || searchParams.get("count") || searchParams.get("limit") || "5",
       max_chars: searchParams.get("max_chars") || "4000",
       format: searchParams.get("format") || "json",
       no_cache: searchParams.get("no_cache") || "",
