@@ -8,7 +8,8 @@
    "requiresDigits": true,
    "page": [
     "stat.gov.az",
-    "wikipedia.org"
+    "wikipedia.org",
+    "wikidata.org"
    ]
   },
   "sources": [
@@ -44,7 +45,8 @@
    "unit": "(km²|km2)",
    "tol": 20000,
    "page": [
-    "wikipedia.org"
+    "wikipedia.org",
+    "wikidata.org"
    ]
   },
   "sources": [
@@ -355,7 +357,8 @@
     "xosrov"
    ],
    "page": [
-    "wikipedia.org"
+    "wikipedia.org",
+    "wikidata.org"
    ]
   },
   "sources": [
@@ -427,7 +430,9 @@
    "year": 1992,
    "must_not": [],
    "page": [
-    "wikipedia.org"
+    "wikipedia.org",
+    "president.az",
+    "e-qanun.az"
    ]
   },
   "sources": [
@@ -459,7 +464,10 @@
    "requiresDigits": true,
    "page": [
     "stat.gov.az",
-    "wikipedia.org"
+    "wikipedia.org",
+    "edu.gov.az",
+    "report.az",
+    "azerbaijan.az"
    ]
   },
   "sources": [
@@ -521,9 +529,7 @@
     "antarktida",
     "antarktika"
    ],
-   "must_not": [
-    "sahara"
-   ],
+   "must_not": [],
    "page": [
     "wikipedia.org"
    ]
@@ -531,7 +537,7 @@
   "sources": [
    "wikipedia.org"
   ],
-  "note": "sahəyə görə Antarktida"
+  "note": "sahəyə görə Antarktida | superlativ cavab yolu hələ yoxdur (bilinən boşluq)"
  },
  {
   "q": "Python-da fayl oxuma necə olur",
