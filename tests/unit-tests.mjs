@@ -1232,6 +1232,10 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     // v81: dativ hal sayı ləğv etmir, tarix dəqiqliyi
     assert("v81: '300-ə çatıb' saydır", extractCount("Bakıda park və bağların sayı 300-ə çatıb.", "park").value === 300);
     assert("v81: tam tarix üstün tutulur", extractDateAnswer("1918-ci il mayın 28-də müstəqillik elan olundu. Azərbaycan Konstitusiyası 12 noyabr 1995-ci il tarixində referendumla qəbul edilmişdir.", "Azərbaycan Konstitusiyası nə vaxt qəbul olunub").dateText === "12 noyabr 1995");
+    // v82: "2 min 166", "burada" miqyası, tarixə il əlavəsi
+    assert("v82: '2 min 166 məscid' → 2166", extractCount("Azərbaycanda 2 min 166 məscid var.", "məscid").value === 2166);
+    assert("v82: 'burada 140 məscid' ölkə sayı deyil", extractCount("“Burada 140 məscid var. Ölkə ərazisində ümumilikdə 2389 məscid mövcuddur.", "məscid", { query: "Azərbaycanda neçə məscid var" }).value === 2389);
+    assert("v82: tarixə il əlavə olunur", extractDateAnswer("Azərbaycan 1992-ci ilin 2 mart tarixində BMT-yə qəbul edildi.", "Azərbaycan BMT-yə nə vaxt üzv olub").dateText === "2 mart 1992");
     // v75: hissə saylarının cəmi
     const bk = extractCount("Hazırda Azərbaycanda 2 dövlət bankı və 19 kommersiya bankı fəaliyyət göstərir.", "bank");
     assert("v75: '2 dövlət və 19 kommersiya bankı' → 21", bk && bk.value === 21 && bk.summed === true, JSON.stringify(bk));
