@@ -23,7 +23,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 156; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 157; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -381,7 +381,9 @@ async function handleSearch(body, req) {
   // v38: provayderlər düşəndə 1-2 nəticə qalır (kripto, bərpa olunan enerji) →
   // sadələşdirilmiş nüvə sorğusu ilə BİR dəfə ehtiyat axtarış
   // v47.2: structured cavab (vahid/fakt/hava/saat/valyuta) varsa ehtiyat axtarışa HEÇ getmirik
-  if (!hasStructured && scored.length < 3 && Date.now() - started < 1800) {  // v39.1: vaxt büdcəsi (8s deadline)
+  // v62.1: mənasız sorğuda (unintelligible) sadələşdirilmiş təkrar axtarış da BAĞLANIR —
+  // əks halda "asdf qwer zxcvb mmm" → knowyourmeme "asdf" nəticəsi qayıdırdı (v60.1 geri qaytarması).
+  if (!hasStructured && !unintelligible && scored.length < 3 && Date.now() - started < 1800) {  // v39.1: vaxt büdcəsi (8s deadline)
     try {
       const core = tokenize(query).slice(0, 3).join(" ");
       if (core && core !== normQuery) {

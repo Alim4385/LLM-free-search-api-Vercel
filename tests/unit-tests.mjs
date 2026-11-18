@@ -1110,6 +1110,9 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
       { title: "List of Baku Metro stations - Wikipedia", url: "https://en.wikipedia.org/x", snippet: "Baku metro station list" }
     ], "how many metro stations baku");
     assert("v62: Bing tək-söz nəticəsi kəsilir", g1.length === 1 && /Baku/.test(g1[0].title), JSON.stringify(g1.map(x => x.title)));
+    // tarix say deyil: "1992-ci il 27 oktyabr tarixli" → 27 sayılmır
+    const f = extractCount("Milli Məclisin 1992-ci il 27 oktyabr tarixli qərarı ilə bayramlar müəyyən edilib.", "bayram");
+    assert("v62.1: ay adı ilə gələn rəqəm sayılmır", f === null, JSON.stringify(f));
     assert("v62: tək sözlü sorğuda gate işləmir", providerTermGate([{ title: "MANY definition", url: "u", snippet: "x" }], "many").length === 1);
   }
 
