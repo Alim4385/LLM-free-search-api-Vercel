@@ -1210,7 +1210,7 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v77: ölkə sualında şəhər cümləsi uduzur", extractCount("Bakı ərazisinə 59 qəsəbə daxildir. Azərbaycanda 262 qəsəbə var.", "qəsəbə", { query: "Azərbaycanda neçə qəsəbə var" }).value === 262);
     assert("v77: faiz ölçüsü çıxarılır", extractMeasure("İşsizlik səviyyəsi 2025-ci ildə 5,50 faizə enib.", "işsizlik səviyyəsi nə qədərdir").text === "5,50 faiz");
     assert("v77: yaş ölçüsü çıxarılır", extractMeasure("Gözlənilən ömür uzunluğu 75 yaş olub.", "orta ömür uzunluğu nə qədərdir").value === 75);
-    assert("v77: ölçü sualı tanınır", matchMeasureQuery("işsizlik səviyyəsi nə qədərdir") === true && matchMeasureQuery("neçə bank var") === true);
+    assert("v77/v78: ölçü sualı tanınır (neçə say sualıdır, ölçü deyil)", matchMeasureQuery("işsizlik səviyyəsi nə qədərdir") === true && matchMeasureQuery("neçə bank var") === false);
     // v78: adambaşına göstərici, ASCII tarixi zaman, ölçüdə ölkə miqyası
     assert("v78: 'hər 100 min nəfərə düşən 22 aptek' say deyil", extractCount("Əhalinin hər 100 min nəfərinə düşən aptek sayı 22-dir. İndi apteklərin sayı 2900-a çatıb.", "aptek").value === 2900);
     assert("v78: ASCII 'acımışdı' tarixi cəza alır", extractCount("70-80-ci illərdə 5 yeni ali məktəb acımışdı. Hazırda ölkədə 51 ali məktəb var.", "ali məktəb").value === 51);
