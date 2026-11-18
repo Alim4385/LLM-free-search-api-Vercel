@@ -557,13 +557,13 @@
   "q": "Azərbaycanda pambıq istehsalı nə qədərdir",
   "type": "count",
   "expect": {
-   "num": null,
    "unit": "ton",
    "requiresDigits": true,
    "page": [
     "stat.gov.az",
     "report.az",
-    "banker.az"
+    "banker.az",
+    "agro.gov.az"
    ]
   },
   "sources": [
@@ -571,6 +571,6 @@
    "report.az",
    "banker.az"
   ],
-  "note": "rəqəm + ton"
+  "note": "istehsal rəqəmi (min ton) — rəsmi aqro/stat mənbəyi"
  }
 ]

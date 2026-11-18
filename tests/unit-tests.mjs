@@ -1252,6 +1252,16 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v90: 'neçədir' say markeridir", hasCountMarker("Bu neçədir") === true);
     assert("v90: 'necədir' say deyil", hasCountMarker("Bakıda hava necədir") === false);
     assert("v90: 'neçə manatdır' rewrite olunmur", countSearchQuery("Bu neçə manatdır") === null);
+    // v99: ingilis dilli mənbədən tarix cavabı + AZ söz sırası
+    assert("v99: ingilis ay adı oxunur", (() => {
+      const r = extractDateAnswer("GPT-5 is a multimodal model. It was released on August 7, 2025.", "GPT-5 nə vaxt çıxdı");
+      return r && r.dateText === "7 avqust 2025";
+    })());
+    // v99: "istehsal" soruşulanda hektar deyil ton götürülür
+    assert("v99: ölçü dimensiyası uyğunlaşdırılır", (() => {
+      const r = extractMeasure("290 min tondan çox pambıq təhvil verilib. 132,5 min hektar sahədə pambıq əkilib.", "Azərbaycanda pambıq istehsalı nə qədərdir");
+      return r && r.value === 290 && r.unit === "min ton";
+    })());
     // v98.2: güclü anchor (hərf+rəqəm) nəticədə olmalıdır
     assert("v98.2: anchor olmayan nəticə cəzalanır", (() => {
       const snip = "GPT modelləri OpenAI tərəfindən hazırlanır.";
