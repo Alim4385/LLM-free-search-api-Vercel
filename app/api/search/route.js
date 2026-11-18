@@ -9,6 +9,7 @@ import { matchUnits, unitsToText } from "../../../lib/units.js";
 import { extractCountFromResults, countNounFromQuery } from "../../../lib/countextract.js";
 import { matchCrypto, fetchCryptoPrice, cryptoToText } from "../../../lib/crypto.js";
 import { matchHoliday, holidayToText } from "../../../lib/holidays.js";
+import { matchLiveStat, extractLiveStatFromResults, liveStatToText } from "../../../lib/livestat.js";
 import { matchFact, fetchFact, factToText } from "../../../lib/facts.js";
 import { matchMath, mathToText } from "../../../lib/math.js";
 import { matchSports, fetchLastMatch, lastMatchToText } from "../../../lib/sports.js";
@@ -25,7 +26,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 169; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 170; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -215,6 +216,11 @@ async function handleSearch(body, req) {
   }
 
   let searchQuery = query;
+  // v71: dəyişən rəsmi rəqəm sualına cari ili əlavə et (köhnə xəbər gəlməsin)
+  {
+    const ls = matchLiveStat(query);
+    if (ls.hit && !/20\d{2}/.test(query)) searchQuery = `${query} ${new Date().getFullYear()}`;
+  }
   if (isMetaQuery(query)) {
     const cleaned = stripMetaInstructions(query);
     if (cleaned) searchQuery = cleaned;
@@ -833,10 +839,19 @@ async function handleSearch(body, req) {
       finalResults.forEach((r, i) => { r.id = i + 1; });
     }
   };
+  // v71: dəyişən rəsmi rəqəm (minimum əmək haqqı, pensiya, yaşayış minimumu)
+  const liveStatQ = matchLiveStat(normQuery);
+  let liveStatHit = null;
+  if (liveStatQ.hit && finalResults.length) {
+    liveStatHit = extractLiveStatFromResults(finalResults.slice(0, 5), liveStatQ.id);
+    if (liveStatHit) degradedStages.push("livestat_extracted");
+  }
+
   const structured = [];
   if (weather && weatherText) structured.push({ title: `${weather.city} - hava məlumatı (Open-Meteo)`, url: "https://open-meteo.com", snippet: undefined, content: weatherText, sources: ["open-meteo"], source: "open-meteo", published_at: weather.fetched_at, updated_at: null, date_info: buildDateInfo(weather.fetched_at, null, reqLang), untrusted: false });
   if (timeData && timeText && intentExact) structured.push({ title: `${timeData.place || "Azərbaycan"} üçün hazırkı vaxt (${timeData.timezone})`, url: "https://time.is", snippet: undefined, content: timeText, sources: ["asia-baku-time"], source: "asia-baku-time", published_at: timeData.fetched_at, updated_at: null, date_info: buildDateInfo(timeData.fetched_at, null, reqLang), untrusted: false });
   if (nutriData && nutriText) structured.push({ title: `${nutriData.food} — qida tərkibi (USDA)`, url: "https://fdc.nal.usda.gov/", snippet: undefined, content: nutriText, sources: ["usda.gov"], source: "usda", published_at: nutriData.fetched_at, updated_at: null, date_info: buildDateInfo(nutriData.fetched_at, null, reqLang), untrusted: false });
+  if (liveStatHit) structured.push({ title: `${liveStatQ.label} (mətndən çıxarıldı)`, url: liveStatHit.url, snippet: undefined, content: liveStatToText(liveStatHit, liveStatQ.label), sources: [(() => { try { return new URL(liveStatHit.url).hostname.replace(/^www\./, ""); } catch { return "mənbə"; } })()], source: "livestat-extract", published_at: liveStatHit.published_at || null, updated_at: null, date_info: buildDateInfo(liveStatHit.published_at || null, null, reqLang), untrusted: false });
   if (holidayHit.hit && holidayText) structured.push({ title: `${holidayHit.note} — tarix`, url: "https://president.az/az/pages/view/azerbaijan/holidays", snippet: undefined, content: holidayText, sources: ["president.az"], source: "holiday-table", published_at: null, updated_at: null, date_info: buildDateInfo(null, null, reqLang), untrusted: false });
   if (cryptoData && cryptoText && intentExact) structured.push({ title: `${cryptoData.sym} hazırkı qiyməti (CoinGecko)`, url: "https://www.coingecko.com/", snippet: undefined, content: cryptoText, sources: ["coingecko.com"], source: "coingecko", published_at: cryptoData.fetched_at, updated_at: null, date_info: buildDateInfo(cryptoData.fetched_at, null, reqLang), untrusted: false });
   if (mathData && mathText) structured.push({ title: `Hesablama (daxili)`, url: "https://www.wolframalpha.com/", snippet: undefined, content: mathText, sources: ["daxili-hesablama"], source: "hesablama", published_at: null, updated_at: null, date_info: buildDateInfo(null, null, reqLang), untrusted: false });

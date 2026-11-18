@@ -21,6 +21,7 @@ import { matchFact } from "../lib/facts.js";
 import { matchNutrition } from "../lib/nutrition.js";
 import { matchMath } from "../lib/math.js";
 import { matchHoliday } from "../lib/holidays.js";
+import { matchLiveStat, extractMoneySentence } from "../lib/livestat.js";
 import { matchCrypto, cryptoToText } from "../lib/crypto.js";
 import { extractCount, extractCountFromResults, countNounFromQuery } from "../lib/countextract.js";
 import { parseSitemap, parseArticleHtml, matchSitemapItems } from "../lib/sitemapnews.js";
@@ -1168,6 +1169,13 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v70: '8 noyabr nə gündür' → Zəfər Günü", /Zəfər/.test(matchHoliday("8 noyabr nə gündür").note || ""));
     assert("v70: adi sual bayram sayılmır", matchHoliday("Azərbaycan Prezidenti kimdir").hit === false);
     assert("v70: hava sualı bayram deyil", matchHoliday("Bakıda hava necədir").hit === false);
+    // v71: dəyişən rəsmi rəqəm
+    assert("v71: minimum əmək haqqı tanınır", matchLiveStat("Azərbaycanda minimum əmək haqqı nə qədərdir").id === "minwage");
+    assert("v71: pensiya tanınır", matchLiveStat("minimum pensiya nə qədərdir").id === "pension");
+    const ms = extractMoneySentence("minimum aylıq əməkhaqqının məbləği 2025-ci il yanvarın 1-dən 400 manat müəyyən edilib.", "minwage", 2026);
+    assert("v71: 400 manat çıxarılır", ms && ms.value === 400, JSON.stringify(ms));
+    assert("v71: köhnə rəqəm (2019) rədd olunur", extractMoneySentence("2019-cu ildə minimum əmək haqqı 180 manat idi.", "minwage", 2026) === null);
+    assert("v71: resept saytı boost alır", howtoTrustBoost("https://azcookbook.com/2011/04/13/yogurt-soup/") > 0);
     assert("v62: tək sözlü sorğuda gate işləmir", providerTermGate([{ title: "MANY definition", url: "u", snippet: "x" }], "many").length === 1);
   }
 
