@@ -14,6 +14,7 @@ import { protectTokens, restoreTokens, protectWithTerms } from "../lib/translate
 import { detectConflicts, parseNum } from "../lib/conflict.js";
 import { isChallengePage } from "../lib/extract.js";
 import { applyFinalLimits, filterByFreshness } from "../lib/finalize.js";
+import { extractHydrationText } from "../lib/extract.js";
 import { wikiTitleFromUrl, cleanWikiQuery } from "../lib/wikilink.js";
 import { parseMaxResults, parseMaxChars, parseFormat, parseFreshness, parseExcludeDomains, parseLang } from "../lib/pipeline/params.js";
 import { makeJsonResponse, makeJsonlResponse, jsonlLines } from "../lib/pipeline/respond.js";
@@ -27,7 +28,7 @@ import { matchMath } from "../lib/math.js";
 import { matchHoliday } from "../lib/holidays.js";
 import { matchLiveStat, extractMoneySentence } from "../lib/livestat.js";
 import { matchCrypto, cryptoToText } from "../lib/crypto.js";
-import { extractMeasure, extractMeasureFromResults, matchMeasureQuery, extractDateAnswer, matchDateQuery, extractDateFromResults } from "../lib/measure.js";
+import { extractMeasure, extractMeasureFromResults, matchMeasureQuery, extractDateAnswer, matchDateQuery, extractDateFromResults, unitFamilyOfQuery, unitFamilyOfUnit } from "../lib/measure.js";
 import { extractCount, extractCountFromResults, countNounFromQuery, countSearchQuery, hasCountMarker } from "../lib/countextract.js";
 import { parseSitemap, parseArticleHtml, matchSitemapItems } from "../lib/sitemapnews.js";
 import { normalizeUrl, decodeEntities, stripQuestionWords, parseDDGLite, normalizeMwmbl, parseYahooJP, parseMilliArxiv, isArchiveTopic, providerTermGate } from "../lib/search.js";
@@ -1262,6 +1263,21 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v104: 'üstü' dərəcəsi", String(matchMath("2 üstü 10").result) === "1024");
     assert("v104: farengeyt (AZ yazılışı)", (() => { const r = matchUnits("30 dərəcə Selsi neçə Farengeyt"); return r.hit && r.from === "c" && r.to === "f"; })());
     assert("v104: temperatur 2 onluq", unitsToText(matchUnits("100 farengeyt neçə selsi")) === "100 °F = 37,78 °C (temperatur çevirməsi).");
+    // v109: Next.js hydration payload (metro.gov.az kimi client-rendered səhifələr)
+    assert("v109: RSC payload-dan mətn çıxarılır", (() => {
+      const html = `<html><body><div id="root"></div><script>self.__next_f.push([1,"[\\"$\\",\\"p\\",null,{\\"children\\\":\\\"Bu gün isə Bakı metropoliteni 3 xətt, 27 stansiya və 40,7 kilometrlik şəbəkəsi ilə.\\\"}]"])</script></body></html>`;
+      const out = extractHydrationText(html);
+      return out.includes("27 stansiya");
+    })());
+    assert("v109: payload olmayan səhifədə boş qaytarır", extractHydrationText("<html><body><p>Adi səhifə</p></body></html>") === "");
+    // v109: "hansı ildə açılıb" → ən erkən il
+    assert("v109: açılış ili ən erkən tarixdir", (() => {
+      const txt = "Ölkə başçısının 7 may 2026-cı il tarixində imzaladığı Fərman. Bakı metrosunun inkişaf yolu 1967-ci ildə başlayıb.";
+      const r = extractDateAnswer(txt, "Bakı metropoliteni hansı ildə açılıb");
+      return r && r.dateText === "1967-ci ildə";
+    })());
+    // v108: vahid ailəsi
+    assert("v108: vahid ailəsi düzgün təyin olunur", unitFamilyOfQuery("neft hasilatı nə qədərdir") === "mass" && unitFamilyOfQuery("əhalisi nə qədərdir") === "count" && unitFamilyOfUnit("min ton") === "mass" && unitFamilyOfUnit("km²") === "area");
     // v107: dil "blok deyil, preferensiya" — başqa dildə/mətnli səhifə cəza alır, silinmir
     assert("v107: kiril mətni bloklanmır, sadəcə aşağı düşür", (() => {
       const q = "Xocalı soyqırımı nə vaxt olub";
