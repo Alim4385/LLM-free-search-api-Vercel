@@ -33,7 +33,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 220; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 221; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -240,6 +240,18 @@ async function handleSearch(body, req) {
   const timing = {};
   let searchResult = { results: [], providersUsed: [], errors: {}, anchorQuery: null, translated: false };
   let earlyBridge = null;   // v106: dil körpüsü (count/date) — paralel başladılır
+  // v109: RƏSMİ MƏNBƏ (site-hint) axtarışı ƏSAS axtarışla PARALEL başladılır. Əvvəl ardıcıl
+  // idi və şərt "2 saniyədən tez olmalı" olduğu üçün uzun axtarışlarda heç vaxt işləmirdi
+  // ("Bakı metrosunda neçə stansiya" → metro.gov.az gəlmirdi).
+  let siteHintPromise = null;
+  if (qType.siteHint && !hasStructured && !unintelligible) {
+    try {
+      const coreQ = `${tokenize(normQuery).slice(0, 5).join(" ")} site:${qType.siteHint}`;
+      if (coreQ.trim()) {
+        siteHintPromise = withTimeout(searchAll(coreQ, maxResults, { freshness, excludeDomains }), 2000, "site hint timeout").catch(() => null);
+      }
+    } catch { siteHintPromise = null; }
+  }
   let results = [], providersUsed = [], errors = {};
   if (!hasStructured && !unintelligible) {
     try {
@@ -486,10 +498,10 @@ async function handleSearch(body, req) {
   }
 
   // v39: AZ kontekstli sualda rəsmi mənbə heç gəlməyibsə → sayt-hədəfli bir cəhd
-  if (!hasStructured && !structuredFailed && qType.siteHint && !scored.some(r => officialBoost(r.url)) && Date.now() - started < 2000 && HARD_DEADLINE_MS - (Date.now() - started) > 2600) {
+  if (!hasStructured && !structuredFailed && siteHintPromise && !scored.some(r => officialBoost(r.url)) && HARD_DEADLINE_MS - (Date.now() - started) > 1200) {
     try {
-      const coreQ = `${tokenize(normQuery).slice(0, 5).join(" ")} site:${qType.siteHint}`;
-      const rs = await withTimeout(searchAll(coreQ, maxResults, { freshness, excludeDomains }), 1300, "site hint timeout");
+      const rs = await siteHintPromise;
+      if (!rs) throw new Error("no site hint");
       const tS = [...new Set([...qTerms, ...tokenize(rs.anchorQuery || "")])];
       const extraS = rs.results.filter(r => !isSpamDomain(r.url)).map(r => ({ ...r, score: scoreResult(r, tS, qLang, normQuery) })).filter(r => r.score >= 1.5);
       if (extraS.length) {
