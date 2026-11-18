@@ -1180,6 +1180,12 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v72: '130 saylı sərəncam' say deyil", extractCount("1967-ci il tarixli 130 saylı sərəncamına əsasən yaradılmışdır.", "muzey") === null);
     assert("v72: 'neçə qonşusu var' → borders", matchFact("Azərbaycanın neçə qonşusu var").kind === "borders", JSON.stringify(matchFact("Azərbaycanın neçə qonşusu var")));
     assert("v72: 'neçə sərhəd qonşusu var' → borders", matchFact("Azərbaycanın neçə sərhəd qonşusu var").kind === "borders");
+    // v73: köhnə il qeydi
+    const old = extractCount("2014-cü ilin məlumatına görə Bakıda 380 mehmanxana var.", "mehmanxana");
+    assert("v73: köhnə il qeyd olunur", old && old.year === 2014, JSON.stringify(old));
+    assert("v73: pensiya mövzusu geniş tanınır", matchLiveStat("Azərbaycanda pensiya nə qədərdir").id === "pension", JSON.stringify(matchLiveStat("Azərbaycanda pensiya nə qədərdir")));
+    const pen = extractMoneySentence("2026-cı ildə Azərbaycanda minimum əmək pensiyasının məbləği 320 manat təşkil edir.", "pension", 2026);
+    assert("v73: pensiya 320 manat çıxarılır", pen && pen.value === 320, JSON.stringify(pen));
     assert("v62: tək sözlü sorğuda gate işləmir", providerTermGate([{ title: "MANY definition", url: "u", snippet: "x" }], "many").length === 1);
   }
 
