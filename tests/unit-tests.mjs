@@ -1251,6 +1251,10 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v90: 'neçədir' say markeridir", hasCountMarker("Bu neçədir") === true);
     assert("v90: 'necədir' say deyil", hasCountMarker("Bakıda hava necədir") === false);
     assert("v90: 'neçə manatdır' rewrite olunmur", countSearchQuery("Bu neçə manatdır") === null);
+    // v95: 3 anlayışlı sualda ƏSAS MÖVZU tutulubsa nəticə atılmır ("React" 0 bal alırdı)
+    assert("v95: mövzu məqaləsi sıfırlanmır (əvvəl sərt 0 idi)", scoreResult({ title: "React", url: "https://az.wikipedia.org/wiki/React", snippet: "React JavaScript kitabxanasıdır, komponent əsaslıdır." }, ["react", "state", "idareetme"], "az", "React state idarəetməsi nədir") > 0);
+    assert("v95: mövzusuz səhifə yenə atılır", scoreResult({ title: "Hava proqnozu", url: "https://example.az/x", snippet: "Sabah hava günəşli olacaq." }, ["react", "state", "idareetme"], "az", "React state idarəetməsi nədir") === 0);
+    assert("v95: 'X nədir' sualında X mövzu sayılır", scoreResult({ title: "Git", url: "https://az.wikipedia.org/wiki/Git", snippet: "Git versiya nəzarəti sistemidir." }, ["git", "rebase"], "az", "Git rebase nədir") > 0);
     // v93: faiz soruşulmayıbsa "%" cavab verilmir
     assert("v93: faiz cavabı rədd olunur", extractMeasure("Ötən il Azərbaycanın xarici dövlət borcu 20% azalıb.", "Azərbaycanın dövlət borcu nə qədərdir") === null);
     assert("v93: faiz soruşulanda qalır", (extractMeasure("Azərbaycanda işsizlik 5,3 faiz olub.", "işsizlik neçə faizdir") || {}).text === "5,3 faiz");

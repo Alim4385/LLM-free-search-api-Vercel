@@ -1,0 +1,955 @@
+{
+  "threshold": 1.5,
+  "queries": [
+    {
+      "q": "Azərbaycanda neçə rayon var",
+      "lang": "az",
+      "truth": "Azərbaycanın inzibati bölgüsü",
+      "truthSim": 1,
+      "hints": [
+        "64",
+        "11",
+        "6",
+        "12",
+        "262",
+        "190"
+      ],
+      "raw": 24,
+      "pos": 8,
+      "fn": 3,
+      "fp": 0,
+      "fnList": [
+        {
+          "host": "bbc.com",
+          "score": -0.4,
+          "ov": 0.33,
+          "drop": "score",
+          "why": "leksik",
+          "title": "Azərbaycanda neçə \"siyasi məhbus\" var? Siyahılar niyə fərqlidir?…"
+        },
+        {
+          "host": "news.google.com",
+          "score": 0,
+          "ov": 0.22,
+          "drop": "junk_domain",
+          "why": "leksik",
+          "title": "İlham Əliyev “Füzuli Şəhəri Günü”ndə Füzuli şəhərinə köçmüş sakinlər"
+        },
+        {
+          "host": "news.google.com",
+          "score": 0,
+          "ov": 0.2,
+          "drop": "junk_domain",
+          "why": "leksik",
+          "title": "İlham Əliyevin Azərbaycan Televiziyasına müsahibəsi » Azərbaycan Pre"
+        }
+      ],
+      "fpList": []
+    },
+    {
+      "q": "Azərbaycanın paytaxtı hansıdır",
+      "lang": "az",
+      "truth": "Azərbaycan",
+      "truthSim": 1,
+      "hints": [],
+      "raw": 20,
+      "pos": 14,
+      "fn": 1,
+      "fp": 0,
+      "fnList": [
+        {
+          "host": "bbc.com",
+          "score": 1.3,
+          "ov": 0.3,
+          "drop": "score",
+          "why": "leksik",
+          "title": "Şəki: Qafqazın az tanınan mədəniyyət paytaxtı - BBC"
+        }
+      ],
+      "fpList": []
+    },
+    {
+      "q": "Xəzər dənizinin sahəsi nə qədərdir",
+      "lang": "az",
+      "truth": "Xəzər dənizi",
+      "truthSim": 1,
+      "hints": [
+        "28",
+        "44",
+        "10",
+        "20",
+        "370",
+        "2"
+      ],
+      "raw": 9,
+      "pos": 8,
+      "fn": 2,
+      "fp": 0,
+      "fnList": [
+        {
+          "host": "az.wikipedia.org",
+          "score": 0.5,
+          "ov": 0.47,
+          "drop": "score",
+          "why": "leksik",
+          "title": "Aqraxan körfəzi"
+        },
+        {
+          "host": "az.wikipedia.org",
+          "score": 0,
+          "ov": 0.26,
+          "drop": "score",
+          "why": "leksik",
+          "title": "Aral gölü"
+        }
+      ],
+      "fpList": []
+    },
+    {
+      "q": "Azərbaycanda neçə muzey var",
+      "lang": "az",
+      "truth": "Azərbaycan muzeyləri",
+      "truthSim": 1,
+      "hints": [],
+      "raw": 16,
+      "pos": 0,
+      "fn": 0,
+      "fp": 0,
+      "fnList": [],
+      "fpList": []
+    },
+    {
+      "q": "Azərbaycan himni nə vaxt təsdiq olunub",
+      "lang": "az",
+      "truth": "Azərbaycan himni",
+      "truthSim": 1,
+      "hints": [
+        "1920",
+        "30",
+        "50",
+        "1",
+        "28",
+        "1992"
+      ],
+      "raw": 8,
+      "pos": 8,
+      "fn": 0,
+      "fp": 0,
+      "fnList": [],
+      "fpList": []
+    },
+    {
+      "q": "Azərbaycanın dövlət borcu nə qədərdir",
+      "lang": "az",
+      "truth": "Azərbaycan iqtisadiyyatı",
+      "truthSim": 1,
+      "hints": [
+        "1990",
+        "2000",
+        "1995",
+        "2014",
+        "10",
+        "90"
+      ],
+      "raw": 11,
+      "pos": 6,
+      "fn": 0,
+      "fp": 0,
+      "fnList": [],
+      "fpList": []
+    },
+    {
+      "q": "Azərbaycanda neçə universitet var",
+      "lang": "az",
+      "truth": "Azərbaycanda təhsil",
+      "truthSim": 1,
+      "hints": [
+        "1",
+        "6",
+        "4",
+        "5",
+        "9",
+        "10"
+      ],
+      "raw": 16,
+      "pos": 5,
+      "fn": 2,
+      "fp": 0,
+      "fnList": [
+        {
+          "host": "az.wikipedia.org",
+          "score": -4.6,
+          "ov": 0.27,
+          "drop": "score",
+          "why": "leksik",
+          "title": "Universitet"
+        },
+        {
+          "host": "news.google.com",
+          "score": 0,
+          "ov": 0.2,
+          "drop": "junk_domain",
+          "why": "leksik",
+          "title": "AZƏRBAYCAN HAKİMİYYƏTİNİ BİABIR EDƏN REKTORUN 180 DƏRƏCƏ DƏYİŞƏN MÖV"
+        }
+      ],
+      "fpList": []
+    },
+    {
+      "q": "Azərbaycanda neçə kənd var",
+      "lang": "az",
+      "truth": "Azərbaycanın yaşayış məntəqələri",
+      "truthSim": 1,
+      "hints": [],
+      "raw": 24,
+      "pos": 0,
+      "fn": 0,
+      "fp": 0,
+      "fnList": [],
+      "fpList": []
+    },
+    {
+      "q": "qutab necə hazırlanır",
+      "lang": "az",
+      "truth": "Qutab",
+      "truthSim": 1,
+      "hints": [],
+      "raw": 9,
+      "pos": 1,
+      "fn": 0,
+      "fp": 1,
+      "fnList": [],
+      "fpList": [
+        {
+          "host": "greelane.com",
+          "score": 3.4,
+          "ov": 0,
+          "title": "Quru buz balonu necə hazırlanır"
+        }
+      ]
+    },
+    {
+      "q": "React state idarəetməsi nədir",
+      "lang": "az",
+      "truth": "React (JavaScript kitabxanası)",
+      "truthSim": 1,
+      "hints": [],
+      "raw": 17,
+      "pos": 1,
+      "fn": 0,
+      "fp": 3,
+      "fnList": [],
+      "fpList": [
+        {
+          "host": "github.com",
+          "score": 4.6,
+          "ov": 0.05,
+          "title": "GitHub - lsm/alfa: Effortless React State Management."
+        },
+        {
+          "host": "css-tricks.com",
+          "score": 3.6,
+          "ov": 0.05,
+          "title": "React State From The Ground Up | CSS-Tricks"
+        },
+        {
+          "host": "medium.com",
+          "score": 3.5,
+          "ov": 0.05,
+          "title": "React State | by Christopher Pitt | React Tutorials | Medium"
+        }
+      ]
+    },
+    {
+      "q": "what is the capital of Azerbaijan",
+      "lang": "en",
+      "truth": "Azerbaijan",
+      "truthSim": 1,
+      "hints": [],
+      "raw": 24,
+      "pos": 16,
+      "fn": 12,
+      "fp": 0,
+      "fnList": [
+        {
+          "host": "news.google.com",
+          "score": 0,
+          "ov": 0.44,
+          "drop": "junk_domain",
+          "why": "leksik",
+          "title": "Azerbaijan | People, Flag, Map, Religion, Europe, Russia, & Asia - B"
+        },
+        {
+          "host": "msn.com",
+          "score": 0.1,
+          "ov": 0.33,
+          "drop": "score",
+          "why": "leksik",
+          "title": "Is Baku, Azerbaijan all a facade? What they never show you"
+        },
+        {
+          "host": "bbc.co.uk",
+          "score": 0.1,
+          "ov": 0.28,
+          "drop": "score",
+          "why": "leksik",
+          "title": "Azerbaijan boom benefits super-rich oil elite - BBC News"
+        },
+        {
+          "host": "en.wikipedia.org",
+          "score": 1.3,
+          "ov": 0.36,
+          "drop": "score",
+          "why": "leksik",
+          "title": "Stepanakert"
+        },
+        {
+          "host": "news.google.com",
+          "score": 0,
+          "ov": 0.29,
+          "drop": "junk_domain",
+          "why": "leksik",
+          "title": "® ABB presents research on human capital in Azerbaijan - azərtac"
+        },
+        {
+          "host": "news.google.com",
+          "score": 0,
+          "ov": 0.22,
+          "drop": "junk_domain",
+          "why": "leksik",
+          "title": "Azerbaijan International Investment Forum: Where capital meets oppor"
+        },
+        {
+          "host": "azerbaijans.com",
+          "score": 0.3,
+          "ov": 0.29,
+          "drop": "score",
+          "why": "leksik",
+          "title": "Chagane - Azerbaijan"
+        },
+        {
+          "host": "en.wikipedia.org",
+          "score": 1,
+          "ov": 0.28,
+          "drop": "score",
+          "why": "leksik",
+          "title": "List of cities in Azerbaijan"
+        },
+        {
+          "host": "news.google.com",
+          "score": 0,
+          "ov": 0.38,
+          "drop": "junk_domain",
+          "why": "leksik",
+          "title": "Baku, the Capital City of Azerbaijan, will Host the First Edition of"
+        },
+        {
+          "host": "news.google.com",
+          "score": 0,
+          "ov": 0.27,
+          "drop": "junk_domain",
+          "why": "leksik",
+          "title": "Azerbaijan supports establishment of Palestinian state with East Jer"
+        },
+        {
+          "host": "news.google.com",
+          "score": 0,
+          "ov": 0.43,
+          "drop": "junk_domain",
+          "why": "leksik",
+          "title": "Why Visit Baku, The Vibrant And Varied Capital Of Azerbaijan - Forbe"
+        },
+        {
+          "host": "news.google.com",
+          "score": 0,
+          "ov": 0.36,
+          "drop": "junk_domain",
+          "why": "leksik",
+          "title": "Gallery of Baku Architecture City Guide: 15 Projects Reframing Azerb"
+        }
+      ],
+      "fpList": []
+    },
+    {
+      "q": "how many regions does Azerbaijan have",
+      "lang": "en",
+      "truth": "Administrative divisions of Azerbaijan",
+      "truthSim": 1,
+      "hints": [
+        "67",
+        "11",
+        "7",
+        "1",
+        "14",
+        "2021"
+      ],
+      "raw": 24,
+      "pos": 6,
+      "fn": 5,
+      "fp": 0,
+      "fnList": [
+        {
+          "host": "news.google.com",
+          "score": 0,
+          "ov": 0.63,
+          "drop": "junk_domain",
+          "why": "leksik",
+          "title": "Azerbaijan - Nagorno-Karabakh, Soviet Union, Heydar Aliyev - Britann"
+        },
+        {
+          "host": "qa.answers.com",
+          "score": -2.8,
+          "ov": 0.2,
+          "drop": "score",
+          "why": "leksik",
+          "title": "How many main land regions does Colorado have? - Answers"
+        },
+        {
+          "host": "science.blurtit.com",
+          "score": -2.8,
+          "ov": 0.2,
+          "drop": "score",
+          "why": "leksik",
+          "title": "How Many Regions Does China Have? And What Are The Names? - Blur…"
+        },
+        {
+          "host": "math.answers.com",
+          "score": -2.8,
+          "ov": 0.25,
+          "drop": "score",
+          "why": "leksik",
+          "title": "How many regions does a hexagon have? - Answers"
+        },
+        {
+          "host": "answers.com",
+          "score": -2.8,
+          "ov": 0.25,
+          "drop": "score",
+          "why": "leksik",
+          "title": "How many regions does Russia have? - Answers"
+        }
+      ],
+      "fpList": []
+    },
+    {
+      "q": "python list comprehension",
+      "lang": "en",
+      "truth": "Python (programming language)",
+      "truthSim": 1,
+      "hints": [],
+      "raw": 24,
+      "pos": 4,
+      "fn": 1,
+      "fp": 3,
+      "fnList": [
+        {
+          "host": "news.google.com",
+          "score": 0,
+          "ov": 0.4,
+          "drop": "junk_domain",
+          "why": "leksik",
+          "title": "How to Use List Comprehension in Python - MakeUseOf"
+        }
+      ],
+      "fpList": [
+        {
+          "host": "realpython.com",
+          "score": 9.1,
+          "ov": 0.06,
+          "title": "Python List Comprehension: Tutorial With Examples"
+        },
+        {
+          "host": "python.org",
+          "score": 3.6,
+          "ov": 0.06,
+          "title": "PEP 274 – Dict Comprehensions | peps.python.org"
+        },
+        {
+          "host": "note.com",
+          "score": 3.6,
+          "ov": 0.04,
+          "title": "Python: The 'Skip Phenomenon' Trap When Deleting List Elements Durin"
+        }
+      ]
+    },
+    {
+      "q": "Azərbaycanda neçə milli park var",
+      "lang": "az",
+      "truth": "Azərbaycan milli parkları",
+      "truthSim": 1,
+      "hints": [],
+      "raw": 24,
+      "pos": 7,
+      "fn": 6,
+      "fp": 0,
+      "fnList": [
+        {
+          "host": "milliyet.com.tr",
+          "score": -9.6,
+          "ov": 0.33,
+          "drop": "score",
+          "why": "leksik",
+          "title": "Milli Park Haberleri - Son Dakika Milli Park Haber Güncel Gelişm…"
+        },
+        {
+          "host": "az.wikipedia.org",
+          "score": -8.6,
+          "ov": 0.33,
+          "drop": "score",
+          "why": "leksik",
+          "title": "Çapada dos Veadeyros Milli Park — Vikipediya"
+        },
+        {
+          "host": "tr.wiki34.com",
+          "score": -6.2,
+          "ov": 0.4,
+          "drop": "score",
+          "why": "leksik",
+          "title": "Milli park Canaima - wiki34.com"
+        },
+        {
+          "host": "tr.frwiki.wiki",
+          "score": -8.4,
+          "ov": 0.4,
+          "drop": "score",
+          "why": "leksik",
+          "title": "Milli park (Fransa) - frwiki.wiki"
+        },
+        {
+          "host": "birgun.net",
+          "score": -8.5,
+          "ov": 0.5,
+          "drop": "score",
+          "why": "leksik",
+          "title": "milli park - BirGün Gazetesi"
+        },
+        {
+          "host": "sabah.com.tr",
+          "score": -8.5,
+          "ov": 0.4,
+          "drop": "score",
+          "why": "leksik",
+          "title": "Tarihi Milli Park - YAVUZ DONAT"
+        }
+      ],
+      "fpList": []
+    }
+  ],
+  "domains": {
+    "az.wikipedia.org": {
+      "pos": 35,
+      "neg": 2,
+      "kept": 55,
+      "dropped": 10
+    },
+    "tr.wikipedia.org": {
+      "pos": 0,
+      "neg": 0,
+      "kept": 1,
+      "dropped": 1
+    },
+    "gag.wikipedia.org": {
+      "pos": 0,
+      "neg": 0,
+      "kept": 1,
+      "dropped": 0
+    },
+    "surucu.az": {
+      "pos": 0,
+      "neg": 0,
+      "kept": 1,
+      "dropped": 0
+    },
+    "bbc.com": {
+      "pos": 3,
+      "neg": 0,
+      "kept": 1,
+      "dropped": 6
+    },
+    "en.wikipedia.org": {
+      "pos": 7,
+      "neg": 31,
+      "kept": 17,
+      "dropped": 53
+    },
+    "news.google.com": {
+      "pos": 12,
+      "neg": 8,
+      "kept": 0,
+      "dropped": 32
+    },
+    "developia.az": {
+      "pos": 1,
+      "neg": 0,
+      "kept": 1,
+      "dropped": 0
+    },
+    "bashlibel.az": {
+      "pos": 1,
+      "neg": 0,
+      "kept": 1,
+      "dropped": 0
+    },
+    "adpuquba.edu.az": {
+      "pos": 1,
+      "neg": 0,
+      "kept": 1,
+      "dropped": 0
+    },
+    "azerbaijans.com": {
+      "pos": 2,
+      "neg": 0,
+      "kept": 1,
+      "dropped": 1
+    },
+    "bulbapp.io": {
+      "pos": 1,
+      "neg": 0,
+      "kept": 1,
+      "dropped": 0
+    },
+    "azerbaijan.az": {
+      "pos": 1,
+      "neg": 0,
+      "kept": 2,
+      "dropped": 0
+    },
+    "sabunchu-ih.gov.az": {
+      "pos": 1,
+      "neg": 0,
+      "kept": 1,
+      "dropped": 0
+    },
+    "baku-ih.gov.az": {
+      "pos": 1,
+      "neg": 0,
+      "kept": 1,
+      "dropped": 0
+    },
+    "youtube.com": {
+      "pos": 0,
+      "neg": 0,
+      "kept": 1,
+      "dropped": 0
+    },
+    "trt.net.tr": {
+      "pos": 0,
+      "neg": 0,
+      "kept": 1,
+      "dropped": 0
+    },
+    "shagird.info": {
+      "pos": 1,
+      "neg": 0,
+      "kept": 1,
+      "dropped": 0
+    },
+    "pia.az": {
+      "pos": 1,
+      "neg": 0,
+      "kept": 1,
+      "dropped": 0
+    },
+    "interfax.az": {
+      "pos": 2,
+      "neg": 0,
+      "kept": 2,
+      "dropped": 0
+    },
+    "greelane.com": {
+      "pos": 0,
+      "neg": 1,
+      "kept": 1,
+      "dropped": 0
+    },
+    "github.com": {
+      "pos": 0,
+      "neg": 1,
+      "kept": 4,
+      "dropped": 0
+    },
+    "reactjs.org": {
+      "pos": 0,
+      "neg": 0,
+      "kept": 0,
+      "dropped": 1
+    },
+    "robinwieruch.de": {
+      "pos": 0,
+      "neg": 0,
+      "kept": 1,
+      "dropped": 0
+    },
+    "css-tricks.com": {
+      "pos": 0,
+      "neg": 1,
+      "kept": 1,
+      "dropped": 0
+    },
+    "discourse.mozilla.org": {
+      "pos": 0,
+      "neg": 0,
+      "kept": 0,
+      "dropped": 1
+    },
+    "daveceddia.com": {
+      "pos": 0,
+      "neg": 0,
+      "kept": 1,
+      "dropped": 0
+    },
+    "dev.to": {
+      "pos": 0,
+      "neg": 0,
+      "kept": 1,
+      "dropped": 0
+    },
+    "medium.com": {
+      "pos": 0,
+      "neg": 1,
+      "kept": 1,
+      "dropped": 0
+    },
+    "cpj.org": {
+      "pos": 0,
+      "neg": 0,
+      "kept": 1,
+      "dropped": 0
+    },
+    "msn.com": {
+      "pos": 1,
+      "neg": 0,
+      "kept": 0,
+      "dropped": 1
+    },
+    "bbc.co.uk": {
+      "pos": 1,
+      "neg": 0,
+      "kept": 0,
+      "dropped": 1
+    },
+    "krebsonsecurity.com": {
+      "pos": 0,
+      "neg": 0,
+      "kept": 0,
+      "dropped": 1
+    },
+    "reuters.com": {
+      "pos": 0,
+      "neg": 0,
+      "kept": 1,
+      "dropped": 0
+    },
+    "saveur.com": {
+      "pos": 0,
+      "neg": 0,
+      "kept": 0,
+      "dropped": 1
+    },
+    "middleeasteye.net": {
+      "pos": 0,
+      "neg": 0,
+      "kept": 0,
+      "dropped": 1
+    },
+    "azjm.org": {
+      "pos": 0,
+      "neg": 1,
+      "kept": 0,
+      "dropped": 1
+    },
+    "langfuse.com": {
+      "pos": 0,
+      "neg": 0,
+      "kept": 0,
+      "dropped": 1
+    },
+    "science.blurtit.com": {
+      "pos": 1,
+      "neg": 0,
+      "kept": 0,
+      "dropped": 2
+    },
+    "qa.answers.com": {
+      "pos": 1,
+      "neg": 0,
+      "kept": 0,
+      "dropped": 1
+    },
+    "csis.org": {
+      "pos": 0,
+      "neg": 0,
+      "kept": 0,
+      "dropped": 1
+    },
+    "healthcareitnews.com": {
+      "pos": 0,
+      "neg": 1,
+      "kept": 0,
+      "dropped": 1
+    },
+    "mapsofworld.com": {
+      "pos": 0,
+      "neg": 0,
+      "kept": 0,
+      "dropped": 1
+    },
+    "math.answers.com": {
+      "pos": 1,
+      "neg": 0,
+      "kept": 0,
+      "dropped": 1
+    },
+    "sarahkendzior.com": {
+      "pos": 0,
+      "neg": 0,
+      "kept": 0,
+      "dropped": 1
+    },
+    "answers.com": {
+      "pos": 1,
+      "neg": 0,
+      "kept": 0,
+      "dropped": 1
+    },
+    "w3schools.com": {
+      "pos": 0,
+      "neg": 0,
+      "kept": 2,
+      "dropped": 0
+    },
+    "geeksforgeeks.org": {
+      "pos": 1,
+      "neg": 0,
+      "kept": 2,
+      "dropped": 0
+    },
+    "docs.python.org": {
+      "pos": 0,
+      "neg": 0,
+      "kept": 1,
+      "dropped": 0
+    },
+    "realpython.com": {
+      "pos": 0,
+      "neg": 1,
+      "kept": 1,
+      "dropped": 0
+    },
+    "martinheinz.dev": {
+      "pos": 0,
+      "neg": 0,
+      "kept": 1,
+      "dropped": 0
+    },
+    "programiz.com": {
+      "pos": 0,
+      "neg": 0,
+      "kept": 1,
+      "dropped": 0
+    },
+    "pythonguides.com": {
+      "pos": 1,
+      "neg": 0,
+      "kept": 1,
+      "dropped": 0
+    },
+    "arxiv.org": {
+      "pos": 0,
+      "neg": 0,
+      "kept": 0,
+      "dropped": 2
+    },
+    "python.org": {
+      "pos": 0,
+      "neg": 1,
+      "kept": 2,
+      "dropped": 0
+    },
+    "treyhunner.com": {
+      "pos": 0,
+      "neg": 0,
+      "kept": 1,
+      "dropped": 0
+    },
+    "gamedev.net": {
+      "pos": 0,
+      "neg": 0,
+      "kept": 1,
+      "dropped": 0
+    },
+    "stackoverflow.com": {
+      "pos": 0,
+      "neg": 0,
+      "kept": 1,
+      "dropped": 0
+    },
+    "moderndescartes.com": {
+      "pos": 1,
+      "neg": 0,
+      "kept": 1,
+      "dropped": 0
+    },
+    "note.com": {
+      "pos": 0,
+      "neg": 1,
+      "kept": 1,
+      "dropped": 0
+    },
+    "worldatlas.com": {
+      "pos": 0,
+      "neg": 1,
+      "kept": 0,
+      "dropped": 1
+    },
+    "alchetron.com": {
+      "pos": 0,
+      "neg": 0,
+      "kept": 0,
+      "dropped": 1
+    },
+    "milliyet.com.tr": {
+      "pos": 1,
+      "neg": 0,
+      "kept": 0,
+      "dropped": 1
+    },
+    "talha-hostel.aboutbakuhotels.com": {
+      "pos": 0,
+      "neg": 0,
+      "kept": 0,
+      "dropped": 1
+    },
+    "tr.wiki34.com": {
+      "pos": 1,
+      "neg": 0,
+      "kept": 0,
+      "dropped": 1
+    },
+    "tr.frwiki.wiki": {
+      "pos": 1,
+      "neg": 0,
+      "kept": 0,
+      "dropped": 1
+    },
+    "birgun.net": {
+      "pos": 1,
+      "neg": 0,
+      "kept": 0,
+      "dropped": 1
+    },
+    "sabah.com.tr": {
+      "pos": 1,
+      "neg": 0,
+      "kept": 0,
+      "dropped": 1
+    }
+  },
+  "totals": {
+    "tp": 52,
+    "fn": 32,
+    "fp": 7,
+    "tn": 44,
+    "skip": 115
+  }
+}

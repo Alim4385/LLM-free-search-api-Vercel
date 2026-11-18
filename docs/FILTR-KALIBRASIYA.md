@@ -23,7 +23,12 @@ nəticədə olmalıdır — yoxsa "How many regions does China have" Azərbaycan
 | tarix | versiya | Precision | Recall | TP | FN | FP |
 |---|---|---|---|---|---|---|
 | v94 (baza) | FV 192 | 88.9 % | 59.3 % | 48 | 33 | 6 |
-| v95 | FV 193 | — | — | — | — | — |
+| v95 | FV 193 | 88.1 % | 61.9 % | 52 | 32 | 7 |
+
+v95-də dəyişənlər: (1) `minHits` — 3 anlayışlı sualda əsas mövzu tutulubsa nəticə sıfırlanmır;
+(2) "X nədir" sualında əsas mövzu = ilk fərqləndirici söz (söz sırası), ən uzun söz deyil;
+(3) boş snippet + güclü bal (>3) olan nəticə atılmır — məzmun ekstraksiyada çəkilir.
+Nəticə: recall +2.6 pp, precision −0.8 pp (hədlər daxilində), TP 48 → 52.
 
 FN-in böyük hissəsi iki qrupdur: (a) **junk domen** (news.google/facebook — qəsdən atılır),
 (b) **boş snippet** (v95-də düzəldildi). Qalan "FN" etiket səhvidir (mövzusuz səhifələr).

@@ -146,7 +146,8 @@ for (const { q, lang, wiki } of QUERIES.slice(0, LIMIT)) {
     const junk = isJunkDomain(r.url) || isSpamDomain(r.url);
     const score = scoreResult(r, qTerms, lang === "az" ? "az" : "en", q);
     const emptySnippet = String(r.snippet || r.content || "").trim().length < 10;
-    const kept = !junk && score >= THRESHOLD && !emptySnippet;
+    // route.js-dəki saxlanma qaydası ilə EYNİ olmalıdır (v95: boş snippet + güclü bal → saxlanır)
+    const kept = !junk && score >= THRESHOLD && (!emptySnippet || score >= 3);
     const drop = junk ? "junk_domain" : score < THRESHOLD ? "score" : emptySnippet ? "empty_snippet" : "";
     const txt = textOf(r);
     const ov = truth ? overlap(r, truth.text) : 0;
