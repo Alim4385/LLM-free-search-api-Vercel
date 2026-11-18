@@ -1193,6 +1193,12 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v74: 'iki körpü var' sayılır", (extractCount("Rayonda iki körpü var.", "körpü") || {}).value === 2);
     assert("v74: say sorğusu '<X> sayı' formasına çevrilir", countSearchQuery("Azərbaycanda neçə xəstəxana var") === "Azərbaycanda xəstəxana sayı", String(countSearchQuery("Azərbaycanda neçə xəstəxana var")));
     assert("v74: artıq 'sayı' varsa toxunulmur", countSearchQuery("Azərbaycanda rayon sayı") === null);
+    // v75: say ismi SUALDAN, fel qalığı atılır, yiyəlik şəkilçisi göstərişdə silinir
+    assert("v75: 'neçə universitet fəaliyyət göstərir' → universitet", countNounFromQuery("Azərbaycanda neçə universitet fəaliyyət göstərir") === "universitet");
+    assert("v75: 'neçə TV kanalı' → kanal", countNounFromQuery("neçə TV kanalı var") === "kanal");
+    assert("v75: 'neçə sığorta şirkəti' → şirkət", countNounFromQuery("neçə sığorta şirkəti fəaliyyət göstərir") === "şirkət");
+    assert("v75: 'neçə dövlət muzeyi' → muzey", countNounFromQuery("neçə dövlət muzeyi var") === "muzey");
+    assert("v75: 'neçə qapı' toxunulmur", countNounFromQuery("neçə qapı") === "qapı");
     // v75: hissə saylarının cəmi
     const bk = extractCount("Hazırda Azərbaycanda 2 dövlət bankı və 19 kommersiya bankı fəaliyyət göstərir.", "bank");
     assert("v75: '2 dövlət və 19 kommersiya bankı' → 21", bk && bk.value === 21 && bk.summed === true, JSON.stringify(bk));
