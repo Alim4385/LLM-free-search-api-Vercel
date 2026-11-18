@@ -10,7 +10,9 @@
     "build": "next build",
     "start": "next start -p 3000",
     "test": "node tests/unit-tests.mjs",
-    "test:providers": "node scripts/test-providers.mjs"
+    "test:providers": "node scripts/test-providers.mjs",
+    "test:golden": "node eval/run.mjs eval/golden.json 3",
+    "calib": "node eval/filter-calib.mjs"
   },
   "dependencies": {
     "@mozilla/readability": "^0.5.0",
