@@ -95,3 +95,56 @@ dimensiya qaydalarına (`istehsal/sahə`) uyğun gəlmir və köhnə rəqəm qal
 
 - `npm test`: **535 keçdi, 0 uğursuz** (4 yeni test: TR tarix, AZ format qorunması, URL parse, sorğu təmizliyi)
 - Golden: **27 keçdi / 1 bilinən / 2 uğursuz** — qalan ikisi mənbə-host gözləntisidir, cavab məzmunu deyil.
+
+---
+
+# v108 — "ölç" nəticələri: körpü ölçü suallarında
+
+## Tapılan BUG (ən qiymətli nəticə)
+
+`prop=extracts` çağırışında `exchars=6000` göndərirdik, amma **server onu ~1200 simvolda kəsir**:
+
+| sorğu | nəticə |
+|---|---|
+| `Pamuk` + `exchars=6000` | **1205 simvol** |
+| `Pamuk` (parametrsiz) | **4855 simvol** |
+
+Yəni bütün dil körpüləri (say, tarix, ölçü) acından qalırdı — mətn 4 dəfə qısa gəlirdi.
+Düzəliş: `exchars` silindi, tam mətn alınır və **özümüz** `maxChars`-a kəsirik (`lib/wikilink.js`).
+
+## Ölçü körpüsünün ölçməsi (5 sual, canlı wiki)
+
+| sual | körpü mətni | cavab | qərar |
+|---|---|---|---|
+| pambıq istehsalı | tr «Azerbaycan'da pamuk üretimi» | **831.000 ton** | ✅ qəbul (əvvəl: 1,1 milyon — 1913-cü il) |
+| neft hasilatı | tr «Azerbaycan'da petrol endüstrisi» | 21 metr → **rədd** | bal < 3 |
+| Xəzər sahəsi | tr «Hazar Depresyonu» | 28 metr → **rədd** | bal < 3 |
+| əhali | tr «Azerbaycan demografisi» | 14 yaş → **rədd** | bal < 3 |
+| qaz hasilatı | ru «Список стран по добыче…» | null | mətn tapılmadı |
+
+Nəticə: **1/5 qazanc, 0/5 zərər** — çünki hədd yüksəkdir (≥3). Ona görə körpü yalnız
+**yerli mətndən rəqəm çıxmadıqda** işə düşür (`measure_bridge` mərhələsi).
+
+## Köməkçi qaydalar (özü də ölçüldü)
+
+1. **Vahid ailəsi** (`unitFamilyOfQuery` / `unitFamilyOfUnit`): sual "hasilat" soruşursa
+   vahid kütlə/həcm olmalıdır; "sahə" → km²/hektar; "əhali" → nəfər; "uzunluq" → metr.
+   Uyğunsuz vahid −2.4 bal. Tək miqyas sözü ("1,1 milyon") ölçü cavabı sayılmır.
+   Bu qayda olmadan "21 metr", "14 yaş" kimi təsadüfi rəqəmlər qalib gəlirdi.
+2. **Ölçü sualında SAY mexanizmi söndürülür**: "nə qədər" hər iki markerə düşürdü və say
+   körpüsü ölçü körpüsünü əvəz edirdi (pambıq sualı "say" kimi emal olunurdu).
+3. **Körpü üçün EN sorğu tərcümə ilə qurulur** ("How much cotton is produced in Azerbaijan?"):
+   AZ sorğu ilə `list=search` yanlış səhifə qaytarır. Tərcümə paralel gedir, cavabı bloklamır.
+
+## Geri götürülən təcrübə
+
+v107-də əlavə etdiyim "başqa dilli səhifə sorğunun ≥2 termini ilə uyğunlaşırsa, dil cəzası
+ləğv olunur" qaydası **zərərli çıxdı**: "JavaScript-də map ilə forEach fərqi" sualında
+perlmonks.org (2.40) MDN-i üstələdi. Texniki suallar artıq `techQ` ilə azaddır — qayda
+geri götürüldü. Sərt "kiril/ərəb mətni = 0 bal" blokunun cəzaya (−2.0) çevrilməsi isə QALIR.
+
+## Yekun
+
+- unit: **536/0**
+- golden (FV 218): **28 keçdi / 1 bilinən / 1 uğursuz**
+- pambıq: canlı cavab **831.000 ton** (mənbə: tr.wiki məqaləsi)
