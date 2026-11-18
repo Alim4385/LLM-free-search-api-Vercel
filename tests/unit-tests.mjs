@@ -1239,6 +1239,12 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     // v83: pul kəsr/minlik fərqi
     assert("v83: '579.2 manat' kəsr kimi", extractMoneySentence("The average pension in Azerbaijan will be 579.2 manat in 2026.", "pension", 2026).value === 579.2);
     assert("v83: '25.000 manat' minlik kimi", extractMoneySentence("Minimum əmək haqqı 2026-cı ildə 25.000 manat olacaq.", "minwage", 2026).value === 25000);
+    // v84: təyinedici uyğunsuzluğu, artım feli, milyon+min
+    assert("v84: 'kişi müəllim' alt-qrupu say deyil", extractCount("30615 nəfər kişi müəllim çalışır. Ölkədə 180000 müəllim var.", "müəllim", { query: "Azərbaycanda neçə müəllim çalışır" }).value === 180000);
+    assert("v84: 'sayı 93 min artıb' say deyil", extractCount("Sayı 93,7 min ədəd artıb. Ölkədə 1738940 avtomobil var.", "avtomobil", { query: "Azərbaycanda neçə avtomobil var" }).value === 1738940);
+    assert("v84: '50 milyonu keçən bayram' say deyil", extractCount("50 milyonu keçən azərbaycanlıların bayramıdır. 7 dövlət bayramı var.", "bayram", { query: "Azərbaycanda neçə dövlət bayramı var" }).value === 7);
+    assert("v84: '1 milyon 738 min 940' düzgün", extractCount("Azərbaycanda 1 milyon 738 min 940 avtomobil var.", "avtomobil", { query: "neçə avtomobil" }).value === 1738940);
+    assert("v84: 'və'dən sonra təyinedici sayılmır", extractCount("Bakı metropoliteni 3 xəttdən, 27 işləyən və dörd tikilən stansiyadan ibarətdir.", "stansiya", { query: "Bakı metrosunda neçə stansiya var" }).value === 27);
     // v75: hissə saylarının cəmi
     const bk = extractCount("Hazırda Azərbaycanda 2 dövlət bankı və 19 kommersiya bankı fəaliyyət göstərir.", "bank");
     assert("v75: '2 dövlət və 19 kommersiya bankı' → 21", bk && bk.value === 21 && bk.summed === true, JSON.stringify(bk));
