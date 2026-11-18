@@ -23,7 +23,7 @@ import { matchMath } from "../lib/math.js";
 import { matchHoliday } from "../lib/holidays.js";
 import { matchLiveStat, extractMoneySentence } from "../lib/livestat.js";
 import { matchCrypto, cryptoToText } from "../lib/crypto.js";
-import { extractCount, extractCountFromResults, countNounFromQuery } from "../lib/countextract.js";
+import { extractCount, extractCountFromResults, countNounFromQuery, countSearchQuery } from "../lib/countextract.js";
 import { parseSitemap, parseArticleHtml, matchSitemapItems } from "../lib/sitemapnews.js";
 import { normalizeUrl, decodeEntities, stripQuestionWords, parseDDGLite, normalizeMwmbl, parseYahooJP, parseMilliArxiv, isArchiveTopic, providerTermGate } from "../lib/search.js";
 import { parseJinaMarkdown } from "../lib/extract.js";
@@ -1186,6 +1186,13 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v73: pensiya mövzusu geniş tanınır", matchLiveStat("Azərbaycanda pensiya nə qədərdir").id === "pension", JSON.stringify(matchLiveStat("Azərbaycanda pensiya nə qədərdir")));
     const pen = extractMoneySentence("2026-cı ildə Azərbaycanda minimum əmək pensiyasının məbləği 320 manat təşkil edir.", "pension", 2026);
     assert("v73: pensiya 320 manat çıxarılır", pen && pen.value === 320, JSON.stringify(pen));
+    // v74: minlik ayırıcı, say çərçivəsi, say sorğusu
+    const lib = extractCount("Hal-hazırda Azərbaycanda 12.000 kitabxana fəaliyyət göstərir.", "kitabxana");
+    assert("v74: '12.000 kitabxana' → 12000", lib && lib.value === 12000, JSON.stringify(lib));
+    assert("v74: say çərçivəsiz söz rəqəmi sayılmır", extractCount("Araz çayı üzərində salınan iki Xudafərin körpüsü bizə məlumdur.", "körpü") === null);
+    assert("v74: 'iki körpü var' sayılır", (extractCount("Rayonda iki körpü var.", "körpü") || {}).value === 2);
+    assert("v74: say sorğusu '<X> sayı' formasına çevrilir", countSearchQuery("Azərbaycanda neçə xəstəxana var") === "Azərbaycanda xəstəxana sayı", String(countSearchQuery("Azərbaycanda neçə xəstəxana var")));
+    assert("v74: artıq 'sayı' varsa toxunulmur", countSearchQuery("Azərbaycanda rayon sayı") === null);
     assert("v62: tək sözlü sorğuda gate işləmir", providerTermGate([{ title: "MANY definition", url: "u", snippet: "x" }], "many").length === 1);
   }
 
