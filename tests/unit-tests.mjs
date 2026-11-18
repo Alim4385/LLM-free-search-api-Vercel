@@ -1135,6 +1135,12 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v64: 'bananın' → banana", matchNutrition("bananın tərkibində nə qədər kalori var").foodEn === "banana", JSON.stringify(matchNutrition("bananın tərkibində nə qədər kalori var")));
     assert("v64: 'çörəyin' → bread", matchNutrition("çörəyin tərkibində nə qədər karbohidrat var").foodEn === "bread", JSON.stringify(matchNutrition("çörəyin tərkibində nə qədər karbohidrat var")));
     assert("v64: 'toyuğun' → chicken", matchNutrition("toyuğun tərkibində nə qədər protein var").foodEn === "chicken", JSON.stringify(matchNutrition("toyuğun tərkibində nə qədər protein var")));
+    // v65: inkar işarəsi, "sayı"-dan əvvəlki söz, captcha səhifəsi
+    assert("v65: '14 qeyri-dövlət universiteti' say deyil", extractCount("Azərbaycanda 16 dövlət, 14 qeyri-dövlət universiteti var.", "universiteti") === null || extractCount("Azərbaycanda 16 dövlət, 14 qeyri-dövlət universiteti var.", "universiteti").value === 16, JSON.stringify(extractCount("Azərbaycanda 16 dövlət, 14 qeyri-dövlət universiteti var.", "universiteti")));
+    const city = extractCount("Şəhər rayonlarının sayı: 14. Şəhərlərin sayı: 79.", "şəhər");
+    assert("v65: 'şəhər rayonlarının sayı 14' → şəhər sayı deyil", city && city.value === 79, JSON.stringify(city));
+    const ch = extractCountFromResults([{ url: "https://a.az/1", title: "A", content: "Client Challenge. A required part of this site couldn't load. Burada 14 şəhər var." }], "şəhər");
+    assert("v65: captcha səhifəsindən say çıxarılmır", ch === null, JSON.stringify(ch));
     assert("v62: tək sözlü sorğuda gate işləmir", providerTermGate([{ title: "MANY definition", url: "u", snippet: "x" }], "many").length === 1);
   }
 
