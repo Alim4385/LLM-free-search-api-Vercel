@@ -27,7 +27,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 183; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 184; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -888,10 +888,10 @@ async function handleSearch(body, req) {
         countHitDone = true;
         degradedStages.push("count_extracted");
         structured.unshift({
-          title: `${fmtNum(got.value)} ${noun}${got.summed ? " (cəmi)" : ""} (mətndən çıxarıldı)`,
+          title: `${fmtNum(got.value)} ${got.qualifier && got.qualifier.length ? got.qualifier.join(" ") + " " : ""}${noun}${got.summed ? " (cəmi)" : ""}${got.atLeast ? " (ən azı)" : ""} (mətndən çıxarıldı)`,
           url: got.url,
           snippet: undefined,
-          content: `${fmtNum(got.value)} ${noun}${got.year && got.year < new Date().getFullYear() ? ` (${got.year} ili məlumatı)` : ""}. Mənbə cümlə: "${got.sentence}"${got.sources.length > 1 ? ` (${got.sources.length} mənbədə eyni rəqəm)` : ""}`,
+          content: `${fmtNum(got.value)} ${got.qualifier && got.qualifier.length ? got.qualifier.join(" ") + " " : ""}${noun}${got.atLeast ? " (ən azı)" : ""}${got.year && got.year < new Date().getFullYear() ? ` (${got.year} ili məlumatı)` : ""}. Mənbə cümlə: "${got.sentence}"${got.sources.length > 1 ? ` (${got.sources.length} mənbədə eyni rəqəm)` : ""}`,
           sources: [hostOf(got.url)],
           source: "count-extract",
           published_at: null,
