@@ -18,6 +18,7 @@ import { cleanContent, pickAnswer, cutWord, dedupeSnippet, normalizeColloquialAz
 import { matchAzertagItems, azertagLangFor } from "../lib/azertag.js";
 import { newsTrustBoost, AZ_NEWS_TRUSTED, howtoTrustBoost, isHowtoQuery, HOWTO_TRUSTED } from "../lib/router.js";
 import { matchFact } from "../lib/facts.js";
+import { matchNutrition } from "../lib/nutrition.js";
 import { extractCount, extractCountFromResults, countNounFromQuery } from "../lib/countextract.js";
 import { parseSitemap, parseArticleHtml, matchSitemapItems } from "../lib/sitemapnews.js";
 import { normalizeUrl, decodeEntities, stripQuestionWords, parseDDGLite, normalizeMwmbl, parseYahooJP, parseMilliArxiv, isArchiveTopic, providerTermGate } from "../lib/search.js";
@@ -1130,6 +1131,10 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v63: kilometr say deyil", extractCount("Kəlbəcərdən 60 kilometr məsafədə hava limanı var", "limanı") === null);
     const park = extractCount("Bakıda 164 park var.", "park");
     assert("v63: real say tapılır (164)", park && park.value === 164, JSON.stringify(park));
+    // v64: qida adının şəkilçili forması
+    assert("v64: 'bananın' → banana", matchNutrition("bananın tərkibində nə qədər kalori var").foodEn === "banana", JSON.stringify(matchNutrition("bananın tərkibində nə qədər kalori var")));
+    assert("v64: 'çörəyin' → bread", matchNutrition("çörəyin tərkibində nə qədər karbohidrat var").foodEn === "bread", JSON.stringify(matchNutrition("çörəyin tərkibində nə qədər karbohidrat var")));
+    assert("v64: 'toyuğun' → chicken", matchNutrition("toyuğun tərkibində nə qədər protein var").foodEn === "chicken", JSON.stringify(matchNutrition("toyuğun tərkibində nə qədər protein var")));
     assert("v62: tək sözlü sorğuda gate işləmir", providerTermGate([{ title: "MANY definition", url: "u", snippet: "x" }], "many").length === 1);
   }
 
