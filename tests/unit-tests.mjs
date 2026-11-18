@@ -1128,8 +1128,8 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     const rev = extractCount("İnzibati rayonların sayı: 66. Şəhər rayonlarının sayı: 14.", "rayon");
     assert("v62.4: 'sayı: 66' əks naxış işləyir və mətn sırası üstündür", rev && rev.value === 66, JSON.stringify(rev));
     // v63: siyahı başlığı, birləşik isim, vahid
-    assert("v63: 'neçə hava limanı' → 'limanı'", countNounFromQuery("Azərbaycanda neçə hava limanı var") === "limanı", String(countNounFromQuery("Azərbaycanda neçə hava limanı var")));
-    assert("v63: 'neçə dövlət bayramı' → 'bayramı'", countNounFromQuery("Azərbaycanda neçə dövlət bayramı var") === "bayramı", String(countNounFromQuery("Azərbaycanda neçə dövlət bayramı var")));
+    assert("v63/v75: 'neçə hava limanı' → 'liman'", countNounFromQuery("Azərbaycanda neçə hava limanı var") === "liman", String(countNounFromQuery("Azərbaycanda neçə hava limanı var")));
+    assert("v63/v75: 'neçə dövlət bayramı' → 'bayram'", countNounFromQuery("Azərbaycanda neçə dövlət bayramı var") === "bayram", String(countNounFromQuery("Azərbaycanda neçə dövlət bayramı var")));
     assert("v63: 'Ən Yaxşı 5 Park' say deyil", extractCount("Bakıda Piknik Üçün Ən Yaxşı 5 Park", "park") === null);
     assert("v63: '12 əfsanəvi parkı' say deyil", extractCount("Bakının 12 əfsanəvi parkı", "park") === null);
     assert("v63: kilometr say deyil", extractCount("Kəlbəcərdən 60 kilometr məsafədə hava limanı var", "limanı") === null);
