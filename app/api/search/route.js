@@ -23,7 +23,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 159; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 160; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -808,6 +808,15 @@ async function handleSearch(body, req) {
     finalResults.forEach((r, idx) => { r.id = idx + 1; });
   }
 
+  // v62.4: çıxarılan say cavabı HƏMİŞƏ 1-ci yerdə qalsın (sıralama mərhələləri onu aşağı sala bilir)
+  const pinExtracted = () => {
+    const idx = finalResults.findIndex(r => r && r.extracted);
+    if (idx > 0) {
+      const [it] = finalResults.splice(idx, 1);
+      finalResults.unshift(it);
+      finalResults.forEach((r, i) => { r.id = i + 1; });
+    }
+  };
   const structured = [];
   if (weather && weatherText) structured.push({ title: `${weather.city} - hava məlumatı (Open-Meteo)`, url: "https://open-meteo.com", snippet: undefined, content: weatherText, sources: ["open-meteo"], source: "open-meteo", published_at: weather.fetched_at, updated_at: null, date_info: buildDateInfo(weather.fetched_at, null, reqLang), untrusted: false });
   if (timeData && timeText && intentExact) structured.push({ title: `${timeData.place || "Azərbaycan"} üçün hazırkı vaxt (${timeData.timezone})`, url: "https://time.is", snippet: undefined, content: timeText, sources: ["asia-baku-time"], source: "asia-baku-time", published_at: timeData.fetched_at, updated_at: null, date_info: buildDateInfo(timeData.fetched_at, null, reqLang), untrusted: false });
@@ -995,6 +1004,8 @@ async function handleSearch(body, req) {
   const confidence = computeConfidence(finalResults, safeErrors, usedFallback);
   const datedResults = finalResults.filter(r => r.published_at || r.updated_at).length;
   const debug = !!(body && (body.debug === true || body.debug === "1" || body.debug === 1));
+
+  pinExtracted();
 
   const responseObj = {
     query,

@@ -1119,6 +1119,9 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
       { url: "https://b.az/2", title: "B", content: "Bakı metrosunda 27 stansiya fəaliyyət göstərir." }
     ], "metrostansiyası");
     assert("v62.2: planlaşdırılan rəqəm faktiki saydan geri qalır (27)", fut && fut.value === 27, JSON.stringify(fut && fut.value));
+    // rəqəm isimdən sonra: "rayonların sayı: 66"
+    const rev = extractCount("İnzibati rayonların sayı: 66. Şəhər rayonlarının sayı: 14.", "rayon");
+    assert("v62.4: 'sayı: 66' əks naxış işləyir və mətn sırası üstündür", rev && rev.value === 66, JSON.stringify(rev));
     assert("v62: tək sözlü sorğuda gate işləmir", providerTermGate([{ title: "MANY definition", url: "u", snippet: "x" }], "many").length === 1);
   }
 
