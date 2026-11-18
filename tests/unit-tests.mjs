@@ -1252,6 +1252,8 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v90: 'neçədir' say markeridir", hasCountMarker("Bu neçədir") === true);
     assert("v90: 'necədir' say deyil", hasCountMarker("Bakıda hava necədir") === false);
     assert("v90: 'neçə manatdır' rewrite olunmur", countSearchQuery("Bu neçə manatdır") === null);
+    // v97.1: inzibati siyahı cəm sayılmır ("64 rayon, 12 şəhər rayonu" → 80 deyil, 64)
+    assert("v97.1: inzibati siyahı cəmlənmir", extractCount("Azərbaycanın inzibati bölgüsü — Azərbaycanda 64 rayon, 11 respublika tabeli şəhər, 12 şəhər rayonu var.", "rayon", { query: "Azərbaycanda neçə rayon var" }).value === 64);
     // v97: finalize modulu — limitlər və təzəlik qaydası
     assert("v97: limit tətbiq olunur", applyFinalLimits([1, 2, 3, 4, 5, 6], 4).length === 4);
     assert("v97: limit 1 olanda yalnız 1 nəticə", applyFinalLimits([1, 2, 3], 1).length === 1);
