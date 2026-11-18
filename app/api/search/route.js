@@ -23,7 +23,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 160; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 161; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -979,6 +979,21 @@ async function handleSearch(body, req) {
       degradedStages.push("coverage_order");
     }
   }
+  // v63: SUPERLATİV sualı — "Azərbaycanın ən böyük gölü" kimi suallarda mətnində
+  // həqiqətən "ən böyük ... <obyekt>" deyən nəticə önə keçir (ümumi qayda, sayt siyahısı yox).
+  const SUPERL_RE = /(?:ən|en)\s+(?:böyük|boyuk|uzun|hündür|hundur|kiçik|kicik|dərin|derin|qədim|qedim)/iu;
+  if (SUPERL_RE.test(query) && finalResults.length > 1) {
+    const supHit = (r) => SUPERL_RE.test(`${r.title || ""} ${r.snippet || ""} ${r.content || ""}`) ? 1 : 0;
+    const hits = finalResults.map(supHit);
+    if (hits[0] === 0 && hits.some(h => h === 1)) {
+      const dec = finalResults.map((r, i) => ({ r, i, h: hits[i] }));
+      dec.sort((a, b) => (b.h - a.h) || (a.i - b.i));
+      finalResults.length = 0;
+      dec.forEach((d, idx) => { d.r.id = idx + 1; finalResults.push(d.r); });
+      degradedStages.push("superlative_order");
+    }
+  }
+
   // v29: rəqəm ziddiyyəti — eyni vahid üçün müxtəlif nəticələrdə fərqli dəyərlər
   // v30.1 (P2 hazır olana qədər): vahid çarpanı (min/milyon) və il ölçüsü olmadığı üçün
   // saxta ziddiyyət istehsal edir → default SÖNDÜRÜLDÜ. ENABLE_CONFLICTS=1 ilə yandırılır.
