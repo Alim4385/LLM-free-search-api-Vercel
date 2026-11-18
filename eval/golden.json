@@ -305,7 +305,8 @@
     "president.az",
     "sosial.gov.az",
     "e-qanun.az",
-    "tradingeconomics.com"
+    "tradingeconomics.com",
+    "operativmm.az"
    ],
    "tol": 0
   },
@@ -527,13 +528,16 @@
    ],
    "must_not": [],
    "page": [
-    "wikipedia.org"
+    "wikipedia.org",
+    "geology.com",
+    "worldatlas.com",
+    "geographypin.com"
    ]
   },
   "sources": [
    "wikipedia.org"
   ],
-  "note": "sahəyə görə Antarktida | superlativ cavab yolu hələ yoxdur (bilinən boşluq)"
+  "note": "ən böyük səhra (Antarktida/Sahara) — ensiklopedik və ya coğrafiya mənbəyi"
  },
  {
   "q": "Python-da fayl oxuma necə olur",
