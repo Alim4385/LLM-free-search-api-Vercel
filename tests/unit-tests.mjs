@@ -1251,6 +1251,11 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v90: 'neçədir' say markeridir", hasCountMarker("Bu neçədir") === true);
     assert("v90: 'necədir' say deyil", hasCountMarker("Bakıda hava necədir") === false);
     assert("v90: 'neçə manatdır' rewrite olunmur", countSearchQuery("Bu neçə manatdır") === null);
+    // v93: faiz soruşulmayıbsa "%" cavab verilmir
+    assert("v93: faiz cavabı rədd olunur", extractMeasure("Ötən il Azərbaycanın xarici dövlət borcu 20% azalıb.", "Azərbaycanın dövlət borcu nə qədərdir") === null);
+    assert("v93: faiz soruşulanda qalır", (extractMeasure("Azərbaycanda işsizlik 5,3 faiz olub.", "işsizlik neçə faizdir") || {}).text === "5,3 faiz");
+    // v92: "1918-ci ildə" sözü tam kəsilmir (\w "ə" hərfini tanımır)
+    assert("v92b: il sözü tam oxunur", extractDateAnswer("Himn ilk dəfə 1918-ci ildə qəbul edilmişdir.", "himn nə vaxt qəbul olunub").dateText === "1918-ci ildə");
     // v92: ay adlı tam tarix tək ildən üstündür
     assert("v92: tam tarix tək ili üstələyir", extractDateAnswer("Azərbaycan SSR-in 1921-ci ilin Konstitusiyası var idi. Konstitusiya 12 noyabr 1995-ci il tarixində qəbul edilmişdir.", "Konstitusiya nə vaxt qəbul olunub").dateText === "12 noyabr 1995");
     // v75: hissə saylarının cəmi
