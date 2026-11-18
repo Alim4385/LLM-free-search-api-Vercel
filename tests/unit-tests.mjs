@@ -1211,6 +1211,11 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v77: faiz ölçüsü çıxarılır", extractMeasure("İşsizlik səviyyəsi 2025-ci ildə 5,50 faizə enib.", "işsizlik səviyyəsi nə qədərdir").text === "5,50 faiz");
     assert("v77: yaş ölçüsü çıxarılır", extractMeasure("Gözlənilən ömür uzunluğu 75 yaş olub.", "orta ömür uzunluğu nə qədərdir").value === 75);
     assert("v77: ölçü sualı tanınır", matchMeasureQuery("işsizlik səviyyəsi nə qədərdir") === true && matchMeasureQuery("neçə bank var") === true);
+    // v78: adambaşına göstərici, ASCII tarixi zaman, ölçüdə ölkə miqyası
+    assert("v78: 'hər 100 min nəfərə düşən 22 aptek' say deyil", extractCount("Əhalinin hər 100 min nəfərinə düşən aptek sayı 22-dir. İndi apteklərin sayı 2900-a çatıb.", "aptek").value === 2900);
+    assert("v78: ASCII 'acımışdı' tarixi cəza alır", extractCount("70-80-ci illərdə 5 yeni ali məktəb acımışdı. Hazırda ölkədə 51 ali məktəb var.", "ali məktəb").value === 51);
+    assert("v78: 'necə saxlamaq' ölçü sualı deyil", matchMeasureQuery("təzə çörəyi necə saxlamaq olar") === false);
+    assert("v78: ölçüdə başqa ölkə cəzalanır", extractMeasure("Avqustda Çində işsizlik səviyyəsi 5,3%-ə yüksəlib. Azərbaycanda işsizlik səviyyəsi 2025-ci ildə 5,50 faizə enib.", "Azərbaycanda işsizlik səviyyəsi nə qədərdir").value === 5.5);
     // v75: hissə saylarının cəmi
     const bk = extractCount("Hazırda Azərbaycanda 2 dövlət bankı və 19 kommersiya bankı fəaliyyət göstərir.", "bank");
     assert("v75: '2 dövlət və 19 kommersiya bankı' → 21", bk && bk.value === 21 && bk.summed === true, JSON.stringify(bk));
