@@ -1216,6 +1216,11 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v78: ASCII 'acımışdı' tarixi cəza alır", extractCount("70-80-ci illərdə 5 yeni ali məktəb acımışdı. Hazırda ölkədə 51 ali məktəb var.", "ali məktəb").value === 51);
     assert("v78: 'necə saxlamaq' ölçü sualı deyil", matchMeasureQuery("təzə çörəyi necə saxlamaq olar") === false);
     assert("v78: ölçüdə başqa ölkə cəzalanır", extractMeasure("Avqustda Çində işsizlik səviyyəsi 5,3%-ə yüksəlib. Azərbaycanda işsizlik səviyyəsi 2025-ci ildə 5,50 faizə enib.", "Azərbaycanda işsizlik səviyyəsi nə qədərdir").value === 5.5);
+    // v79: fel və yiyəlik incəlikləri
+    assert("v79: 'neçə erməni yaşayır' → erməni", countNounFromQuery("Azərbaycanda neçə erməni yaşayır") === "erməni");
+    assert("v79: 'neçə dövlət qoruğu' → qoruq", countNounFromQuery("Azərbaycanda neçə dövlət qoruğu var") === "qoruq");
+    assert("v79: şəhər sualında 'bu rayon' cümləsi uduzur", extractCount("Bu rayonun ərazisində 36 park fəaliyyət göstərir. Bakıda 140 park var.", "park", { query: "Bakıda neçə park var" }).value === 140);
+    assert("v79: 'ali təhsil müəssisələrinin sayı' universitet sayılır", extractCount("Ölkədə ali təhsil müəssisələrinin sayı 51 olub.", "universitet").value === 51);
     // v75: hissə saylarının cəmi
     const bk = extractCount("Hazırda Azərbaycanda 2 dövlət bankı və 19 kommersiya bankı fəaliyyət göstərir.", "bank");
     assert("v75: '2 dövlət və 19 kommersiya bankı' → 21", bk && bk.value === 21 && bk.summed === true, JSON.stringify(bk));
