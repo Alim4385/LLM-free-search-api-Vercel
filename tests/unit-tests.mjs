@@ -1113,6 +1113,12 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     // tarix say deyil: "1992-ci il 27 oktyabr tarixli" → 27 sayılmır
     const f = extractCount("Milli Məclisin 1992-ci il 27 oktyabr tarixli qərarı ilə bayramlar müəyyən edilib.", "bayram");
     assert("v62.1: ay adı ilə gələn rəqəm sayılmır", f === null, JSON.stringify(f));
+    // gələcək plan rəqəmi faktiki saydan geri qalır
+    const fut = extractCountFromResults([
+      { url: "https://a.az/1", title: "A", content: "Bakıda 10 yeni metro stansiyası inşa ediləcək." },
+      { url: "https://b.az/2", title: "B", content: "Bakı metrosunda 27 stansiya fəaliyyət göstərir." }
+    ], "metrostansiyası");
+    assert("v62.2: planlaşdırılan rəqəm faktiki saydan geri qalır (27)", fut && fut.value === 27, JSON.stringify(fut && fut.value));
     assert("v62: tək sözlü sorğuda gate işləmir", providerTermGate([{ title: "MANY definition", url: "u", snippet: "x" }], "many").length === 1);
   }
 
