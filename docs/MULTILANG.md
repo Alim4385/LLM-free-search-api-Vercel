@@ -59,3 +59,39 @@ TR korpusu AZ mövzularında həqiqətən zəngindir: `Hocalı Katliamı`, `Şek
 `26 keçdi / 1 bilinən / 3 uğursuz`. Uğursuzluqlar: `GPT-5` (prod-da wikipedia 429 →
 tarix mətni gəlmir), `minimum əmək haqqı` və `HTTP-vs-HTTPS` (mənbə hostu). Gün ərzində
 provayderlər dəyişdiyi üçün qapı 26–29 arasında oynayır.
+
+---
+
+# v106 — məqalə səviyyəsində dil körpüsü (işləyən versiya)
+
+Fikir: axtarışı TR/RU-da TƏKRARLAMAQ əvəzinə, tapılmış məqalənin `langlinks`-i ilə
+qarşılığını götürmək (1–2 API çağırışı, determinist, ~600 ms, 10 dəq keş).
+
+Yeni modul: `lib/wikilink.js`
+- `wikiTitleFromUrl`, `cleanWikiQuery` — saf funksiyalar (test olunur)
+- `bridgeByQuery(enQuery)` — EN wiki axtarışı → `langlinks` → TR/RU mətn (`explaintext`)
+- `bridgeCount(azQuery, enQuery, noun)` — yalnız məqalənin GİRİŞİNDƏ (ilk 900 simvol) "N + isim"
+- `bridgeDate(azQuery, enQuery)` — çıxarış məqalənin öz dilindəki başlıqla aparılır
+
+`lib/measure.js`: TR ayları (`Şubat`, `Mayıs`, `Ağustos`…) əlavə edildi və tarix nümunələri
+normallaşdırılmış mətn üzərində işləyir (əvvəl `Şubat` ümumiyyətlə oxunmurdu).
+`AZ_BRIDGE` (axtarış səviyyəsindəki köhnə körpü) default sönük qalır — bu yenisi ondan fərqlidir.
+
+## Ölçmə (canlı, v106)
+
+| sual | əvvəl | indi | mexanizm |
+|---|---|---|---|
+| Azərbaycanda neçə universitet var | cavab yox | **51 universitet** | tr.wiki "Azerbaycan'daki üniversiteler listesi" (girişdə "51") |
+| Bakı metrosunda neçə stansiya | 27 (bəzən) | **27 stansiya** | yerli mətn + körpü |
+| Xocalı soyqırımı nə vaxt | 26 fevral 1992 | **26 fevral 1992** | tr.wiki "Hocalı Katliamı" (TR ayı oxunur) |
+| Azərbaycan himni nə vaxt | dəyişkən | **1918-ci ildə** | yerli mətn (körpü ehtiyat) |
+| pambıq istehsalı | 784 min ton (1986) | açıq qalır | retrieval məhdudiyyəti |
+
+**Ölçü (measure) suallarında körpü QƏSDƏN söndürülüb:** türkcə "üretim/alan" sözləri AZ
+dimensiya qaydalarına (`istehsal/sahə`) uyğun gəlmir və köhnə rəqəm qalib gəlirdi
+("pambıq istehsalı" → 1913-cü ilin 1,1 milyonu). Say və tarixdə isə qazanc aydındır.
+
+## Yekun
+
+- `npm test`: **535 keçdi, 0 uğursuz** (4 yeni test: TR tarix, AZ format qorunması, URL parse, sorğu təmizliyi)
+- Golden: **27 keçdi / 1 bilinən / 2 uğursuz** — qalan ikisi mənbə-host gözləntisidir, cavab məzmunu deyil.
