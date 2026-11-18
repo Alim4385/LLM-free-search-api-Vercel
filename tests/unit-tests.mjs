@@ -1141,6 +1141,8 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v65: 'şəhər rayonlarının sayı 14' → şəhər sayı deyil", city && city.value === 79, JSON.stringify(city));
     const ch = extractCountFromResults([{ url: "https://a.az/1", title: "A", content: "Client Challenge. A required part of this site couldn't load. Burada 14 şəhər var." }], "şəhər");
     assert("v65: captcha səhifəsindən say çıxarılmır", ch === null, JSON.stringify(ch));
+    const st = extractCount("Bakı Metropoliteni — 27 stansiyanın xidmət etdiyi üç xətt.", "metrostansiyası");
+    assert("v66: 'stansiyanın' şəkilçisi ilə də say tapılır (27)", st && st.value === 27, JSON.stringify(st));
     assert("v62: tək sözlü sorğuda gate işləmir", providerTermGate([{ title: "MANY definition", url: "u", snippet: "x" }], "many").length === 1);
   }
 
