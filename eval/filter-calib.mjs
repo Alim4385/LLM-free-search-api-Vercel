@@ -121,9 +121,27 @@ function overlap(result, truthText) {
   return hit / Math.min(rt.size, 30);
 }
 
+// XAM NƏTİCƏ KEŞİ: iki filtr variantını EYNİ girişlərlə müqayisə etmək üçün.
+// Canlı axtarış hər run-da fərqli nəticə verir → keşsiz A/B müqayisəsi etibarsızdır.
+const RAW_CACHE_PATH = "eval/raw-cache.json";
+let RAW_CACHE = {};
+try { RAW_CACHE = JSON.parse((await import("node:fs")).readFileSync(RAW_CACHE_PATH, "utf8")); } catch {}
+async function rawResults(q, refresh) {
+  if (!refresh && RAW_CACHE[q]) return RAW_CACHE[q];
+  const out = await searchAll(q, 8, {}).catch(() => []);
+  const arr = Array.isArray(out) ? out : (out?.results || []);
+  RAW_CACHE[q] = arr;
+  await saveCacheRaw();
+  return arr;
+}
+async function saveCacheRaw() {
+  try { (await import("node:fs")).writeFileSync(RAW_CACHE_PATH, JSON.stringify(RAW_CACHE)); } catch {}
+}
+const REFRESH = !!args.refresh;
+
 const report = { threshold: THRESHOLD, queries: [], domains: {}, totals: { tp: 0, fn: 0, fp: 0, tn: 0, skip: 0 } };
 for (const { q, lang, wiki } of QUERIES.slice(0, LIMIT)) {
-  const [pages, raw] = await Promise.all([wikiPages(q, lang, wiki), searchAll(q, 8, {}).catch(() => [])]);
+  const [pages, raw] = await Promise.all([wikiPages(q, lang, wiki), rawResults(q, REFRESH)]);
   const truth = wiki && pages.length ? { ...pages[0], sim: 1 } : pickTruth(pages, q);
   const hints = truth ? answerHints(truth.text, q) : new Set();
   const results = Array.isArray(raw) ? raw : (raw?.results || []);
@@ -168,6 +186,8 @@ for (const { q, lang, wiki } of QUERIES.slice(0, LIMIT)) {
     if (label === "pos") bucket.pos++; else if (label === "neg") bucket.neg++;
     if (kept) bucket.kept++; else bucket.dropped++;
 
+    row.items ||= [];
+    row.items.push({ r, score, label, kept });
     if (label === "pos") {
       row.pos++;
       if (kept) report.totals.tp++;
@@ -180,6 +200,32 @@ for (const { q, lang, wiki } of QUERIES.slice(0, LIMIT)) {
       else report.totals.tn++;
     } else report.totals.skip++;
   }
+  // === SIRALAMA ÖLÇÜSÜ (P@1 / P@3) — filtr metriki bunu görmür ===
+  // Üç variant eyni xam nəticələr üzərində müqayisə olunur:
+  //   A: bonus yoxdur | B: URL/provayder konsensusu (koddakı) | C: SAYT (host) konsensusu
+  const provOf = (r) => new Set(Array.isArray(r.providers) && r.providers.length ? r.providers : [r.source || "?"]);
+  const hostProv = {};
+  for (const r of results) {
+    let h = ""; try { h = new URL(r.url).hostname.replace(/^www\./, ""); } catch {}
+    hostProv[h] ||= new Set();
+    for (const p of provOf(r)) hostProv[h].add(p);
+  }
+  const scoredList = row.items || [];
+  const SCALE = Number(args.scale || 1);   // bonus gücü (A/B/C testi üçün)
+  const bonusB = (r) => SCALE * Math.min(0.9, 0.3 * (provOf(r).size - 1));
+  const bonusC = (r) => { let h = ""; try { h = new URL(r.url).hostname.replace(/^www\./, ""); } catch {} const n = hostProv[h] ? hostProv[h].size : 1; return SCALE * Math.min(0.9, 0.3 * (n - 1)); };
+  const rank = (bonusFn) => {
+    const arr = scoredList.filter(x => x.kept).map(x => ({ ...x, s2: x.score + bonusFn(x.r) })).sort((a, b) => b.s2 - a.s2).slice(0, 3);
+    return arr.map(x => x.label);
+  };
+  row.pAt3 = { A: rank(() => 0), B: rank(bonusB), C: rank(bonusC) };
+  row.rankD = (table) => {
+    const arr = scoredList.filter(x => x.kept).map(x => {
+      let h = ""; try { h = new URL(x.r.url).hostname.replace(/^www\./, ""); } catch {}
+      return { ...x, s2: x.score + 0.5 * (table[h] || 0) };
+    }).sort((a, b) => b.s2 - a.s2).slice(0, 3);
+    return arr.map(x => x.label);
+  };
   report.queries.push(row);
   console.log(`\n## ${q}  (etalon: ${row.truth || "YOXDUR"} uyğunluq=${row.truthSim}, cavab siqnalları: ${row.hints.join(",") || "—"}, xam ${row.raw})`);
   console.log(`   relevant ${row.pos} | FN ${row.fn} | FP ${row.fp}`);
@@ -192,12 +238,34 @@ const precision = t.tp + t.fp ? (t.tp / (t.tp + t.fp)) * 100 : 0;
 const recall = t.tp + t.fn ? (t.tp / (t.tp + t.fn)) * 100 : 0;
 console.log(`\n=== CƏMİ  TP ${t.tp} | FN ${t.fn} | FP ${t.fp} | TN ${t.tn} | skip ${t.skip}`);
 console.log(`=== Precision ${precision.toFixed(1)}%   Recall ${recall.toFixed(1)}%`);
+// sıralama nəticələri: top-3-də neçə relevant nəticə (maksimum 3)
+let sumA = 0, sumB = 0, sumC = 0, cntQ = 0;
+for (const row of report.queries) {
+  if (!row.pAt3) continue;
+  const sc = (l) => l.filter(x => x === "pos").length;
+  sumA += sc(row.pAt3.A); sumB += sc(row.pAt3.B); sumC += sc(row.pAt3.C);
+  cntQ++;
+}
+console.log(`\n=== SIRALAMA (top-3-də relevant sayı, ${cntQ} sual)`);
+console.log(`   A bonus yoxdur          : ${sumA}`);
+console.log(`   B URL/provayder konsensus: ${sumB}`);
+console.log(`   C SAYT (host) konsensus  : ${sumC}`);
+// D: domen etibarlılıq cədvəli (kalibrasiya datasından) — SAYTIN keçmiş nəticələrinə görə çəki
+const domTable = {};
+for (const [h, v] of Object.entries(report.domains)) {
+  if (v.pos + v.neg < 3) continue;
+  domTable[h] = (v.pos - v.neg) / (v.pos + v.neg);
+}
+const sumD = report.queries.reduce((acc, row) => acc + (row.rankD ? row.rankD(domTable).filter(x => x === "pos").length : 0), 0);
+console.log(`   D SAYT etibarlılıq çəki (${Object.keys(domTable).length} domen): ${sumD}  [in-sample]`);
+
 const dom = Object.entries(report.domains).filter(([, v]) => v.pos + v.neg >= 2)
   .sort((a, b) => (b[1].pos - b[1].neg) - (a[1].pos - a[1].neg)).slice(0, 16);
 console.log("\n=== DOMEN BALANSI (pos−neg)");
 for (const [h, v] of dom) console.log(`   ${String(v.pos - v.neg).padStart(3)}   ${h.padEnd(32)} pos ${v.pos} neg ${v.neg} saxlanan ${v.kept}/${v.kept + v.dropped}`);
 
 if (args.json) {
+  for (const row of report.queries) delete row.items;
   const fs = await import("node:fs");
   fs.writeFileSync("eval/calib-report.json", JSON.stringify(report, null, 2));
   console.log("\nyazıldı: eval/calib-report.json");

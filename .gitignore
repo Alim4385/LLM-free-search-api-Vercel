@@ -11,3 +11,4 @@ eval/*.out.json
 eval/sweep.*.json
 .vercel
 eval/wiki-cache.json
+eval/raw-cache.json

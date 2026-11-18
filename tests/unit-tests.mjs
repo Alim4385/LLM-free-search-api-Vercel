@@ -1251,6 +1251,15 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v90: 'neçədir' say markeridir", hasCountMarker("Bu neçədir") === true);
     assert("v90: 'necədir' say deyil", hasCountMarker("Bakıda hava necədir") === false);
     assert("v90: 'neçə manatdır' rewrite olunmur", countSearchQuery("Bu neçə manatdır") === null);
+    // v96: provayder konsensusu — eyni nəticəni 2 provayder veribsə bal artır (məhdud: +0.9)
+    assert("v96: konsensus bonusu işləyir", (() => {
+      const q = ["xezer", "deniz", "sahe"];
+      const base = { title: "Xəzər dənizi", url: "https://az.wikipedia.org/wiki/X%C9%99z%C9%99r_d%C9%99nizi", snippet: "Xəzər dənizinin sahəsi 386 400 km²-dir." };
+      const one = scoreResult({ ...base, providers: ["wikipedia"] }, q, "az", "Xəzər dənizinin sahəsi nə qədərdir");
+      const two = scoreResult({ ...base, providers: ["wikipedia", "mwmbl"] }, q, "az", "Xəzər dənizinin sahəsi nə qədərdir");
+      const nine = scoreResult({ ...base, providers: ["a", "b", "c", "d", "e", "f", "g", "h", "i"] }, q, "az", "Xəzər dənizinin sahəsi nə qədərdir");
+      return two > one && nine - one <= 0.9;
+    })());
     // v95.1: extractMeasureFromResults heç vaxt partlamamalıdır (prod-da 500 xətası olmuşdu)
     assert("v95.1: ölçü ekstraksiyası 500 vermir", (() => {
       try {

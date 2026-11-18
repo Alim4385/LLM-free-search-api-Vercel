@@ -32,3 +32,23 @@ Nəticə: recall +2.6 pp, precision −0.8 pp (hədlər daxilində), TP 48 → 5
 
 FN-in böyük hissəsi iki qrupdur: (a) **junk domen** (news.google/facebook — qəsdən atılır),
 (b) **boş snippet** (v95-də düzəldildi). Qalan "FN" etiket səhvidir (mövzusuz səhifələr).
+
+## Sıralama ölçüsü (v96)
+
+Filtr metriki sıralamanı görmür — ona görə `top-3-də relevant sayı` əlavə olundu.
+14 sual üzərində dörd variant (eyni keşlənmiş xam nəticələr):
+
+| variant | top-3 relevant |
+|---|---|
+| A — bonus yoxdur | 22 |
+| B — URL/provayder konsensusu | 22 |
+| C — SAYT (host) konsensusu | 22 |
+| D — sayt etibarlılıq çəkisi (in-sample) | 22 |
+
+Nəticə: **"ən çox görünən saytı qabağa sal" hazırda sıralamanı dəyişmir.** Səbəb: yaxşı
+mənbə (Vikipediya) artıq birincidir, canlı provayder sayı isə azdır (brave/yahoo rate-limited,
+ddg-html bloklu) — yəni konsensus siqnalı çox zəifdir. Bonus kodda saxlanıldı, çünki pulsuzdur
+və provayder sayı artanda işləyəcək; lakin böyük ümid buna bağlanmamalıdır.
+
+Xam nəticələr `eval/raw-cache.json`-da keşlənir — A/B müqayisəsi eyni girişlərlə aparılır
+(`--refresh` ilə yenilənir).
