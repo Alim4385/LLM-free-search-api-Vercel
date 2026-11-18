@@ -14,6 +14,7 @@ import { protectTokens, restoreTokens, protectWithTerms } from "../lib/translate
 import { detectConflicts, parseNum } from "../lib/conflict.js";
 import { isChallengePage } from "../lib/extract.js";
 import { applyFinalLimits, filterByFreshness } from "../lib/finalize.js";
+import { wikiTitleFromUrl, cleanWikiQuery } from "../lib/wikilink.js";
 import { parseMaxResults, parseMaxChars, parseFormat, parseFreshness, parseExcludeDomains, parseLang } from "../lib/pipeline/params.js";
 import { makeJsonResponse, makeJsonlResponse, jsonlLines } from "../lib/pipeline/respond.js";
 import { scoreResult, isSpamDomain, hostMatches, diversifyByDomain, isJunkDomain, computeConfidence, looksLikeGibberish, strongAnchor } from "../lib/score.js";
@@ -1261,6 +1262,17 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v104: 'üstü' dərəcəsi", String(matchMath("2 üstü 10").result) === "1024");
     assert("v104: farengeyt (AZ yazılışı)", (() => { const r = matchUnits("30 dərəcə Selsi neçə Farengeyt"); return r.hit && r.from === "c" && r.to === "f"; })());
     assert("v104: temperatur 2 onluq", unitsToText(matchUnits("100 farengeyt neçə selsi")) === "100 °F = 37,78 °C (temperatur çevirməsi).");
+    // v106: dil körpüsü — saf funksiyalar
+    assert("v106: wiki URL-dən dil+başlıq", (() => {
+      const w = wikiTitleFromUrl("https://az.wikipedia.org/wiki/Bak%C4%B1_metrosu");
+      return w && w.lang === "az" && w.title === "Bakı metrosu" && wikiTitleFromUrl("https://example.com/x") === null;
+    })());
+    assert("v106: wiki sorğusu təmizlənir", cleanWikiQuery("How many universities are there in Azerbaijan?") === "universities in Azerbaijan" && cleanWikiQuery("Number of national parks in Azerbaijan") === "national parks in Azerbaijan");
+    assert("v106: türkcə tarix oxunur", (() => {
+      const r = extractDateAnswer("Hocalı Katliamı, 26 Şubat 1992 tarihinde gerçekleşti.", "Hocalı Katliamı");
+      return r && r.dateText === "26 fevral 1992";
+    })());
+    assert("v106: AZ tarix formatı pozulmur", extractDateAnswer("Himn ilk dəfə 1918-ci ildə qəbul edilmişdir.", "himn nə vaxt qəbul olunub").dateText === "1918-ci ildə");
     // v105: versiya fərqi — "GPT-5.2"-nin tarixi "GPT-5" sualına cavab deyil
     assert("v105: URL-də dəqiq anchor olan mənbə üstündür", (() => {
       const r = extractDateFromResults([

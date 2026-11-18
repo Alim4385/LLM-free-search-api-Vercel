@@ -21,6 +21,7 @@ import { scoreResult, diversifyByDomain, extractQuotedPhrases, containsPhrase, i
 import { applyFinalLimits, filterByFreshness } from "../../../lib/finalize.js";
 import { CORS_HEADERS, makeJsonResponse, makeJsonlResponse, makeSimpleResponse, rateLimitHeaders as makeRateLimitHeaders } from "../../../lib/pipeline/respond.js";
 import { strongAnchor } from "../../../lib/score.js";
+import { bridgeCount, bridgeDate } from "../../../lib/wikilink.js";
 import { parseMaxResults, parseMaxChars, parseFormat, parseFreshness, parseExcludeDomains, parseBool, parseTranslateResults, parseLang } from "../../../lib/pipeline/params.js";
 import { cleanContent, cutWord, dedupeSnippet, detectQueryLanguage, isBoilerplateOnly, stripBoilerplateHead } from "../../../lib/clean.js";
 import { expandQuery, isMetaQuery, stripMetaInstructions, rewriteSearchIntentAz } from "../../../lib/expand.js";
@@ -31,7 +32,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 213; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 214; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -237,6 +238,7 @@ async function handleSearch(body, req) {
   // v88: mərhələ vaxtları (yalnız debug=1) — gələcək optimizasiya üçün ölçü
   const timing = {};
   let searchResult = { results: [], providersUsed: [], errors: {}, anchorQuery: null, translated: false };
+  let earlyBridge = null;   // v106: dil körpüsü (count/date) — paralel başladılır
   let results = [], providersUsed = [], errors = {};
   if (!hasStructured && !unintelligible) {
     try {
@@ -250,6 +252,20 @@ async function handleSearch(body, req) {
       throw e;
     }
     ({ results, providersUsed, errors } = searchResult);
+    // v106: dil körpüsü ERKƏN başladılır (səhifə oxunuşu ilə paralel) — gec başlayanda
+    // 8 saniyəlik büdcə bitirdi və "neçə universitet" kimi suallar cavabsız qalırdı.
+    if (!hasStructured) {
+      const wantsCnt = hasCountMarker(normQueryForIntent);
+      const wantsDate = !wantsCnt && matchDateQuery(normQueryForIntent);
+      if (wantsCnt || wantsDate) {
+        try {
+          const bq = searchResult.anchorQuery || searchQuery || normQueryForIntent;
+          earlyBridge = wantsCnt
+            ? (() => { const noun = countNounFromQuery(normQueryForIntent); return noun ? bridgeCount(normQueryForIntent, bq, noun) : Promise.resolve(null); })().catch(() => null)
+            : bridgeDate(normQueryForIntent, bq).catch(() => null);
+        } catch { earlyBridge = null; }
+      }
+    }
     // v75: "<X> sayı" forması çox daraldıbsa (0–1 nəticə) — rewrite-siz sorğu ilə
     // ikinci cəhd. "Bakıda neçə mehmanxana", "neçə vilayət" kimi siniflər boş qalırdı.
     if (cntQ && results.length < 2) {
@@ -897,10 +913,16 @@ async function handleSearch(body, req) {
     }
   };
   // v71: dəyişən rəsmi rəqəm (minimum əmək haqqı, pensiya, yaşayış minimumu)
+  // v106: DİL KÖRPÜSÜ yalnız SAY və TARİX suallarında istifadə olunur (aşağıda, earlyBridge).
+  // Ölçmə göstərdi ki, ÖLÇÜ suallarında körpü mətni zərərlidir: türkcə "üretim/alan"
+  // sözləri AZ dimensiya qaydalarına ("istehsal/sahə") uyğun gəlmir və köhnə rəqəm qalib gəlir
+  // ("pambıq istehsalı" → 1913-cü ilin 1,1 milyonu). Ona görə ölçü üçün körpü söndürülüb.
+  const extractPool = finalResults;
+
   const liveStatQ = matchLiveStat(normQuery);
   let liveStatHit = null;
   if (liveStatQ.hit && finalResults.length) {
-    liveStatHit = extractLiveStatFromResults(finalResults.slice(0, 5), liveStatQ.id);
+    liveStatHit = extractLiveStatFromResults(extractPool.slice(0, 5), liveStatQ.id);
     if (liveStatHit) degradedStages.push("livestat_extracted");
   }
 
@@ -923,7 +945,15 @@ async function handleSearch(body, req) {
     try {
     const noun = countNounFromQuery(normQueryForIntent);
     if (noun) {
-      const got = extractCountFromResults(finalResults.slice(0, 5), noun, normQueryForIntent);
+      let got = extractCountFromResults(extractPool.slice(0, 5), noun, normQueryForIntent);
+      // v106: mətn yerli mənbələrdə cavab vermədisə → dil körpüsü (EN sual → TR/RU məqalə).
+      // Ölçmə: "neçə universitet" → tr.wiki listesi → 51 (birbaşa cavab, ~600 ms).
+      if ((!got || !(got.score >= 1.5 || got.fromWord)) && earlyBridge) {
+        try {
+          const bg = await earlyBridge;
+          if (bg && bg.value !== undefined) { got = bg; degradedStages.push("count_bridge"); }
+        } catch { /* körpü yoxdur */ }
+      }
       // v62: sözlə yazılmış say ("iki peyk") da qəbul edilir — rəqəmli ilə eyni həddə salmırıq
       if (got && (got.score >= 1.5 || got.fromWord)) {
         countHitDone = true;
@@ -955,7 +985,7 @@ async function handleSearch(body, req) {
   // v77: ÖLÇÜ cavabı — "işsizlik səviyyəsi nə qədərdir" (5,50 faiz), "orta ömür uzunluğu" (75 yaş),
   // "dövlət borcu" (25,7 milyard manat). Say çıxarılmadıqda işə düşür.
   if (!hasStructured && !countHitDone && finalResults.length && matchMeasureQuery(normQueryForIntent)) {
-    const mhit = extractMeasureFromResults(finalResults.slice(0, 5), normQueryForIntent);
+    const mhit = extractMeasureFromResults(extractPool.slice(0, 5), normQueryForIntent);
     if (mhit && mhit.score >= 2) {
       degradedStages.push("measure_extracted");
       structured.unshift({
@@ -977,7 +1007,14 @@ async function handleSearch(body, req) {
   }
   // v80: TARİX cavabı — "Konstitusiya nə vaxt qəbul olunub", "BMT-yə nə vaxt üzv olub"
   if (!hasStructured && !countHitDone && finalResults.length && matchDateQuery(normQueryForIntent)) {
-    const dhit = extractDateFromResults(finalResults.slice(0, 5), normQueryForIntent);
+    let dhit = extractDateFromResults(extractPool.slice(0, 5), normQueryForIntent);
+    // v106: tarix yerli mətndə yoxdursa → dil körpüsü (TR ayları artıq oxunur)
+    if (!dhit && earlyBridge) {
+      try {
+        const bd = await earlyBridge;
+        if (bd && bd.dateText) { dhit = bd; degradedStages.push("date_bridge"); }
+      } catch { /* körpü yoxdur */ }
+    }
     if (dhit && dhit.score >= 2) {
       degradedStages.push("date_extracted");
       structured.unshift({
