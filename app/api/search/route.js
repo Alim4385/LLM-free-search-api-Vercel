@@ -7,7 +7,7 @@ import { matchTime, fetchTime, timeToText } from "../../../lib/time.js";
 import { matchCurrency, fetchCBAR, currencyToText } from "../../../lib/currency.js";
 import { matchUnits, unitsToText } from "../../../lib/units.js";
 import { extractCountFromResults, countNounFromQuery, countSearchQuery, hasCountMarker } from "../../../lib/countextract.js";
-import { extractMeasureFromResults, matchMeasureQuery, extractDateFromResults, matchDateQuery } from "../../../lib/measure.js";
+import { extractMeasureFromResults, matchMeasureQuery, extractDateFromResults, matchDateQuery, unitFamilyOfQuery } from "../../../lib/measure.js";
 import { matchCrypto, fetchCryptoPrice, cryptoToText } from "../../../lib/crypto.js";
 import { matchHoliday, holidayToText } from "../../../lib/holidays.js";
 import { matchLiveStat, extractLiveStatFromResults, liveStatToText } from "../../../lib/livestat.js";
@@ -21,7 +21,8 @@ import { scoreResult, diversifyByDomain, extractQuotedPhrases, containsPhrase, i
 import { applyFinalLimits, filterByFreshness } from "../../../lib/finalize.js";
 import { CORS_HEADERS, makeJsonResponse, makeJsonlResponse, makeSimpleResponse, rateLimitHeaders as makeRateLimitHeaders } from "../../../lib/pipeline/respond.js";
 import { strongAnchor } from "../../../lib/score.js";
-import { bridgeCount, bridgeDate } from "../../../lib/wikilink.js";
+import { bridgeCount, bridgeDate, bridgeMeasure } from "../../../lib/wikilink.js";
+import { translateAzToEn } from "../../../lib/translate.js";
 import { parseMaxResults, parseMaxChars, parseFormat, parseFreshness, parseExcludeDomains, parseBool, parseTranslateResults, parseLang } from "../../../lib/pipeline/params.js";
 import { cleanContent, cutWord, dedupeSnippet, detectQueryLanguage, isBoilerplateOnly, stripBoilerplateHead } from "../../../lib/clean.js";
 import { expandQuery, isMetaQuery, stripMetaInstructions, rewriteSearchIntentAz } from "../../../lib/expand.js";
@@ -32,7 +33,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 216; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 217; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -255,14 +256,30 @@ async function handleSearch(body, req) {
     // v106: dil körpüsü ERKƏN başladılır (səhifə oxunuşu ilə paralel) — gec başlayanda
     // 8 saniyəlik büdcə bitirdi və "neçə universitet" kimi suallar cavabsız qalırdı.
     if (!hasStructured) {
-      const wantsCnt = hasCountMarker(normQueryForIntent);
+      // v108: ÖLÇÜ sualında ("pambıq istehsalı nə qədərdir") SAY mexanizmi işə düşməsin —
+      // "nə qədər" hər iki markerə düşür və say körpüsü ölçü körpüsünü əvəz edirdi.
+      // yalnız HƏQİQİ ölçü ailləsi (sahə/həcm/kütlə/uzunluq/faiz) — "neçə stansiya" say qalır
+      const famM = unitFamilyOfQuery(normQueryForIntent);
+      const measureIntent = matchMeasureQuery(normQueryForIntent) && famM && famM !== "count";
+      const wantsCnt = hasCountMarker(normQueryForIntent) && !measureIntent;
       const wantsDate = !wantsCnt && matchDateQuery(normQueryForIntent);
-      if (wantsCnt || wantsDate) {
+      const wantsMeasure = !wantsCnt && !wantsDate && matchMeasureQuery(normQueryForIntent);
+      if (wantsCnt || wantsDate || wantsMeasure) {
         try {
           const bq = searchResult.anchorQuery || searchQuery || normQueryForIntent;
           earlyBridge = wantsCnt
             ? (() => { const noun = countNounFromQuery(normQueryForIntent); return noun ? bridgeCount(normQueryForIntent, bq, noun) : Promise.resolve(null); })().catch(() => null)
-            : bridgeDate(normQueryForIntent, bq).catch(() => null);
+            : wantsDate
+              ? bridgeDate(normQueryForIntent, bq).catch(() => null)
+              : (async () => {
+                  // v108: EN vikipediya axtarışı üçün İNGİLİSCƏ sorğu lazımdır — AZ sorğu ilə
+                  // "list=search" yanlış səhifə qaytarır. Tərcümə paralel gedir (bloklamır).
+                  let en = searchResult.anchorQuery;
+                  if (!en || /[əğıöşüç]/i.test(en)) {
+                    try { const t = await translateAzToEn(normQueryForIntent, 1200); if (t && !/[əğıöşüç]/i.test(t)) en = t; } catch {}
+                  }
+                  return bridgeMeasure(normQueryForIntent, en || normQueryForIntent);
+                })().catch(() => null);
         } catch { earlyBridge = null; }
       }
     }
@@ -985,7 +1002,14 @@ async function handleSearch(body, req) {
   // v77: ÖLÇÜ cavabı — "işsizlik səviyyəsi nə qədərdir" (5,50 faiz), "orta ömür uzunluğu" (75 yaş),
   // "dövlət borcu" (25,7 milyard manat). Say çıxarılmadıqda işə düşür.
   if (!hasStructured && !countHitDone && finalResults.length && matchMeasureQuery(normQueryForIntent)) {
-    const mhit = extractMeasureFromResults(extractPool.slice(0, 5), normQueryForIntent);
+    let mhit = extractMeasureFromResults(extractPool.slice(0, 5), normQueryForIntent);
+    // v108: yerli mətndən rəqəm çıxmadısa — körpüdən (TR/EN) cəhd; hədd yüksəkdir (≥3)
+    if ((!mhit || mhit.score < 2) && earlyBridge) {
+      try {
+        const bm = await earlyBridge;
+        if (bm && (bm.score ?? 0) >= 3 && (!mhit || (bm.score ?? 0) > mhit.score)) { mhit = bm; degradedStages.push("measure_bridge"); }
+      } catch {}
+    }
     if (mhit && mhit.score >= 2) {
       degradedStages.push("measure_extracted");
       structured.unshift({
