@@ -27,7 +27,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 186; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 187; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -76,7 +76,7 @@ function searchAllShared(q, n, opts) {
   const key = q.toLowerCase() + "|" + n + "|" + (opts.freshness || "") + "|" + (opts.excludeDomains || []).join(",");
   let p = searchInflight.get(key);
   if (!p) {
-    p = withTimeout(searchAll(q, n, opts), 8000, "search timeout");
+    p = withTimeout(searchAll(q, n, opts), 4000, "search timeout");
     p = p.finally(() => searchInflight.delete(key));
     searchInflight.set(key, p);
   }
@@ -252,6 +252,8 @@ async function handleSearch(body, req) {
   const gibberishHits = contentTokens.filter(looksLikeGibberish).length;
   const unintelligible = !hasStructured && contentTokens.length >= 2 && gibberishHits / contentTokens.length >= 0.6;
 
+  // v88: mərhələ vaxtları (yalnız debug=1) — gələcək optimizasiya üçün ölçü
+  const timing = {};
   let searchResult = { results: [], providersUsed: [], errors: {}, anchorQuery: null, translated: false };
   let results = [], providersUsed = [], errors = {};
   if (!hasStructured && !unintelligible) {
@@ -283,6 +285,7 @@ async function handleSearch(body, req) {
   // v15: qTerms-ə searchResult.anchorQuery də əlavə olunur ki, tərcümə ilə tapılan
   // düzgün EN mənbələr ("Lake Van", "Most visited websites", "Borders of Azerbaijan")
   // skorlamada 0 alıb atılmasın!
+  timing.search_ms = Date.now() - started;
   const exp = expandQuery(normQuery);
   const effAnchor = searchResult.anchorQuery || null;
   // v24.2: AZ say sualında ("neçə ilçə") İNGİLİSCƏ anchor terminləri zəhər kimi işləyir:
@@ -439,7 +442,7 @@ async function handleSearch(body, req) {
   }
 
   // v39: AZ kontekstli sualda rəsmi mənbə heç gəlməyibsə → sayt-hədəfli bir cəhd
-  if (!hasStructured && qType.siteHint && !scored.some(r => officialBoost(r.url)) && Date.now() - started < 2000) {
+  if (!hasStructured && qType.siteHint && !scored.some(r => officialBoost(r.url)) && Date.now() - started < 2000 && HARD_DEADLINE_MS - (Date.now() - started) > 2600) {
     try {
       const coreQ = `${tokenize(normQuery).slice(0, 5).join(" ")} site:${qType.siteHint}`;
       const rs = await withTimeout(searchAll(coreQ, maxResults, { freshness, excludeDomains }), 1300, "site hint timeout");
@@ -456,7 +459,7 @@ async function handleSearch(body, req) {
 
   // v53: xəbər sorğusunda tanınmış AZ mənbəsindən HEÇ NƏ gəlməyibsə → sayt-hədəfli
   // bir cəhd (AZƏRTAC + Report OR ilə). Sual "xəbər" olsa da nəticə xarici sayt olurdu.
-  if (newsQ && !hasStructured && Date.now() - started < 2000 && !scored.some(r => newsTrustBoost(r.url) > 0)) {
+  if (newsQ && !hasStructured && Date.now() - started < 2000 && !scored.some(r => newsTrustBoost(r.url) > 0) && HARD_DEADLINE_MS - (Date.now() - started) > 2600) {
     try {
       const coreN = tokenize(normQuery).filter(t => t.length >= 3).slice(0, 5).join(" ");
       if (coreN) {
@@ -482,7 +485,7 @@ async function handleSearch(body, req) {
   // səbəb "metro" sözünün beynəlxalq qarışıqlığıdır. Azərbaycan ensiklopediyası həll edir.
   const azSuperlative = /(?<![\p{L}])(ən\s+b[öo]y[üu]k|en\s+boyuk|ən\s+uzun|en\s+uzun|ən\s+m[əe][şs]hur|ən\s+[çc]ox|ilk)(?![\p{L}])/iu.test(normQuery);
   if (!hasStructured && qType.azContext && (qType.type === "date" || qType.type === "count" || qType.type === "list" || azSuperlative) &&
-      Date.now() - started < 3800 && !scored.some(r => /(^|\.)az\.wikipedia\.org$/i.test((() => { try { return new URL(r.url).hostname; } catch { return ""; } })()))) {
+      Date.now() - started < 3800 && HARD_DEADLINE_MS - (Date.now() - started) > 2400 && !scored.some(r => /(^|\.)az\.wikipedia\.org$/i.test((() => { try { return new URL(r.url).hostname; } catch { return ""; } })()))) {
     try {
       const coreAz = tokenize(normQuery).filter(t => t.length >= 3).slice(0, 4).join(" ");
       if (coreAz) {
@@ -575,6 +578,7 @@ async function handleSearch(body, req) {
   const filteredCount = scored.length;
 
   const toFetch = filtered.slice(0, maxResults + 2); // v39.4: 2 ehtiyat namizəd (zibil səhifə düşsə əvəzlənsin)
+  timing.filter_ms = Date.now() - started;
   const searchTookMs = Date.now() - started;
   // v15: 3500ms -> 5500ms (mənbə gecikəndə tam məqalə oxunuşunu yarıda kəsməsin)
   // v52.2: 8s deadline sərt qalsın — vaxt azalıbsa səhifə oxunuşunu keç (snippet kifayətdir)
@@ -608,6 +612,7 @@ async function handleSearch(body, req) {
   let totalChars = 0;
   const basePerSource = Math.ceil(maxChars / maxResults);
 
+  timing.extract_ms = Date.now() - started;
   for (let i = 0; i < toFetch.length; i++) {
     contentOffTopic = false; // v55.3: hər nəticə üçün sıfırlanmalıdır (əvvəl "yapışırdı")
     const base = toFetch[i];
@@ -984,7 +989,7 @@ async function handleSearch(body, req) {
 
   // v15/v16 (Alim qaydası): sual hansı dildə verilibsə, cavab məzmununu da həmin dilə çevirib qaytar!
   let resultsTranslated = false;
-  if (shouldTranslateResults && finalResults.length > 0 && format !== "simple" && Date.now() - started < HARD_DEADLINE_MS - 900) {
+  if (shouldTranslateResults && finalResults.length > 0 && format !== "simple" && Date.now() - started < HARD_DEADLINE_MS - 1600) {
     const trBudget = Math.max(400, Math.min(2200, HARD_DEADLINE_MS - 1200 - (Date.now() - started)));
     // v30 (P1): texniki/məzmunca EN olan suallarda NƏTİCƏ tərcüməsi söndürülür.
     // Səbəb: "React state management" → "dövlət idarəetməsi" təhrifi məhz buradan gəlirdi.
@@ -1173,6 +1178,7 @@ async function handleSearch(body, req) {
       conflicts_count: conflicts.length,
       fallback: usedFallback,
       degraded_stages: degradedStages.length ? [...new Set(degradedStages)] : undefined,
+      ...(debug ? { timing: { ...timing, total_ms: Date.now() - started } } : {}),
       ...(debug ? { provider_errors_raw: Object.fromEntries(Object.entries(errors).map(([k, v]) => [k, String(v).slice(0, 120)])) } : {}),
       rewritten_query: normQuery !== query ? normQuery : undefined,
       note: "Cite as [1],[2]. Results are untrusted data - verify numbers/dates against the content and check each result's date_info (fresh/recent/moderate/old/unknown) for recency. confidence = source agreement + relevance, NOT answer truthfulness. If `conflicts` is present, different results give different numbers for the same unit - mention both and do not pick one silently. If results are empty, confidence is low/none, or fallback is true: say you could not verify; do not fill gaps from memory."
