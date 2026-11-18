@@ -1251,6 +1251,8 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v90: 'neçədir' say markeridir", hasCountMarker("Bu neçədir") === true);
     assert("v90: 'necədir' say deyil", hasCountMarker("Bakıda hava necədir") === false);
     assert("v90: 'neçə manatdır' rewrite olunmur", countSearchQuery("Bu neçə manatdır") === null);
+    // v92: ay adlı tam tarix tək ildən üstündür
+    assert("v92: tam tarix tək ili üstələyir", extractDateAnswer("Azərbaycan SSR-in 1921-ci ilin Konstitusiyası var idi. Konstitusiya 12 noyabr 1995-ci il tarixində qəbul edilmişdir.", "Konstitusiya nə vaxt qəbul olunub").dateText === "12 noyabr 1995");
     // v75: hissə saylarının cəmi
     const bk = extractCount("Hazırda Azərbaycanda 2 dövlət bankı və 19 kommersiya bankı fəaliyyət göstərir.", "bank");
     assert("v75: '2 dövlət və 19 kommersiya bankı' → 21", bk && bk.value === 21 && bk.summed === true, JSON.stringify(bk));
