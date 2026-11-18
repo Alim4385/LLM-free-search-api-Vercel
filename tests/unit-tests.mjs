@@ -1176,6 +1176,10 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v71: 400 manat çıxarılır", ms && ms.value === 400, JSON.stringify(ms));
     assert("v71: köhnə rəqəm (2019) rədd olunur", extractMoneySentence("2019-cu ildə minimum əmək haqqı 180 manat idi.", "minwage", 2026) === null);
     assert("v71: resept saytı boost alır", howtoTrustBoost("https://azcookbook.com/2011/04/13/yogurt-soup/") > 0);
+    // v72: sənəd nömrəsi say deyil, qonşu sayı Wikidata-dan
+    assert("v72: '130 saylı sərəncam' say deyil", extractCount("1967-ci il tarixli 130 saylı sərəncamına əsasən yaradılmışdır.", "muzey") === null);
+    assert("v72: 'neçə qonşusu var' → borders", matchFact("Azərbaycanın neçə qonşusu var").kind === "borders", JSON.stringify(matchFact("Azərbaycanın neçə qonşusu var")));
+    assert("v72: 'neçə sərhəd qonşusu var' → borders", matchFact("Azərbaycanın neçə sərhəd qonşusu var").kind === "borders");
     assert("v62: tək sözlü sorğuda gate işləmir", providerTermGate([{ title: "MANY definition", url: "u", snippet: "x" }], "many").length === 1);
   }
 
