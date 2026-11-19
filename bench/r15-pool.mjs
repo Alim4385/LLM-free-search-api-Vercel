@@ -158,5 +158,17 @@ export const POOL = [
   { id: "n3-h-az-democratic", cat: "HIST", q: "Azərbaycan Xalq Cümhuriyyəti hansı ildə yaradılıb", must: [["1918"]] },
   { id: "n3-h-columbus", cat: "HIST", q: "Kolumb Amerikanı hansı ildə kəşf etdi", must: [["1492"]] },
   { id: "n3-c-nizami-city", cat: "CULT", q: "Nizami Gəncəvi hansı şəhərdə anadan olub", must: [["gəncə", "gence"]] },
-  { id: "n3-c-fuzuli-work", cat: "CULT", q: "Füzulinin ən məşhur əsəri hansıdır", must: [["leyli", "məcnun", "mecnun"]] }
+  { id: "n3-c-fuzuli-work", cat: "CULT", q: "Füzulinin ən məşhur əsəri hansıdır", must: [["leyli", "məcnun", "mecnun"]] },  // ---------- v116c: dördüncü dəst ----------
+  { id: "n4-az-currency", cat: "AZ", q: "Azərbaycanın pul vahidi necə adlanır", must: [["manat"]] },
+  { id: "n4-az-borders-count", cat: "AZ", q: "Azərbaycan neçə ölkə ilə həmsərhəddir", must: [["5", "beş"]] },
+  { id: "n4-az-ganja", cat: "AZ", q: "Gəncə hansı ildə əsası qoyulub", must: [["ganja", "gəncə", "859", "860", "viii"]] },
+  { id: "n4-az-parliament", cat: "AZ", q: "Azərbaycan Milli Məclisi neçə deputatdan ibarətdir", must: [["125"]] },
+  { id: "n4-w-germany-capital", cat: "WORLD", q: "Almaniyanın paytaxtı hansı şəhərdir", must: [["berlin"]] },
+  { id: "n4-w-spain-capital", cat: "WORLD", q: "İspaniyanın paytaxtı hansı şəhərdir", must: [["madrid"]] },
+  { id: "n4-w-pacific", cat: "WORLD", q: "Dünyanın ən dərin okeanı hansıdır", must: [["sakit", "pasifik", "pasific", "pacific"]] },
+  { id: "n4-s-ballon-dor", cat: "SPORT", q: "Qızıl top mükafatı hansı idman növünə verilir", must: [["futbol", "football", "soccer"]] },
+  { id: "n4-s-olympic-first", cat: "SPORT", q: "İlk müasir Olimpiya Oyunları hansı ildə keçirilib", must: [["1896"]] },
+  { id: "n4-t-python-version", cat: "TECH", q: "Python proqramlaşdırma dili ilk dəfə hansı ildə buraxılıb", must: [["1991", "1990", "1989"]], nMin: 1 },
+  { id: "n4-sc-blood-type", cat: "SCI", q: "İnsan qanında neçə əsas qan qrupu var", must: [["4", "dörd"]] },
+  { id: "n4-h-az-republic-day", cat: "HIST", q: "Azərbaycanda Respublika Günü nə vaxt qeyd olunur", must: [["28 may", "may"]] }
 ];

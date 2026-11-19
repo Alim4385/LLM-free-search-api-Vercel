@@ -1,0 +1,294 @@
+{
+ "round": 9,
+ "at": "2026-11-19T08:13:46.562Z",
+ "poolSize": 137,
+ "pass": 12,
+ "total": 15,
+ "items": [
+  {
+   "id": "n3-t-react-hook",
+   "cat": "TECH",
+   "q": "React-də useState nə üçün istifadə olunur",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4662,
+   "n": 5,
+   "hosts": [
+    "react.dev",
+    "freecodecamp.org",
+    "stackoverflow.com",
+    "w3schools.com",
+    "instagit.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n2-t-html-doctype",
+   "cat": "TECH",
+   "q": "HTML sənədində doctype nə üçündür",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 3587,
+   "n": 5,
+   "hosts": [
+    "w3schools.com",
+    "work.az",
+    "en.wikipedia.org",
+    "inarlearn.com",
+    "stackoverflow.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n3-w-australia-capital",
+   "cat": "WORLD",
+   "q": "Avstraliyanın paytaxtı hansı şəhərdir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4470,
+   "n": 5,
+   "hosts": [
+    "shagird.info",
+    "youtube.com",
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "wiki.az-az.nina.az"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n3-az-flag-colors",
+   "cat": "AZ",
+   "q": "Azərbaycan bayrağında aypara və ulduz hansı rəngdədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 3794,
+   "n": 5,
+   "hosts": [
+    "president.az",
+    "az.wikipedia.org",
+    "qebulol.az",
+    "academia.edu",
+    "diaspor.gov.az"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n3-w-un-founded",
+   "cat": "WORLD",
+   "q": "BMT hansı ildə yaradılıb",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 6183,
+   "n": 5,
+   "hosts": [
+    "azertag.az",
+    "az.wikipedia.org",
+    "qebulol.az",
+    "en.wikipedia.org",
+    "taxes.gov.az"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n3-az-oil",
+   "cat": "AZ",
+   "q": "Azərbaycanda neft hansı ildən sənaye üsulu ilə çıxarılır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4423,
+   "n": 5,
+   "hosts": [
+    "minenergy.gov.az",
+    "minenergy.gov.az",
+    "az.wikipedia.org",
+    "azerbaijan.az",
+    "aem.az"
+   ],
+   "answer": "1846-cı ildə. Mənbə cümlə: \"Neft sənayesinin inkişaf tarixi |Azərbaycan Energetika Nazirliyi. 2025/10/20 - 1846-cı ildə dünyada ilk dəfə Bibiheybət yatağında 21 metr dərinlikdəki quyudan sənaye üsulu "
+  },
+  {
+   "id": "n2-sc-water-boil",
+   "cat": "SCI",
+   "q": "Suyun qaynama temperaturu nə qədərdir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 6284,
+   "n": 5,
+   "hosts": [
+    "e-derslik.edu.az",
+    "sciencenotes.org",
+    "en.wikipedia.org",
+    "britannica.com",
+    "completewaterguide.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n3-c-fuzuli-work",
+   "cat": "CULT",
+   "q": "Füzulinin ən məşhur əsəri hansıdır",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "yoxdur: leyli|məcnun|mecnun"
+   ],
+   "ms": 4408,
+   "n": 5,
+   "hosts": [
+    "isamveri.org",
+    "manuscript.az",
+    "portal.azertag.az",
+    "edebiyyat-az.com",
+    "anl.az"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n3-w-eu-founded",
+   "cat": "WORLD",
+   "q": "Avropa İttifaqı hansı ildə yaradılıb",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4731,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "eeas.europa.eu",
+    "azerbaijan.az",
+    "az.wikipedia.org",
+    "idp.gov.az"
+   ],
+   "answer": "1 noyabr 1992. Mənbə cümlə: \"Formal olaraq 1 noyabr 1992-ci ildə Maastrixt sazişi ilə təsis edilmiş bu ittifaqın təməli 18 aprel 1951-ci il tarixli Paris Müqaviləsinə əsasən, Belçika, Almaniya, Fransa"
+  },
+  {
+   "id": "n2-w-eu-members",
+   "cat": "WORLD",
+   "q": "Avropa İttifaqında neçə ölkə var",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 3576,
+   "n": 5,
+   "hosts": [
+    "modern.az",
+    "modern.az",
+    "economy.gov.az",
+    "sia.az",
+    "az.wikipedia.org"
+   ],
+   "answer": "27 ölkə — 2 müstəqil mənbə təsdiqləyir (modern.az, economy.gov.az). Mənbə cümlə: \"Avropa İttifaqı (Aİ) dünyanın əsas siyasi və iqtisadi güc mərkəzlərindən biri kimi 27 Avropa ölkəsinin elə məhz siyasi"
+  },
+  {
+   "id": "n3-az-hydromet",
+   "cat": "AZ",
+   "q": "Azərbaycanda ən böyük göl hansıdır",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "yoxdur: xəzər|xezər|xezar|caspian"
+   ],
+   "ms": 4325,
+   "n": 2,
+   "hosts": [
+    "espn.com",
+    "en.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n3-h-az-democratic",
+   "cat": "HIST",
+   "q": "Azərbaycan Xalq Cümhuriyyəti hansı ildə yaradılıb",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 6537,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "axc.preslib.az",
+    "lib.aliyev-heritage.org"
+   ],
+   "answer": "1918-ci ildə. Mənbə cümlə: \"1918-ci ildə Cənubi Qafqazda müstəqil dövlətlər meydana gəldikdə, əzəli Azərbaycan torpaqlarının bir hissəsində Ermənistan Demokratik Respublikası yaradıldı.\""
+  },
+  {
+   "id": "n3-w-egypt-capital",
+   "cat": "WORLD",
+   "q": "Misirin paytaxtı hansı şəhərdir",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "yoxdur: qahirə|kahire|cairo"
+   ],
+   "ms": 4378,
+   "n": 3,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "en.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n3-h-columbus",
+   "cat": "HIST",
+   "q": "Kolumb Amerikanı hansı ildə kəşf etdi",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4839,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "youtube.com",
+    "az.wikipedia.org",
+    "geographerr.wordpress.com"
+   ],
+   "answer": "25 avqust 1451. Mənbə cümlə: \"Cristóbal Colón; ən tezi 25 avqust 1451 və ən geci 31 oktyabr 1451[…], ehtimal ki, Genuya[…] – 20 may 1506[…], Valyadolid) — Amerika qitəsini kəşf edən ilk səyyah.\""
+  },
+  {
+   "id": "n3-az-alphabet-year",
+   "cat": "AZ",
+   "q": "Azərbaycan latın əlifbasına hansı ildə keçdi",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5729,
+   "n": 4,
+   "hosts": [
+    "en.wikipedia.org",
+    "rferl.org",
+    "en.wikipedia.org",
+    "en.wikipedia.org"
+   ],
+   "answer": "17 avqust 1992. Mənbə cümlə: \"Azerbaijan Airlines (AZAL) was officially established on 17 August 1992, but the first scheduled flights had already begun in the month of April.\""
+  }
+ ]
+}

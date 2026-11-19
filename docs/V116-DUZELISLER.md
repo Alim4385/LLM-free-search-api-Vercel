@@ -62,3 +62,19 @@ Unit: **601 keçdi, 0 uğursuz**.
 - **15/15 qapısı PROD API-də (`searchapi-eta.vercel.app`) — RAUND 8: `15/15`**, sərt metrik də (açar fakt ilk 3 nəticədə) **15/15**. Suallar əvvəlki raundlarda istifadə olunmayıb.
 - Hovuz: 137 sual, 8 raundda 105+15 = istifadə olunmuş, **17 sual ehtiyatda**.
 - Test harness repo-ya əlavə olundu: `bench/r15.mjs`, `bench/r15-pool.mjs`, `bench/r15-round-*.json`, `bench/r15-used.json`.
+
+## 7. Raund 9 (prod, fərqli suallar) — 12/15 və qalan 3 boşluq
+
+Raund 8-dən sonra ikinci təsdiq raundu: **12/15** (sərt 12/15). Uğursuzlar:
+
+| Sual | Nəticə | Diaqnoz |
+|---|---|---|
+| Misirin paytaxtı hansı şəhərdir | n=3, "Qahirə" yox | pool-da **"Misir" məqaləsi ümumiyyətlə yoxdur** — yalnız "Memfis", "Aşağı Misir", "Misirin yeni paytaxtı" gəlib; `entity_article_kept` işə düşüb amma sonrakı mərhələdə yenə düşüb |
+| Azərbaycanda ən böyük göl hansıdır | "Xəzər" yox | eyni ailə (obyektin öz məqaləsi seçilmir) |
+| Füzulinin ən məşhur əsəri | "Leyli/Məcnun" yox | ehtimal: əsər adı məqalə mətnində seçilmiş paraqrafda deyil |
+
+**Növbəti sessiya üçün prioritet:** `entity_article_kept` ilə əlavə olunan nəticə **sonadək saxlanmalıdır**
+(və ya `scored` mərhələsində "keep" bayrağı ilə qorunmalıdır) + paytaxt/xassə suallarında məqalənin
+**ilk cümləsi (lead)** mütləq content-ə əlavə olunmalıdır.
+
+Hovuz: **149 sual**, istifadə olunmayan **14**.
