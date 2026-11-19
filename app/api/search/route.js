@@ -18,6 +18,7 @@ import { matchNutrition, fetchNutrient, nutrientToText } from "../../../lib/nutr
 import { leadAnswerSentence } from "../../../lib/rank.js";
 import { classifyType, officialBoost, wantsFresh, sameDayCue, newsTrustBoost, AZ_NEWS_TRUSTED, howtoTrustBoost, isHowtoQuery } from "../../../lib/router.js";
 import { scoreResult, diversifyByDomain, dedupeNearDuplicates, extractQuotedPhrases, containsPhrase, isSpamDomain, hostMatches, computeConfidence, isNewsQuery, looksLikeGibberish } from "../../../lib/score.js";
+import { detectEntities, entityBoostForResult, semanticTerms } from "../../../lib/entityBoost.js";
 import { applyFinalLimits, filterByFreshness } from "../../../lib/finalize.js";
 import { CORS_HEADERS, makeJsonResponse, makeJsonlResponse, makeSimpleResponse, rateLimitHeaders as makeRateLimitHeaders } from "../../../lib/pipeline/respond.js";
 import { strongAnchor } from "../../../lib/score.js";
@@ -33,7 +34,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 239; // v119: math 2^10+sqrt fix + dolma dəqiqə sayı fix (FV239) // // v118e: hallucination+2plus2 nMin1 (FV238) // // v118d: n8 +60 pool 389 (FV237) // // v118c: pop year numeric fix (FV236) // // v118b: railway date topic penalty (FV235) // v117: obyekt məqaləsi keep:true + lead, DNT skor 0 fix, anchor translate, necə→sayı fix, pool+14 // v116: provayder termin qapısı yumşaldıldı (subyekt/ad uyğunluğu), wiki kanonik məqalə qaydası + xüsusi ad/hal şəkilçisi variantları, say çıxarışında mövzu tokeni bonusu, r15 nMin buraxılışı; v114: wikipedia provayderində `bridges` ReferenceError düzəldildi, çıxarış büdcəsi hər səhifə üçün ayrı (qismi nəticə), iki mərhələli axtarış + ayrı AbortController, yaxın dublikatların silinməsi, wiki variant sırası; v113: ölçü/say ayrımı, hashtag-spam, alt-domen, conflict, türkcə kaç // v113: ölçü suallarına "sayı" əlavə olunmur (#2), hashtag/spam rəqəm mənbəyi deyil (#3), alt-domen = bir host (#4), fərqli qruplar → agreement conflict (#5), türkcə "kaç ... var" (#7); v112: çarpaz təsdiq, rus say sözü, site:/domen təmizliyi, 8s deadline // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 240; // v120: Google-kimi entity boost ChatGPT/GitHub rəsmi domen (FV240) // // v119: math 2^10+sqrt fix + dolma dəqiqə sayı fix (FV239) // // v118e: hallucination+2plus2 nMin1 (FV238) // // v118d: n8 +60 pool 389 (FV237) // // v118c: pop year numeric fix (FV236) // // v118b: railway date topic penalty (FV235) // v117: obyekt məqaləsi keep:true + lead, DNT skor 0 fix, anchor translate, necə→sayı fix, pool+14 // v116: provayder termin qapısı yumşaldıldı (subyekt/ad uyğunluğu), wiki kanonik məqalə qaydası + xüsusi ad/hal şəkilçisi variantları, say çıxarışında mövzu tokeni bonusu, r15 nMin buraxılışı; v114: wikipedia provayderində `bridges` ReferenceError düzəldildi, çıxarış büdcəsi hər səhifə üçün ayrı (qismi nəticə), iki mərhələli axtarış + ayrı AbortController, yaxın dublikatların silinməsi, wiki variant sırası; v113: ölçü/say ayrımı, hashtag-spam, alt-domen, conflict, türkcə kaç // v113: ölçü suallarına "sayı" əlavə olunmur (#2), hashtag/spam rəqəm mənbəyi deyil (#3), alt-domen = bir host (#4), fərqli qruplar → agreement conflict (#5), türkcə "kaç ... var" (#7); v112: çarpaz təsdiq, rus say sözü, site:/domen təmizliyi, 8s deadline // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -370,7 +371,19 @@ async function handleSearch(body, req) {
   // v42.5: "Access Denied / Just a moment / 403 Forbidden" kimi bloklanmış səhifələr nəticə deyil
   const ERR_PAGE = /^(access\s+denied|forbidden|403\s+forbidden|404|not\s+found|just\s+a\s+moment|attention\s+required|are\s+you\s+a\s+robot|robot\s+check|blocked|Əlçatmaz|Giriş\s+qadağandır|Доступ\s+запрещ|拒绝访问)/iu;
   results = results.filter(r => !ERR_PAGE.test(String(r.title || "").trim()));
-  let scored = results.map(r => ({ ...r, score: scoreResult(r, qTerms, qLang, normQuery) }));
+  // v120: Google-kimi entitet boost — sorğuda ChatGPT/GitHub kimi ad keçirsə rəsmi domen qabağa
+  const _entities = detectEntities(query);
+  const _semantic = semanticTerms(query);
+  let scored = results.map(r => ({ ...r, score: scoreResult(r, qTerms, qLang, normQuery) + (_entities.length ? entityBoostForResult(r, _entities) : 0) }));
+  if (_entities.length) {
+    // semantic genişlənmə: qısa sorğuda "nədir" mənası üçün gizli termin (rewritten-ə toxunmur, yalnız skor üçün)
+    // məs: "ChatGPT halda məlumat" → "nədir" genişləndirməsi rəsmi səhifəni qaldırır
+    if (_semantic.length) {
+      const extraTerms = _semantic.flatMap(s=> s.split(/\s+/));
+      // qTerms-ə əlavə et, növbəti skor mərhələlərində də təsir etsin
+      for (const w of extraTerms) if (!qTerms.includes(w)) qTerms.push(w);
+    }
+  }
   // v112: `site:` sorğusunda BİRBAŞA oxunmuş domen səhifəsi istifadəçinin AÇIQ istədiyi
   // mənbədir — termin uyğunluğu azdırsa da siyahıda qalır (skor yenidən hesablananda itirdi).
   scored = scored.map(r => (r.source === "site-direct" ? { ...r, score: Math.max(r.score, 3.2) } : r));
