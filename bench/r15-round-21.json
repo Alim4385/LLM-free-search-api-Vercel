@@ -1,0 +1,286 @@
+{
+ "round": 21,
+ "at": "2026-11-19T10:25:52.265Z",
+ "poolSize": 329,
+ "pass": 13,
+ "total": 15,
+ "items": [
+  {
+   "id": "n7-world-statue-liberty",
+   "cat": "WORLD",
+   "q": "Azadlıq heykəli haradadır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4028,
+   "n": 5,
+   "hosts": [
+    "en.wikipedia.org",
+    "statueofliberty.org",
+    "en.wikipedia.org",
+    "britannica.com",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-llm-hallucination",
+   "cat": "LLM",
+   "q": "Hallüsinasiya nədir LLM-də",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 2973,
+   "n": 3,
+   "hosts": [
+    "github.com",
+    "hysenlabs.com",
+    "klu.ai"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-llm-context",
+   "cat": "LLM",
+   "q": "Context window nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4322,
+   "n": 5,
+   "hosts": [
+    "en.wikipedia.org",
+    "en.wikipedia.org",
+    "blog.google",
+    "elevenlabs.io",
+    "techtarget.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-llm-finetune",
+   "cat": "LLM",
+   "q": "Fine-tuning nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5781,
+   "n": 4,
+   "hosts": [
+    "en.wikipedia.org",
+    "en.wikipedia.org",
+    "en.wikipedia.org",
+    "voxel51.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-med-covid",
+   "cat": "MED",
+   "q": "Koronavirus nə vaxt yayıldı",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5010,
+   "n": 5,
+   "hosts": [
+    "en.wikipedia.org",
+    "theguardian.com",
+    "healthline.com",
+    "vox.com",
+    "en.wikipedia.org"
+   ],
+   "answer": "29 yanvar 2020. Mənbə cümlə: \"Also referred to as the President's Coronavirus Task Force, it was established on January 29, 2020, with Secretary of Health and Human Services Alex Azar as chair.\""
+  },
+  {
+   "id": "n7-llm-prompt",
+   "cat": "LLM",
+   "q": "Prompt nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 7185,
+   "n": 5,
+   "hosts": [
+    "en.wikipedia.org",
+    "en.wikipedia.org",
+    "geeksforgeeks.org",
+    "az.wikipedia.org",
+    "hostinger.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-world-pyramid",
+   "cat": "WORLD",
+   "q": "Misir piramidaları nə vaxt tikilib",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 6646,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "face2faceafrica.com",
+    "natgeotv.com.au",
+    "livescience.com",
+    "az.wikipedia.org"
+   ],
+   "answer": "2200-cü illərdə. Mənbə cümlə: \"Vahid Misirin ilk iki hakim sülaləsi Qədim padşahlıq dövrü üçün zəmin yaratdı, təq. e.ə. 2700–2200-cü illərdə bir neçə ehram, xüsusən də Üçüncü sülalə Coser ehramı və Dö"
+  },
+  {
+   "id": "n7-nature-tree-oldest",
+   "cat": "NATURE",
+   "q": "Dünyanın ən yaşlı ağacı hansıdır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5563,
+   "n": 5,
+   "hosts": [
+    "nhmu.utah.edu",
+    "bbc.co.uk",
+    "iere.org",
+    "science.howstuffworks.com",
+    "guinnessworldrecords.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-world-colosseum",
+   "cat": "WORLD",
+   "q": "Kolizey haradadır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 6547,
+   "n": 2,
+   "hosts": [
+    "az.wikipedia.org",
+    "en.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-w-nile2",
+   "cat": "WORLD",
+   "q": "Nil çayı haradan axır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 7512,
+   "n": 5,
+   "hosts": [
+    "filminquiry.com",
+    "en.wikipedia.org",
+    "en.wikipedia.org",
+    "npr.org",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-h-ottoman",
+   "cat": "HIST",
+   "q": "Osmanlı imperiyası hansı ildə süqut etdi",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "yoxdur: 1922|1923"
+   ],
+   "ms": 3753,
+   "n": 3,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "az.wikipedia.org"
+   ],
+   "answer": "1882-ci ildən. Mənbə cümlə: \"\"İmtiyaz\" medalı (Osmanlı imperiyası). \"İmtiyaz\" medalı və ya \"İmtiyaz\" nişanı (Osmanlı türkcəsi: ‏امتياز نشانی) — Sultan II Əbdülhəmid dövründən 1882-ci ildən etibarən Os"
+  },
+  {
+   "id": "n7-world-china-wall",
+   "cat": "WORLD",
+   "q": "Çin səddi nə vaxt tikilib",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 7347,
+   "n": 5,
+   "hosts": [
+    "travelchinaguide.com",
+    "en.wikipedia.org",
+    "worldatlas.com",
+    "britannica.com",
+    "chinahighlights.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-world-continent-count",
+   "cat": "WORLD",
+   "q": "Dünyada neçə qitə var",
+   "ok": false,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [
+    "n=1 < 2"
+   ],
+   "ms": 5229,
+   "n": 1,
+   "hosts": [
+    "baku.ws"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-math-pythagoras",
+   "cat": "MATH",
+   "q": "Pifaqor teoremi nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 6156,
+   "n": 5,
+   "hosts": [
+    "en.wikipedia.org",
+    "az.wikipedia.org",
+    "mathnasium.com",
+    "en.wikipedia.org",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-math-equation",
+   "cat": "MATH",
+   "q": "Kvadrat tənlik necə həll olunur",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 6350,
+   "n": 5,
+   "hosts": [
+    "finishmymathclass.com",
+    "en.neurochispas.com",
+    "en.wikipedia.org",
+    "wikihow.com",
+    "youtube.com"
+   ],
+   "answer": ""
+  }
+ ]
+}

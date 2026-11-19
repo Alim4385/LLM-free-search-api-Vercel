@@ -1,0 +1,277 @@
+{
+ "round": 18,
+ "at": "2026-11-19T10:17:41.325Z",
+ "poolSize": 329,
+ "pass": 14,
+ "total": 15,
+ "items": [
+  {
+   "id": "n7-med-sleep2",
+   "cat": "MED",
+   "q": "Yuxusuzluq nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5255,
+   "n": 5,
+   "hosts": [
+    "btk.az",
+    "nevroloq.az",
+    "apollohospitals.com",
+    "en.m.wikipedia.org",
+    "nhlbi.nih.gov"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-world-ocean-count",
+   "cat": "WORLD",
+   "q": "Dünyada neçə okean var",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4894,
+   "n": 5,
+   "hosts": [
+    "portal.azertag.az",
+    "portal.azertag.az",
+    "gcaptain.com",
+    "bmuv.de",
+    "simple.m.wikipedia.org"
+   ],
+   "answer": "4 okean. Mənbə cümlə: \"Cəmi dörd okean var:\""
+  },
+  {
+   "id": "n7-nature-whale",
+   "cat": "NATURE",
+   "q": "Mavi balina neçə metr uzunluğundadır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 7898,
+   "n": 4,
+   "hosts": [
+    "bilimup.com",
+    "az.wikipedia.org",
+    "tr.wikipedia.org",
+    "youtube.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-math-probability",
+   "cat": "MATH",
+   "q": "Ehtimal nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 3331,
+   "n": 2,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-llm-token",
+   "cat": "LLM",
+   "q": "Token nədir LLM-də",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5246,
+   "n": 5,
+   "hosts": [
+    "youtube.com",
+    "thenewstack.io",
+    "en.wikipedia.org",
+    "az.wikipedia.org",
+    "en.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-nature-eagle",
+   "cat": "NATURE",
+   "q": "Qartallar neçə il yaşayır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4814,
+   "n": 1,
+   "hosts": [
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-world-population",
+   "cat": "WORLD",
+   "q": "Dünya əhalisi nə qədərdir",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "n=1 < 2",
+    "yoxdur: 8|milyard|billion"
+   ],
+   "ms": 1044,
+   "n": 1,
+   "hosts": [
+    "wikidata.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-med-antibiotic",
+   "cat": "MED",
+   "q": "Antibiotik nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 6670,
+   "n": 5,
+   "hosts": [
+    "en.wikipedia.org",
+    "learn.genetics.utah.edu",
+    "en.wikipedia.org",
+    "az.wikipedia.org",
+    "britannica.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-e-euro",
+   "cat": "ECON",
+   "q": "Avro hansı ölkələrdə istifadə olunur",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4398,
+   "n": 3,
+   "hosts": [
+    "en.wikipedia.org",
+    "en.wikipedia.org",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-med-vitamin-d",
+   "cat": "MED",
+   "q": "D vitamini nə üçün lazımdır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4857,
+   "n": 4,
+   "hosts": [
+    "aarp.org",
+    "ritual.com",
+    "qz.com",
+    "bbc.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-meta-self",
+   "cat": "META",
+   "q": "Sən hansı modelisən",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5747,
+   "n": 5,
+   "hosts": [
+    "sketchfab.com",
+    "9to5mac.com",
+    "usa-models.com",
+    "arxiv.org",
+    "reviews.llvm.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-math-integral",
+   "cat": "MATH",
+   "q": "İnteqral nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 3694,
+   "n": 2,
+   "hosts": [
+    "az.wikipedia.org",
+    "en.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-nature-desert-largest",
+   "cat": "NATURE",
+   "q": "Dünyanın ən böyük səhrası hansıdır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5755,
+   "n": 3,
+   "hosts": [
+    "en.wikipedia.org",
+    "en.wikipedia.org",
+    "en.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-nature-animal-fastest",
+   "cat": "NATURE",
+   "q": "Dünyanın ən sürətli heyvanı hansıdır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5328,
+   "n": 5,
+   "hosts": [
+    "pbs.org",
+    "en.wikipedia.org",
+    "en.m.wikipedia.org",
+    "total-croatia-news.com",
+    "rankred.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-med-vaccine2",
+   "cat": "MED",
+   "q": "Peyvənd necə işləyir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5811,
+   "n": 5,
+   "hosts": [
+    "en.wikipedia.org",
+    "theweek.com",
+    "bmj.com",
+    "sciencenews.org",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  }
+ ]
+}

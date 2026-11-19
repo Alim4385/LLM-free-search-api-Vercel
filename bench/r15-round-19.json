@@ -1,0 +1,292 @@
+{
+ "round": 19,
+ "at": "2026-11-19T10:21:53.438Z",
+ "poolSize": 329,
+ "pass": 15,
+ "total": 15,
+ "items": [
+  {
+   "id": "n7-world-currency-most",
+   "cat": "WORLD",
+   "q": "Dünyanın ən güclü valyutası hansıdır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 6790,
+   "n": 5,
+   "hosts": [
+    "cmcmarkets.com",
+    "banco.az",
+    "investaz.az",
+    "valyuta.az",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-world-un-members",
+   "cat": "WORLD",
+   "q": "BMT-yə neçə ölkə üzvdür",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 3352,
+   "n": 5,
+   "hosts": [
+    "qebulol.az",
+    "qebulol.az",
+    "az.wikipedia.org",
+    "azerbaijan.az",
+    "ens.az"
+   ],
+   "answer": "193 ölkə — 2 müstəqil mənbə təsdiqləyir (qebulol.az, ens.az). Mənbə cümlə: \"Hazırda 193 ölkə bu təşkilatın üzvüdür.Vatikan BMT-nin üzvü deyil.\" (2 mənbədə eyni rəqəm)"
+  },
+  {
+   "id": "n7-tech-api3",
+   "cat": "TECH",
+   "q": "REST API nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 3959,
+   "n": 5,
+   "hosts": [
+    "ibm.com",
+    "redhat.com",
+    "restfulapi.net",
+    "freecodecamp.org",
+    "developer.mozilla.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-meta-date",
+   "cat": "META",
+   "q": "Bu gün hansı tarixdir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5413,
+   "n": 5,
+   "hosts": [
+    "todaytimeanddate.com",
+    "inchcalculator.com",
+    "tomorrowcalendar.com",
+    "calendardate.com",
+    "todaysdateandtime.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-llm-transformer",
+   "cat": "LLM",
+   "q": "Transformer nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 8965,
+   "n": 5,
+   "hosts": [
+    "en.wikipedia.org",
+    "en.wikipedia.org",
+    "dzone.com",
+    "wonderfulengineering.com",
+    "alignmentforum.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-math-statistics",
+   "cat": "MATH",
+   "q": "Orta ədəd necə hesablanır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 9534,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "e-derslik.edu.az",
+    "arxiv.org",
+    "programmers.stackexchange.com",
+    "audit.az"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-math-fibonacci",
+   "cat": "MATH",
+   "q": "Fibonaççi ardıcıllığı nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5955,
+   "n": 5,
+   "hosts": [
+    "en.wikipedia.org",
+    "science.howstuffworks.com",
+    "livescience.com",
+    "az.wikipedia.org",
+    "en.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-nature-climate",
+   "cat": "NATURE",
+   "q": "Qlobal istiləşmə nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4275,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "ekoloji.com",
+    "qebulol.az",
+    "nationalgeographic.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-az-state",
+   "cat": "AZ",
+   "q": "Azərbaycan hansı qitədə yerləşir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 6283,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "gsaz.az",
+    "belediyye.gov.az",
+    "study.com",
+    "minfakt.wordpress.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-tech-quantum",
+   "cat": "TECH",
+   "q": "Kvant kompüteri nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5481,
+   "n": 5,
+   "hosts": [
+    "youtube.com",
+    "az.wikipedia.org",
+    "data.edu.az",
+    "ict.az",
+    "az.irna.ir"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-nature-volcano",
+   "cat": "NATURE",
+   "q": "Dünyanın ən aktiv vulkanı hansıdır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4664,
+   "n": 5,
+   "hosts": [
+    "apa.az",
+    "azertag.az",
+    "apa.tv",
+    "ikisahil.az",
+    "yeniazerbaycan.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-nature-tiger",
+   "cat": "NATURE",
+   "q": "Pələng neçə kiloqramdır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 3879,
+   "n": 4,
+   "hosts": [
+    "qebulol.az",
+    "portal.azertag.az",
+    "qebulol.az",
+    "youtube.com"
+   ],
+   "answer": "300 kiloqramdır — 2 müstəqil mənbə təsdiqləyir (qebulol.az, azertag.az). Mənbə cümlə: \"Onların bədən uzunluğu 2.5-3 metrə, çəkisi isə 150-300 kiloqrama çatır.\" (2 mənbədə eyni rəqəm)"
+  },
+  {
+   "id": "n7-nature-rainforest-where",
+   "cat": "NATURE",
+   "q": "Amazon meşəsi harada yerləşir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 6334,
+   "n": 5,
+   "hosts": [
+    "portal.azertag.az",
+    "qebulol.az",
+    "az.wikipedia.org",
+    "en.wikipedia.org",
+    "rainfor.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-world-eu-members",
+   "cat": "WORLD",
+   "q": "Avropa İttifaqında neçə ölkə var",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 2582,
+   "n": 5,
+   "hosts": [
+    "modern.az",
+    "modern.az",
+    "sia.az",
+    "az.wikipedia.org",
+    "economy.gov.az"
+   ],
+   "answer": "27 ölkə — 2 müstəqil mənbə təsdiqləyir (modern.az, economy.gov.az). Mənbə cümlə: \"Avropa İttifaqı (Aİ) dünyanın əsas siyasi və iqtisadi güc mərkəzlərindən biri kimi 27 Avropa ölkəsinin elə məhz siyasi"
+  },
+  {
+   "id": "n7-med-heart-rate",
+   "cat": "MED",
+   "q": "İnsanın normal ürək döyüntüsü neçədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 3107,
+   "n": 4,
+   "hosts": [
+    "sagliq.az",
+    "sagliq.az",
+    "btk.az",
+    "medicina.az"
+   ],
+   "answer": "60 döyüntüsü — 2 müstəqil mənbə təsdiqləyir (sagliq.az, medicina.az). Mənbə cümlə: \"Yetkin qadınlar üçün normal ürək döyüntüsü adətən 60-100 bpm arasında olur.\" (2 mənbədə eyni rəqəm)"
+  }
+ ]
+}

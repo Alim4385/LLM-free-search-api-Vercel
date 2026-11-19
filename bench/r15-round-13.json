@@ -1,0 +1,282 @@
+{
+ "round": 13,
+ "at": "2026-11-19T09:26:02.555Z",
+ "poolSize": 249,
+ "pass": 13,
+ "total": 15,
+ "items": [
+  {
+   "id": "n6-t-html2",
+   "cat": "TECH",
+   "q": "HTML nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 7069,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "en.wikipedia.org",
+    "en.wikipedia.org",
+    "designshack.net",
+    "developer.mozilla.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-s-moon2",
+   "cat": "SCI",
+   "q": "Ay hansı planetin peykidir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 6301,
+   "n": 5,
+   "hosts": [
+    "rafailfazil.blogspot.com",
+    "en.m.wikipedia.org",
+    "simple.m.wikipedia.org",
+    "az.wikipedia.org",
+    "education.nationalgeographic.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-h-ww2-2",
+   "cat": "HIST",
+   "q": "İkinci Dünya müharibəsi neçə il davam etdi",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": true,
+   "fails": [],
+   "ms": 4919,
+   "n": 1,
+   "hosts": [
+    "mod.gov.az"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-az-novruz",
+   "cat": "CULT",
+   "q": "Novruz bayramı nə vaxt qeyd olunur",
+   "ok": false,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [
+    "n=1 < 2"
+   ],
+   "ms": 121,
+   "n": 1,
+   "hosts": [
+    "president.az"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-s-pacific2",
+   "cat": "WORLD",
+   "q": "Dünyanın ən böyük okeanı hansıdır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 3805,
+   "n": 3,
+   "hosts": [
+    "az.wikipedia.org",
+    "ens.az",
+    "e-derslik.edu.az"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-h-ww2-3",
+   "cat": "HIST",
+   "q": "Hitler nə vaxt hakimiyyətə gəldi",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5116,
+   "n": 5,
+   "hosts": [
+    "en.wikipedia.org",
+    "qkix.seestern-kosmetik.de",
+    "historychronicles.org",
+    "encyclopedia.ushmm.org",
+    "en.wikipedia.org"
+   ],
+   "answer": "30 yanvar 1933. Mənbə cümlə: \"Following several backroom negotiations, which included industrialists, Hindenburg's son Oskar, former chancellor Franz von Papen, and Hitler, Hindenburg acquiesced and o"
+  },
+  {
+   "id": "n6-h-coldwar",
+   "cat": "HIST",
+   "q": "Soyuq müharibə nə vaxt başladı",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5547,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "worldhistoryedu.com",
+    "e-derslik.edu.az",
+    "az.wikipedia.org"
+   ],
+   "answer": "10 mart 1946. Mənbə cümlə: \"10 mart 1946-cı il tarixli müşahidəçi Oruell, \"Keçən dekabrdakı Moskva konfransından sonra Rusiya, İngiltərə və İngilis imperiyasına qarşı soyuq müharibə etməyə başladı.\""
+  },
+  {
+   "id": "n6-c-mugam2",
+   "cat": "CULT",
+   "q": "Muğam ustadları kimlərdir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4757,
+   "n": 4,
+   "hosts": [
+    "az.wikipedia.org",
+    "portal.azertag.az",
+    "en.wikipedia.org",
+    "azerbaijan-news.az"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-h-usa-moon",
+   "cat": "HIST",
+   "q": "Aya ilk insan nə vaxt getdi",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "yoxdur: 1969|armstrong"
+   ],
+   "ms": 4325,
+   "n": 5,
+   "hosts": [
+    "greelane.com",
+    "gamesradar.com",
+    "en.wikipedia.org",
+    "en.wikipedia.org",
+    "greelane.com"
+   ],
+   "answer": "12 iyul 2019. Mənbə cümlə: \"12 iyul 2019 - Neil Armstronq Ay modulundan çıxan ilk insan idi.\""
+  },
+  {
+   "id": "n6-t-css2",
+   "cat": "TECH",
+   "q": "CSS nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4042,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "en.wikipedia.org",
+    "geeksforgeeks.org",
+    "developer.mozilla.org",
+    "en.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-s-nile",
+   "cat": "SCI",
+   "q": "Dünyanın ən uzun çayı hansıdır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4009,
+   "n": 5,
+   "hosts": [
+    "en.wikipedia.org",
+    "guinnessworldrecords.com",
+    "history.com",
+    "britannica.com",
+    "usgs.gov"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-h-ww1-2",
+   "cat": "HIST",
+   "q": "Birinci Dünya müharibəsi neçə il davam etdi",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4267,
+   "n": 5,
+   "hosts": [
+    "tehsil.com.az",
+    "az.wikipedia.org",
+    "meydan.tv",
+    "az.wikibooks.org",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-s-human-heart",
+   "cat": "SCI",
+   "q": "İnsan ürəyi neçə kameradan ibarətdir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5626,
+   "n": 2,
+   "hosts": [
+    "az.wikipedia.org",
+    "youtube.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-e-bitcoin2",
+   "cat": "ECON",
+   "q": "Bitcoin nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4928,
+   "n": 3,
+   "hosts": [
+    "en.wikipedia.org",
+    "investopedia.com",
+    "bitcoin.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-h-az-1991",
+   "cat": "HIST",
+   "q": "Azərbaycan müstəqilliyini hansı ildə bərpa edib",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4014,
+   "n": 5,
+   "hosts": [
+    "qax-ih.gov.az",
+    "azertag.az",
+    "az.wikipedia.org",
+    "republic.preslib.az",
+    "qax-ih.gov.az"
+   ],
+   "answer": "18 oktyabr 1991. Mənbə cümlə: \"Azərbaycan xalqı 1991-ci il oktyabrın 18-də öz müstəqilliyini bərpa etmişdir.\""
+  }
+ ]
+}

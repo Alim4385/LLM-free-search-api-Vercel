@@ -1,0 +1,277 @@
+{
+ "round": 15,
+ "at": "2026-11-19T09:30:21.748Z",
+ "poolSize": 249,
+ "pass": 11,
+ "total": 15,
+ "items": [
+  {
+   "id": "n6-az-carpet2",
+   "cat": "CULT",
+   "q": "Azərbaycan muğamı hansı ildə UNESCO siyahısına daxil edilib",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4131,
+   "n": 5,
+   "hosts": [
+    "unesco.az",
+    "az.wikipedia.org",
+    "unesco.az",
+    "az.wikipedia.org",
+    "525.az"
+   ],
+   "answer": "7 noyabr 2003. Mənbə cümlə: \"Azərbaycan xalqı üçün. \"Azərbaycan Muğamı\" 7 noyabr 2003-cü il tarixində Azərbaycan muğamı UNESCO tərəfindən bəşəriyyətin qeyri-maddi irsinin şah əsəri elan olunmuşdur.\""
+  },
+  {
+   "id": "n6-w-egypt-river",
+   "cat": "WORLD",
+   "q": "Misirin ən uzun çayı hansıdır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5512,
+   "n": 5,
+   "hosts": [
+    "en.m.wikipedia.org",
+    "history.com",
+    "en.wikipedia.org",
+    "mnisose.org",
+    "en.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-w-australia-pop",
+   "cat": "WORLD",
+   "q": "Avstraliyanın əhalisi nə qədərdir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 940,
+   "n": 1,
+   "hosts": [
+    "wikidata.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-h-az-leader",
+   "cat": "HIST",
+   "q": "Heydər Əliyev kimdir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4415,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "hr.wikipedia.org",
+    "en.wikipedia.org",
+    "en.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-s-light2",
+   "cat": "SCI",
+   "q": "İşıq ili nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 6553,
+   "n": 4,
+   "hosts": [
+    "astronomyshack.com",
+    "science.nasa.gov",
+    "en.m.wikipedia.org",
+    "orbitalradar.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-c-poet",
+   "cat": "CULT",
+   "q": "Nizami Gəncəvi kimdir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 3594,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "az.wikiquote.org",
+    "en.wikipedia.org",
+    "nizamimuseum.az"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-t-ai",
+   "cat": "TECH",
+   "q": "Süni intellekt nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5414,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "coders.edu.az",
+    "en.wikipedia.org",
+    "az.wikipedia.org",
+    "mrl.cert.gov.az"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-w-japan-capital",
+   "cat": "WORLD",
+   "q": "Yaponiyanın paytaxtı hansı şəhərdir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 2433,
+   "n": 5,
+   "hosts": [
+    "citylife.az",
+    "az.wikipedia.org",
+    "525.az",
+    "az.wikipedia.org",
+    "az.wikiquote.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-s-planet2",
+   "cat": "SCI",
+   "q": "Yer kürəsi neçə qitədən ibarətdir",
+   "ok": false,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [
+    "n=1 < 2"
+   ],
+   "ms": 7656,
+   "n": 1,
+   "hosts": [
+    "hurriyet.com.tr"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-az-mountain",
+   "cat": "AZ",
+   "q": "Azərbaycanın ən hündür dağı hansıdır",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "yoxdur: bazardüzü|bazarduzu|4466"
+   ],
+   "ms": 4929,
+   "n": 2,
+   "hosts": [
+    "en.wikipedia.org",
+    "en.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-az-currency-code",
+   "cat": "AZ",
+   "q": "Azərbaycan manatının ISO kodu nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 3983,
+   "n": 4,
+   "hosts": [
+    "en.wikipedia.org",
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "abc.az"
+   ],
+   "answer": "Azərbaycan manatının denominasiyası — Azərbaycanın milli valyutası olan manatın islahatı. Bu islahat nəticəsində 1 yeni manat 5000 köhnə manata bərabər tutuldu. Denominasiya Azərbaycan Prezidenti İlha"
+  },
+  {
+   "id": "n6-az-lake",
+   "cat": "AZ",
+   "q": "Azərbaycanın ən böyük çayı hansıdır",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "yoxdur: kür|kur"
+   ],
+   "ms": 6039,
+   "n": 2,
+   "hosts": [
+    "en.wikipedia.org",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-w-china-pop",
+   "cat": "WORLD",
+   "q": "Çinin əhalisi nə qədərdir",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "yoxdur: 1,4|1.4|milyard"
+   ],
+   "ms": 738,
+   "n": 1,
+   "hosts": [
+    "wikidata.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-w-moscow2",
+   "cat": "WORLD",
+   "q": "Moskva hansı ölkənin paytaxtıdır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5701,
+   "n": 3,
+   "hosts": [
+    "simple.wikipedia.org",
+    "britannica.com",
+    "rbth.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-az-oil2",
+   "cat": "AZ",
+   "q": "Azərbaycanda neft harada çıxarılır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 2131,
+   "n": 2,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  }
+ ]
+}

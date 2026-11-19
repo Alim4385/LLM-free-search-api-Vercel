@@ -1,0 +1,287 @@
+{
+ "round": 12,
+ "at": "2026-11-19T09:23:57.419Z",
+ "poolSize": 249,
+ "pass": 14,
+ "total": 15,
+ "items": [
+  {
+   "id": "n6-w-tokyo2",
+   "cat": "WORLD",
+   "q": "Tokio harada yerləşir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 7893,
+   "n": 5,
+   "hosts": [
+    "en.wikipedia.org",
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "britannica.com",
+    "az.toponavi.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n4-sc-blood-type",
+   "cat": "SCI",
+   "q": "İnsan qanında neçə əsas qan qrupu var",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 3296,
+   "n": 3,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "saglamaile.az"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n4-t-python-version",
+   "cat": "TECH",
+   "q": "Python proqramlaşdırma dili ilk dəfə hansı ildə buraxılıb",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 3601,
+   "n": 4,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "docs.python.org"
+   ],
+   "answer": "2020-ci ildə. Mənbə cümlə: \"Python 2 dili 2020-ci ildə rəsmi olaraq dayandırıldı (ilk dəfə 2015-ildə dayandırılması planlaşdırılmışdı) və Python 2.7.18 son Python 2.7 buraxılışı oldu və beləliklə son "
+  },
+  {
+   "id": "n6-s-dna2",
+   "cat": "SCI",
+   "q": "DNT nə deməkdir",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "yoxdur: dezoksiribonuklein|deoxyribonucleic|dna"
+   ],
+   "ms": 4695,
+   "n": 5,
+   "hosts": [
+    "findwords.info",
+    "az.wikipedia.org",
+    "slang.org",
+    "merriam-webster.com",
+    "dictionary.cambridge.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-s-water2",
+   "cat": "SCI",
+   "q": "Su hansı elementlərdən ibarətdir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 6179,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "moviecultists.com",
+    "programmers.stackexchange.com",
+    "socratic.org",
+    "en.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-c-carpet3",
+   "cat": "CULT",
+   "q": "Azərbaycan xalçaları niyə məşhurdur",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5182,
+   "n": 3,
+   "hosts": [
+    "azerbaijans.com",
+    "en.wikipedia.org",
+    "en.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-t-linux",
+   "cat": "TECH",
+   "q": "Linux nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 7171,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "linux.com",
+    "en.m.wikipedia.org",
+    "az.wikipedia.org",
+    "geeksforgeeks.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-s-everest2",
+   "cat": "SCI",
+   "q": "Dünyanın ən hündür dağı hansıdır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4906,
+   "n": 5,
+   "hosts": [
+    "geology.com",
+    "guinnessworldrecords.com",
+    "britannica.com",
+    "worldatlas.com",
+    "en.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-w-canada-capital",
+   "cat": "WORLD",
+   "q": "Kanadanın paytaxtı hansı şəhərdir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 6934,
+   "n": 2,
+   "hosts": [
+    "testbook.com",
+    "en.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-h-berlin-wall2",
+   "cat": "HIST",
+   "q": "Berlin divarı nə vaxt tikildi",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5483,
+   "n": 5,
+   "hosts": [
+    "en.wikipedia.org",
+    "britannica.com",
+    "en.wikipedia.org",
+    "thoughtco.com",
+    "adst.org"
+   ],
+   "answer": "11 oktyabr 2001. Mənbə cümlə: \"Construction of the Berliner Mauerweg (Berlin Wall Trail) began in 2002 and was completed in 2006, in line with a resolution passed by the Berlin House of Representative"
+  },
+  {
+   "id": "n6-w-brazil-capital",
+   "cat": "WORLD",
+   "q": "Braziliyanın paytaxtı hansı şəhərdir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 6652,
+   "n": 5,
+   "hosts": [
+    "az.blogfaspec.com.br",
+    "wikimedia.az-az.nina.az",
+    "worldatlas.com",
+    "az.wikipedia.org",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n5-h-az-independence-restored",
+   "cat": "HIST",
+   "q": "Azərbaycan müstəqilliyini hansı ildə bərpa etdi",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 7455,
+   "n": 4,
+   "hosts": [
+    "republic.preslib.az",
+    "diplomatmagazine.eu",
+    "britannica.com",
+    "republic.preslib.az"
+   ],
+   "answer": "1991-ci ildə. Mənbə cümlə: \"1991-ci ildə yenidən müstəqilliyini əldə edən Azərbaycanda Azərbaycan Respublikasının dövlət müstəqilliyini bərpa etmək haqqında Bəyannamə qəbul etdi.\""
+  },
+  {
+   "id": "n6-e-manat2",
+   "cat": "ECON",
+   "q": "Manat nə vaxt dövriyyəyə buraxılıb",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4179,
+   "n": 5,
+   "hosts": [
+    "azertag.az",
+    "azertag.az",
+    "vergiler.az",
+    "az.wikipedia.org",
+    "az.wikipedia.org"
+   ],
+   "answer": "15 avqust 1992. Mənbə cümlə: \"Azərbaycan manatının dövriyyəyə buraxılmasından 30 il ötür. 2022/8/15 - milli pul vahidi olan manat 1992-ci il avqustun 15-də tədavülə buraxılıb .\" (3 mənbədə eyni tarix)"
+  },
+  {
+   "id": "n6-t-api2",
+   "cat": "TECH",
+   "q": "API nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 2843,
+   "n": 5,
+   "hosts": [
+    "github.com",
+    "en.m.wikipedia.org",
+    "aws.amazon.com",
+    "en.wikipedia.org",
+    "developer.mozilla.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n5-t-git-branch",
+   "cat": "TECH",
+   "q": "Git-də yeni branch necə yaradılır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 3199,
+   "n": 5,
+   "hosts": [
+    "stackoverflow.com",
+    "kodekloud.com",
+    "geeksforgeeks.org",
+    "stackoverflow.com",
+    "atlassian.com"
+   ],
+   "answer": ""
+  }
+ ]
+}

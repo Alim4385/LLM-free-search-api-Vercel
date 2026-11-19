@@ -1,0 +1,281 @@
+{
+ "round": 14,
+ "at": "2026-11-19T09:28:38.037Z",
+ "poolSize": 249,
+ "pass": 15,
+ "total": 15,
+ "items": [
+  {
+   "id": "n6-t-docker2",
+   "cat": "TECH",
+   "q": "Docker nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4463,
+   "n": 5,
+   "hosts": [
+    "docker.com",
+    "az.wikipedia.org",
+    "aws.amazon.com",
+    "en.wikipedia.org",
+    "docs.docker.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-t-python2",
+   "cat": "TECH",
+   "q": "Python nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5452,
+   "n": 5,
+   "hosts": [
+    "en.wikipedia.org",
+    "python.org",
+    "pythoninstitute.org",
+    "en.wikipedia.org",
+    "docs.python.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-t-git2",
+   "cat": "TECH",
+   "q": "Git nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 8380,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "git-scm.com",
+    "geeksforgeeks.org",
+    "learn.microsoft.com",
+    "w3schools.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n5-t-python-print",
+   "cat": "TECH",
+   "q": "Python-da çap etmək üçün hansı funksiya istifadə olunur",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4514,
+   "n": 4,
+   "hosts": [
+    "stackoverflow.com",
+    "medium.com",
+    "docs.python.org",
+    "e-derslik.edu.az"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-t-sql2",
+   "cat": "TECH",
+   "q": "SQL nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 6372,
+   "n": 5,
+   "hosts": [
+    "en.wikipedia.org",
+    "az.wikipedia.org",
+    "comptia.org",
+    "aws.amazon.com",
+    "w3schools.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n5-w-london",
+   "cat": "WORLD",
+   "q": "İngiltərənin paytaxtı hansı şəhərdir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 6855,
+   "n": 3,
+   "hosts": [
+    "azertag.az",
+    "en.wikipedia.org",
+    "simple.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-sp-football2",
+   "cat": "SPORT",
+   "q": "Dünya çempionatını ən çox hansı ölkə qazanıb",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4146,
+   "n": 5,
+   "hosts": [
+    "sportinfo.az",
+    "primeinfo.az",
+    "qebulol.az",
+    "d9mc3ts4czbpr.cloudfront.net",
+    "ikisahil.az"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-w-uk-capital",
+   "cat": "WORLD",
+   "q": "Böyük Britaniyanın paytaxtı hansı şəhərdir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 6702,
+   "n": 2,
+   "hosts": [
+    "en.wikipedia.org",
+    "en.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-s-evolution",
+   "cat": "SCI",
+   "q": "Təkamül nəzəriyyəsini kim irəli sürüb",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4113,
+   "n": 3,
+   "hosts": [
+    "education.nationalgeographic.org",
+    "answers.com",
+    "az.khanacademy.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-sp-messi2",
+   "cat": "SPORT",
+   "q": "Messi hansı klubda oynayır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 7151,
+   "n": 3,
+   "hosts": [
+    "en.as.com",
+    "moviecultists.com",
+    "sports.answers.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-s-blood2",
+   "cat": "SCI",
+   "q": "İnsan bədənində neçə litr qan var",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 6453,
+   "n": 4,
+   "hosts": [
+    "portal.azertag.az",
+    "medicana.com.tr",
+    "portal.azertag.az",
+    "az.wikipedia.org"
+   ],
+   "answer": "60 000 min mil qan. Mənbə cümlə: \"İnsan bədənində 60 min mil qan damarı var.\""
+  },
+  {
+   "id": "n6-s-atom",
+   "cat": "SCI",
+   "q": "Atomun nüvəsində nə var",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 6748,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "en.wikipedia.org",
+    "kimyamektebde.net",
+    "en.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-sp-tennis",
+   "cat": "SPORT",
+   "q": "Tennis hansı ölkədə yaranıb",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 8636,
+   "n": 4,
+   "hosts": [
+    "worldatlas.com",
+    "telegraph.co.uk",
+    "en.m.wikipedia.org",
+    "socratic.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-h-az-karabakh",
+   "cat": "HIST",
+   "q": "Qarabağ müharibəsi nə vaxt bitdi",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 6974,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "genprosecutor.gov.az",
+    "moviecultists.com"
+   ],
+   "answer": "27 sentyabr 2020. Mənbə cümlə: \"Qarşıdurmalar 27 sentyabr 2020-ci il səhər saat 06:00-da Qarabağ müharibəsindən sonra yaradılmış təmas xətti boyunca başladı.\""
+  },
+  {
+   "id": "n5-sc-atoms",
+   "cat": "SCI",
+   "q": "Suyun qaynama nöqtəsi neçə dərəcədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 3536,
+   "n": 4,
+   "hosts": [
+    "eurolab.net",
+    "eurolab.net",
+    "az.wikipedia.org",
+    "elmi-spektr.com"
+   ],
+   "answer": "100 dərəcədir (2000 ili məlumatı). Mənbə cümlə: \"Məsələn, dəniz səviyyəsində suyun qaynama nöqtəsi 100 dərəcədir, lakin 2000 metr yüksəklikdə qaynama nöqtəsi 93 dərəcədir.Qaynama buxarlanmadan fərqlid"
+  }
+ ]
+}

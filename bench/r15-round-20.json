@@ -1,0 +1,282 @@
+{
+ "round": 20,
+ "at": "2026-11-19T10:23:48.285Z",
+ "poolSize": 329,
+ "pass": 12,
+ "total": 15,
+ "items": [
+  {
+   "id": "n7-math-calculus",
+   "cat": "MATH",
+   "q": "Riyazi analiz nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 2653,
+   "n": 5,
+   "hosts": [
+    "cs.bsu.edu.az",
+    "static.bsu.az",
+    "az.wikipedia.org",
+    "academia.edu",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-med-blood-pressure",
+   "cat": "MED",
+   "q": "Normal qan təzyiqi nə qədərdir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4130,
+   "n": 4,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "medicina.az",
+    "en.wikipedia.org"
+   ],
+   "answer": "12 metr. Mənbə cümlə: \"Hündürluyə qalxdıqca,təzyiq orta hesabla hər 12 metrdə 1 mm c.s.\""
+  },
+  {
+   "id": "n7-tech-k8s",
+   "cat": "TECH",
+   "q": "Kubernetes nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5497,
+   "n": 5,
+   "hosts": [
+    "en.wikipedia.org",
+    "az.wikipedia.org",
+    "redhat.com",
+    "cisco.com",
+    "kubernetes.io"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-tech-cloud",
+   "cat": "TECH",
+   "q": "Bulud texnologiyası nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 3427,
+   "n": 3,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "en.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-math-pi",
+   "cat": "MATH",
+   "q": "Pi ədədi nə qədərdir",
+   "ok": false,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [
+    "n=1 < 2"
+   ],
+   "ms": 155,
+   "n": 1,
+   "hosts": [
+    "wolframalpha.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-world-longest-river2",
+   "cat": "WORLD",
+   "q": "Nil çayının uzunluğu nə qədərdir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5815,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "britannica.com",
+    "egypttimetravel.com",
+    "howlong.is",
+    "en.wikipedia.org"
+   ],
+   "answer": "6650 km. Mənbə cümlə: \"Afrika materikində yerləşən Nil çayı dünyanın ən uzun çayı olub.Uzunluğu 6650 km-dir.\""
+  },
+  {
+   "id": "n7-med-water2",
+   "cat": "MED",
+   "q": "İnsan bədəninin neçə faizi sudur",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 7451,
+   "n": 2,
+   "hosts": [
+    "sozcu.com.tr",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-med-diabetes",
+   "cat": "MED",
+   "q": "Şəkərli diabet nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4634,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "niddk.nih.gov",
+    "coca-cola.com",
+    "en.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-nature-bee",
+   "cat": "NATURE",
+   "q": "Arı neçə qanadlıdır",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "n=0 < 2",
+    "yoxdur: 4|dörd"
+   ],
+   "ms": 4059,
+   "n": 0,
+   "hosts": [],
+   "answer": ""
+  },
+  {
+   "id": "n7-world-language-most",
+   "cat": "WORLD",
+   "q": "Dünyada ən çox danışılan dil hansıdır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 7554,
+   "n": 5,
+   "hosts": [
+    "babbel.com",
+    "toplangs.com",
+    "brilliantmaps.com",
+    "archive.ph",
+    "ethnologue.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-llm-gpt",
+   "cat": "LLM",
+   "q": "GPT nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 6492,
+   "n": 5,
+   "hosts": [
+    "en.wikipedia.org",
+    "en.wikipedia.org",
+    "cloud.google.com",
+    "aws.amazon.com",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-llm-agents",
+   "cat": "LLM",
+   "q": "AI agent nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4858,
+   "n": 5,
+   "hosts": [
+    "en.wikipedia.org",
+    "cisco.com",
+    "en.wikipedia.org",
+    "geeksforgeeks.org",
+    "microsoft.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-nature-panda",
+   "cat": "NATURE",
+   "q": "Panda harada yaşayır",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "yoxdur: çin|china"
+   ],
+   "ms": 10230,
+   "n": 4,
+   "hosts": [
+    "blog.makezine.com",
+    "github.com",
+    "arxiv.org",
+    "lwn.net"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-med-genetics",
+   "cat": "MED",
+   "q": "Gen nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5059,
+   "n": 5,
+   "hosts": [
+    "medlineplus.gov",
+    "en.wikipedia.org",
+    "my.clevelandclinic.org",
+    "en.m.wikipedia.org",
+    "en.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-math-log",
+   "cat": "MATH",
+   "q": "Loqarifm nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 3269,
+   "n": 3,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "en.wikipedia.org"
+   ],
+   "answer": ""
+  }
+ ]
+}

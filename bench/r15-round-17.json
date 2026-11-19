@@ -1,0 +1,284 @@
+{
+ "round": 17,
+ "at": "2026-11-19T10:11:03.309Z",
+ "poolSize": 329,
+ "pass": 13,
+ "total": 15,
+ "items": [
+  {
+   "id": "n7-world-eiffel",
+   "cat": "WORLD",
+   "q": "Eyfel qülləsi harada yerləşir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 10131,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "big.az",
+    "britannica.com",
+    "whereig.com",
+    "coqrafiya.blogspot.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-med-flu",
+   "cat": "MED",
+   "q": "Qrip necə yoluxur",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5113,
+   "n": 5,
+   "hosts": [
+    "premiumclinic.az",
+    "tabib.gov.az",
+    "az.wikipedia.org",
+    "sehiyye.gov.az",
+    "batigoz.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-az-president",
+   "cat": "AZ",
+   "q": "Azərbaycan Prezidenti kimdir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 3256,
+   "n": 5,
+   "hosts": [
+    "president.az",
+    "en.wikipedia.org",
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "bbc.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-world-smallest-country2",
+   "cat": "WORLD",
+   "q": "Vatikan harada yerləşir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 3385,
+   "n": 5,
+   "hosts": [
+    "azerbaijan-news.az",
+    "az.wikipedia.org",
+    "az.toponavi.com",
+    "az.wikipedia.org",
+    "ikisahil.az"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-e-dollar2",
+   "cat": "ECON",
+   "q": "Dolların simvolu nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5297,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "en.wikipedia.org",
+    "32gun.az",
+    "stackoverflow.com",
+    "ednews.net"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-med-cancer",
+   "cat": "MED",
+   "q": "Xərçəng xəstəliyi nədir",
+   "ok": false,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [
+    "n=1 < 2"
+   ],
+   "ms": 5985,
+   "n": 1,
+   "hosts": [
+    "abc.az"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-nature-forest",
+   "cat": "NATURE",
+   "q": "Dünyanın ən böyük meşəsi hansıdır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5962,
+   "n": 3,
+   "hosts": [
+    "worldatlas.com",
+    "nikin.com",
+    "missiya.az"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-nature-camel",
+   "cat": "NATURE",
+   "q": "Dəvə neçə donqarı var",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 7238,
+   "n": 3,
+   "hosts": [
+    "modern.az",
+    "en.wikipedia.org",
+    "en.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-nature-ocean-deep",
+   "cat": "NATURE",
+   "q": "Mariana çökəkliyinin dərinliyi nə qədərdir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4179,
+   "n": 5,
+   "hosts": [
+    "redaktor.az",
+    "redaktor.az",
+    "report.az",
+    "pickvisa.az",
+    "ednews.net"
+   ],
+   "answer": "10 925 metr. Mənbə cümlə: \"Sakit okeanda ən dərin yer olan Marian çökəkliyinin 10 925 metr dərinlikdə yerləşdiyi müəyyən olub.\" (2 mənbədə eyni rəqəm)"
+  },
+  {
+   "id": "n7-math-algebra",
+   "cat": "MATH",
+   "q": "Cəbr nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4919,
+   "n": 4,
+   "hosts": [
+    "az.wikipedia.org",
+    "cuemath.com",
+    "maa.org",
+    "press.princeton.edu"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-az-railway",
+   "cat": "AZ",
+   "q": "Azərbaycanda ilk dəmir yolu nə vaxt çəkildi",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "yoxdur: 1880|1908"
+   ],
+   "ms": 6651,
+   "n": 3,
+   "hosts": [
+    "az.wikipedia.org",
+    "report.az",
+    "namibweb.com"
+   ],
+   "answer": "19 yanvar 1990. Mənbə cümlə: \"1990-cı il yanvarın 19–20-də sovet qoşunlarının Bakıda və respublikanın digər şəhər və rayonlarında törətdikləri qanlı faciənin qurbanları arasında qadınlar da var idi.\""
+  },
+  {
+   "id": "n7-med-brain2",
+   "cat": "MED",
+   "q": "Alzheimer nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5722,
+   "n": 5,
+   "hosts": [
+    "alzheimers.gov",
+    "alz.org",
+    "en.wikipedia.org",
+    "en.wikipedia.org",
+    "thenakedscientists.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-math-derivative",
+   "cat": "MATH",
+   "q": "Törəmə nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5616,
+   "n": 3,
+   "hosts": [
+    "cosquncafar.medium.com",
+    "az.wikipedia.org",
+    "en.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-math-matrix",
+   "cat": "MATH",
+   "q": "Matris nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 8444,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "en.wikipedia.org",
+    "stattrek.com",
+    "az.wikipedia.org",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n6-s-sun",
+   "cat": "SCI",
+   "q": "Günəş hansı qalaktikada yerləşir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5156,
+   "n": 4,
+   "hosts": [
+    "portal.azertag.az",
+    "e-derslik.edu.az",
+    "az.wikipedia.org",
+    "planetimiz.org"
+   ],
+   "answer": ""
+  }
+ ]
+}

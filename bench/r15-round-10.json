@@ -1,0 +1,267 @@
+{
+ "round": 10,
+ "at": "2026-11-19T09:02:20.670Z",
+ "poolSize": 174,
+ "pass": 13,
+ "total": 15,
+ "items": [
+  {
+   "id": "n4-az-parliament",
+   "cat": "AZ",
+   "q": "Azərbaycan Milli Məclisi neçə deputatdan ibarətdir",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "n=1 < 2",
+    "yoxdur: 125"
+   ],
+   "ms": 7814,
+   "n": 1,
+   "hosts": [
+    "tripadvisor.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n5-az-shahdag",
+   "cat": "AZ",
+   "q": "Şahdağ hansı ölkədə yerləşir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": true,
+   "fails": [],
+   "ms": 1098,
+   "n": 1,
+   "hosts": [
+    "wikidata.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n4-az-ganja",
+   "cat": "AZ",
+   "q": "Gəncə hansı ildə əsası qoyulub",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4856,
+   "n": 3,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n5-s-football-players",
+   "cat": "SPORT",
+   "q": "Futbol komandasında neçə oyunçu olur",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4854,
+   "n": 5,
+   "hosts": [
+    "kayzen.az",
+    "kayzen.az",
+    "en.wikipedia.org",
+    "az.wikipedia.org",
+    "tr.wikipedia.org"
+   ],
+   "answer": "11 oyunçu — 2 müstəqil mənbə təsdiqləyir (kayzen.az, wikipedia.org). Mənbə cümlə: \"Futbolda nəyə görə 11 oyunçu olur?.\" (3 mənbədə eyni rəqəm)"
+  },
+  {
+   "id": "n4-az-borders-count",
+   "cat": "AZ",
+   "q": "Azərbaycan neçə ölkə ilə həmsərhəddir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": true,
+   "fails": [],
+   "ms": 1109,
+   "n": 1,
+   "hosts": [
+    "wikidata.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n5-az-baku-founded",
+   "cat": "AZ",
+   "q": "Bakı şəhərinin əsasının qoyulması hansı əsrə aiddir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": true,
+   "fails": [],
+   "ms": 4721,
+   "n": 1,
+   "hosts": [
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n5-c-nizami-works",
+   "cat": "CULT",
+   "q": "Nizami Gəncəvinin Xəmsəsinə neçə əsər daxildir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 2679,
+   "n": 5,
+   "hosts": [
+    "azertag.az",
+    "azertag.az",
+    "qebulol.az",
+    "az.trend.az",
+    "bp.com"
+   ],
+   "answer": "5 əsər. Mənbə cümlə: \"Müqaviləyə əsasən C.Kamalın rəhbərliyi ilə xüsusi redaksiya şurası yaradılacaq və “Xəmsə”yə daxil olan 5 əsər - “Sirlər xəzinəsi”, “Xosrov və Şirin”, “Leyli və Məcnun”, “Yeddi gö"
+  },
+  {
+   "id": "n4-w-germany-capital",
+   "cat": "WORLD",
+   "q": "Almaniyanın paytaxtı hansı şəhərdir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 3496,
+   "n": 5,
+   "hosts": [
+    "kayzen.az",
+    "report.az",
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n4-az-currency",
+   "cat": "AZ",
+   "q": "Azərbaycanın pul vahidi necə adlanır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4700,
+   "n": 4,
+   "hosts": [
+    "en.wikipedia.org",
+    "kriptoinvest.az",
+    "vergiler.az",
+    "cbar.az"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n4-w-spain-capital",
+   "cat": "WORLD",
+   "q": "İspaniyanın paytaxtı hansı şəhərdir",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "n=1 < 2",
+    "yoxdur: madrid"
+   ],
+   "ms": 4712,
+   "n": 1,
+   "hosts": [
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n5-az-mud-volcano",
+   "cat": "AZ",
+   "q": "Azərbaycanda neçə palçıq vulkanı var",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4401,
+   "n": 3,
+   "hosts": [
+    "az.wikipedia.org",
+    "azerbaijan.az",
+    "eco.gov.az"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n5-h-french-revolution",
+   "cat": "HIST",
+   "q": "Fransız inqilabı hansı ildə başladı",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4595,
+   "n": 3,
+   "hosts": [
+    "az.wikipedia.org",
+    "faqs.org",
+    "az.wikipedia.org"
+   ],
+   "answer": "5 may 1789. Mənbə cümlə: \"Silklər Məclisinin (Fransa parlamenti) seçkilərindən sonra hər üç zümrədən olan deputatlar 5 may 1789-cu ildə kralın Versal sarayında öz ilk iclasına toplaşırlar.\""
+  },
+  {
+   "id": "n5-w-amsterdam",
+   "cat": "WORLD",
+   "q": "Niderlandın paytaxtı hansı şəhərdir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 3631,
+   "n": 2,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n5-s-olympic-motto",
+   "cat": "SPORT",
+   "q": "Olimpiya şüarı nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 3784,
+   "n": 2,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n4-s-olympic-first",
+   "cat": "SPORT",
+   "q": "İlk müasir Olimpiya Oyunları hansı ildə keçirilib",
+   "ok": true,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 3781,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "todayifoundout.com",
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "history.com"
+   ],
+   "answer": "1936-cı ildə. Mənbə cümlə: \"Olimpiya məşəlinin estafetlə Yunanıstandan Oyunlar keçiriləcək şəhərə hərəkətinin müasir ənənəsi 1936-cı ildə Berlin Yay Olimpiya Oyunları zamanı.\""
+  }
+ ]
+}

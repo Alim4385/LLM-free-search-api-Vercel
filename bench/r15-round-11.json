@@ -1,0 +1,270 @@
+{
+ "round": 11,
+ "at": "2026-11-19T09:04:24.966Z",
+ "poolSize": 174,
+ "pass": 9,
+ "total": 15,
+ "items": [
+  {
+   "id": "n3-az-shusha",
+   "cat": "AZ",
+   "q": "Şuşa hansı rayona aiddir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 3990,
+   "n": 3,
+   "hosts": [
+    "en.wikipedia.org",
+    "az.wikipedia.org",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n3-t-http-code",
+   "cat": "TECH",
+   "q": "HTTP 404 nə deməkdir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 6490,
+   "n": 3,
+   "hosts": [
+    "egu.eu",
+    "en.wikipedia.org",
+    "phabricator.wikimedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n5-s-chess",
+   "cat": "SPORT",
+   "q": "Şahmat taxtasında neçə xana var",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "n=1 < 2",
+    "yoxdur: 64"
+   ],
+   "ms": 4425,
+   "n": 1,
+   "hosts": [
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n5-w-cairo-check",
+   "cat": "WORLD",
+   "q": "Qahirə hansı ölkənin paytaxtıdır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 3654,
+   "n": 2,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n5-az-national-park",
+   "cat": "AZ",
+   "q": "Azərbaycanda neçə milli park var",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4289,
+   "n": 2,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n5-e-bitcoin",
+   "cat": "ECON",
+   "q": "Bitcoin hansı ildə yaradılıb",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 6731,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "gab.com",
+    "az.wikipedia.org",
+    "bitcointalk.org"
+   ],
+   "answer": "2008-ci ildə. Mənbə cümlə: \"Bitcoin — 2008-ci ildə Satoşi Nakamoto adlı naməlum şəxs və ya qrup tərəfindən ixtira olunmuş və 2009-cu ildə açıq-mənbəli proqram təminatı kimi istifadəyə verilmiş kriptov"
+  },
+  {
+   "id": "n5-c-mugam",
+   "cat": "CULT",
+   "q": "Muğam nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5296,
+   "n": 3,
+   "hosts": [
+    "az.wikipedia.org",
+    "en.wikipedia.org",
+    "visions.az"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n5-h-usa-independence",
+   "cat": "HIST",
+   "q": "ABŞ müstəqilliyini hansı ildə elan etdi",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "yoxdur: 1776"
+   ],
+   "ms": 4079,
+   "n": 3,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n5-sc-human-brain",
+   "cat": "SCI",
+   "q": "İnsan beynində təxminən neçə neyron var",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "n=1 < 2",
+    "yoxdur: 86|100|milyard"
+   ],
+   "ms": 5883,
+   "n": 1,
+   "hosts": [
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n4-h-az-republic-day",
+   "cat": "HIST",
+   "q": "Azərbaycanda Respublika Günü nə vaxt qeyd olunur",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 3130,
+   "n": 3,
+   "hosts": [
+    "bbc.com",
+    "bbc.com",
+    "az.wikipedia.org"
+   ],
+   "answer": "28 may 2024. Mənbə cümlə: \"Yeniləndi 28 May 2024Bu gün Azərbaycanda Müstəqillik Günü qeyd olunur.106 il əvvəl Şərqdə ilk demokratik respublika Azərbaycanda yaranıb.\""
+  },
+  {
+   "id": "n4-w-pacific",
+   "cat": "WORLD",
+   "q": "Dünyanın ən dərin okeanı hansıdır",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "yoxdur: sakit|pasifik|pasific|pacific"
+   ],
+   "ms": 3973,
+   "n": 3,
+   "hosts": [
+    "theguardian.com",
+    "mentalfloss.com",
+    "zippyfacts.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n5-sc-mendeleev",
+   "cat": "SCI",
+   "q": "Mendeleyev cədvəlində neçə element var",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "n=1 < 2",
+    "yoxdur: 118"
+   ],
+   "ms": 3826,
+   "n": 1,
+   "hosts": [
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n5-w-oslo",
+   "cat": "WORLD",
+   "q": "Norveçin paytaxtı hansı şəhərdir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 3466,
+   "n": 2,
+   "hosts": [
+    "worldatlas.com",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n5-w-athens",
+   "cat": "WORLD",
+   "q": "Yunanıstanın paytaxtı hansı şəhərdir",
+   "ok": false,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [
+    "n=1 < 2"
+   ],
+   "ms": 5002,
+   "n": 1,
+   "hosts": [
+    "worldatlas.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n5-t-html-tag",
+   "cat": "TECH",
+   "q": "HTML-də link yaratmaq üçün hansı teq istifadə olunur",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 6054,
+   "n": 3,
+   "hosts": [
+    "stackoverflow.com",
+    "az.wikipedia.org",
+    "zapier.com"
+   ],
+   "answer": ""
+  }
+ ]
+}
