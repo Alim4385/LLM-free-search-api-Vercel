@@ -29,7 +29,7 @@ import { matchHoliday } from "../lib/holidays.js";
 import { matchLiveStat, extractMoneySentence } from "../lib/livestat.js";
 import { matchCrypto, cryptoToText } from "../lib/crypto.js";
 import { extractMeasure, extractMeasureFromResults, matchMeasureQuery, extractDateAnswer, matchDateQuery, extractDateFromResults, unitFamilyOfQuery, unitFamilyOfUnit } from "../lib/measure.js";
-import { extractCount, extractCountFromResults, extractCountCross, collectCandidates, countNounFromQuery, countSearchQuery, hasCountMarker } from "../lib/countextract.js";
+import { extractCount, extractCountFromResults, extractCountCross, collectCandidates, countNounFromQuery, countSearchQuery, hasCountMarker, regDomain } from "../lib/countextract.js";
 import { stripSiteAndDomains } from "../lib/expand.js";
 import { parseSitemap, parseArticleHtml, matchSitemapItems } from "../lib/sitemapnews.js";
 import { normalizeUrl, decodeEntities, stripQuestionWords, parseDDGLite, normalizeMwmbl, parseYahooJP, parseMilliArxiv, isArchiveTopic, providerTermGate } from "../lib/search.js";
@@ -1492,6 +1492,102 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v112: domen tokenu təmizlənir", stripSiteAndDomains("https://metro.gov.az/about haqqında") === "haqqında", stripSiteAndDomains("https://metro.gov.az/about haqqında"));
     // === v112: isim marker-dən əvvəl gələndə tapılır ===
     assert("v112: 'stansiyaların sayı' → stansiya", countNounFromQuery("Bakı metrosunda stansiyaların sayı") === "stansiya", String(countNounFromQuery("Bakı metrosunda stansiyaların sayı")));
+
+    // === v113: ÖLÇÜ keyfiyyəti — dəyişmə rəqəmi, entitiya qarışması, çarpaz təsdiq ===
+    {
+      const docs = [
+        { url: "https://a.az/1", title: "10 santimetr", content: "Hava temperaturu yüksəldikdə Eyfel qülləsinin hündürlüyü təxminən 10 santimetr artır." },
+        { url: "https://b.az/2", title: "Eyfel qülləsinin hündürlüyü artdı", content: "Eyfel qülləsinə əlavə edilən yeni radio antenası sayəsində qüllə 6 metr böyüyüb." },
+        { url: "https://c.az/3", title: "Eyfel qülləsi", content: "Eyfel qülləsinin fransızca adı La Tour Eiffeldir. Hündürlüyü 300 metr, çəkisi isə 10,100 tondur." }
+      ];
+      const h = extractMeasureFromResults(docs, "Eyfel qülləsinin hündürlüyü nə qədərdir");
+      assert("v113: dəyişmə rəqəmi (10 sm artır / 6 m böyüyüb) əsas dəyəri üstələmir", h.value === 300, JSON.stringify({ v: h.value, c: h.confirmations.map(c => c.value) }));
+      assert("v113: ölçüdə təsdiqlər verilir", Array.isArray(h.confirmations) && h.confirmations[0].value === 300 && typeof h.agreement === "string", JSON.stringify(h.confirmations));
+    }
+    {
+      // başqa obyektin eyni ölçüsü qarışmır (entitiya səviyyəsində süzgəc)
+      const docs = [
+        { url: "https://a.az/1", title: "Everest", content: "Everest dağının hündürlüyü 8848 metr olaraq qəbul edilir." },
+        { url: "https://b.az/2", title: "Eyfel", content: "Eyfel qülləsinin hündürlüyü 300 metr olub." }
+      ];
+      const h = extractMeasureFromResults(docs, "Eyfel qülləsinin hündürlüyü nə qədərdir");
+      assert("v113: entitiya qarışması yoxdur (Eyfel ≠ Everest)", h.value === 300 && !h.confirmations.some(c => c.value === 8848), JSON.stringify(h.confirmations.map(c => c.value)));
+    }
+    {
+      // alt-domen eyni nəşriyyatdır → 2 təsdiq sayılmır (#4 qaydası ölçüdə də)
+      const docs = [
+        { url: "https://portal.azertag.az/a", title: "X", content: "Qüllənin hündürlüyü 300 metr olan tikili." },
+        { url: "https://azertag.az/b", title: "X", content: "Qüllənin hündürlüyü 300 metr olan tikili." }
+      ];
+      const h = extractMeasureFromResults(docs, "qüllənin hündürlüyü nə qədərdir");
+      assert("v113 #4: ölçüdə alt-domen tək host sayılır", h && h.confirmations[0].count === 1, JSON.stringify(h && h.confirmations));
+    }
+    {
+      // müqayisə/nisbi cümlə əsas dəyəri üstələmir + yaxın dəyərlər bir qrupdur
+      const docs = [
+        { url: "https://lent.az/a", title: "Everest", content: "Bununla belə, əksər dağların hündürlüyü 100 metrdən çox olmasa da, Everest qonşuları üzərində 250 metrdən çox yüksəlir." },
+        { url: "https://yenixeber.az/b", title: "Everest", content: "Everest dağının hündürlüyü 8848,86 metr müəyyən edilib." },
+        { url: "https://qafqazinfo.az/c", title: "Everest", content: "Everest dağının hündürlüyü 8848 metr hesablanır." }
+      ];
+      const h = extractMeasureFromResults(docs, "Everest dağının hündürlüyü nə qədərdir");
+      assert("v113: müqayisə cümləsi (100/250 m) cavab olmur", h.value >= 8848, JSON.stringify({ v: h.value, c: h.confirmations.map(c => c.value) }));
+      assert("v113: 8848 və 8848,86 bir qrup (2 host təsdiqi)", h.confirmations[0].count === 2 && h.agreement === "medium", JSON.stringify(h.confirmations[0]));
+    }
+    {
+      const h1 = extractMeasureFromResults([{ url: "https://e-qanun.az/x", title: "Minimum əmək haqqı", content: "Azərbaycanda minimum əmək haqqı 2025-ci il yanvarın 1-dən 400 manat müəyyən edilib. Ötən il bu göstərici 345 manat idi." }], "Azərbaycanda minimum əmək haqqı nə qədərdir");
+      assert("v113: minimum əmək haqqı → 400 manat", h1.value === 400 && /manat/.test(h1.text), JSON.stringify({ v: h1.value, t: h1.text }));
+      const h2 = extractMeasureFromResults([{ url: "https://stat.gov.az/y", title: "Pambıq istehsalı", content: "2025-ci ildə pambıq istehsalı 360 min ton təşkil edib. 1913-cü ildə pambıq istehsalı 65 min ton olub." }], "Azərbaycanda pambıq istehsalı nə qədərdir");
+      assert("v113: pambıq istehsalı → cari 360 min ton (1913 yox)", h2.value === 360, JSON.stringify({ v: h2.value, t: h2.text }));
+    }
+    // === v113 (#2): ölçü suallarına "sayı" əlavə olunmur ===
+    assert("v113 #2: hündürlük sualına 'sayı' əlavə olunmur", countSearchQuery("Everestin hündürlüyü nə qədərdir") === null, String(countSearchQuery("Everestin hündürlüyü nə qədərdir")));
+    assert("v113 #2: əhali sualına 'sayı' əlavə olunmur", countSearchQuery("Azərbaycanın əhalisi nə qədərdir") === null);
+    assert("v113 #2: məsafə sualına 'sayı' əlavə olunmur", countSearchQuery("Bakıdan Qobustana məsafə nə qədərdir") === null);
+    assert("v113 #2: yaş sualına 'sayı' əlavə olunmur", countSearchQuery("Neçə yaşında pensiyaya çıxırlar") === null);
+    assert("v113 #2: say sualı 'sayı' ilə qalır", countSearchQuery("Bakı metrosunda neçə stansiya var") === "Bakı metrosunda stansiya sayı");
+    // === v113 (#3): hashtag və spam ===
+    {
+      const p3 = collectCandidates("Bakı metrosunda #Bakı27 kampaniyası başladı və stansiyalar yenilənir.", "stansiya", { query: "neçə stansiya var" });
+      assert("v113 #3: hashtag rəqəmi say deyil (27)",
+        !(p3.cands || []).some(c => c.value === 27) && (p3.rejected || []).some(r => r.reason === "hashtag" && r.value === 27),
+        JSON.stringify({ c: (p3.cands || []).map(c => c.value), r: (p3.rejected || []).map(x => x.value + ":" + x.reason) }));
+      const p3b = collectCandidates("Hazırda 27 stansiya var.", "stansiya", { query: "neçə stansiya var" });
+      assert("v113 #3: hashtagsız rəqəm qalır (27)", (p3b.cands || []).some(c => c.value === 27));
+      const sp = collectCandidates("Pulsuz bonus 500 manat qazan! Metropolitendə stansiya sayı 27-dir.", "stansiya", { query: "neçə stansiya var" });
+      assert("v113 #3: spam cümlə say mənbəyi deyil", (sp.cands || []).some(c => c.value === 27) && !(sp.cands || []).some(c => c.value === 500), JSON.stringify((sp.cands || []).map(c => c.value)));
+    }
+    // === v113 (#4): alt-domenlər bir host ===
+    assert("v113 #4: portal.azertag.az = azertag.az", regDomain("portal.azertag.az") === regDomain("azertag.az") && regDomain("portal.azertag.az") === "azertag.az", regDomain("portal.azertag.az"));
+    assert("v113 #4: sub.metro.gov.az = metro.gov.az", regDomain("sub.metro.gov.az") === "metro.gov.az");
+    {
+      const sameStory = "Bakı metropolitenində 26 stansiya var.";
+      const r4 = extractCountCross([
+        { url: "https://portal.azertag.az/a", title: "", content: sameStory, snippet: "" },
+        { url: "https://azertag.az/b", title: "", content: sameStory, snippet: "" }
+      ], "stansiya", "neçə stansiya var");
+      assert("v113 #4: alt-domen 2 təsdiq vermir", r4.confirmations[0].count === 1, JSON.stringify(r4.confirmations[0]));
+    }
+    // === v113 (#5): fərqli qruplar → conflict ===
+    {
+      const r5 = extractCountCross([
+        { url: "https://a.az/1", title: "", content: "Bakı metropolitenində 27 stansiya var.", snippet: "" },
+        { url: "https://b.az/2", title: "", content: "Metroda 26 stansiya işləyir.", snippet: "" }
+      ], "stansiya", "neçə stansiya var");
+      assert("v113 #5: fərqli qruplar → conflict", r5.agreement === "conflict", JSON.stringify({ v: r5.value, a: r5.agreement }));
+      const r5b = extractCountCross([
+        { url: "https://a.az/1", title: "", content: "Bakı metropolitenində 27 stansiya var.", snippet: "" },
+        { url: "https://b.az/2", title: "", content: "Hazırda metroda 27 stansiya fəaliyyət göstərir.", snippet: "" }
+      ], "stansiya", "neçə stansiya var");
+      assert("v113 #5: tək qrup → conflict deyil", r5b.agreement !== "conflict", String(r5b.agreement));
+    }
+    // === v113 (#6): Bakıda / Bakıdan / Bakının kökü eynidir ===
+    assert("v113 #6: Bakı halları eyni kökə düşür", stemAz("Bakıda") === stemAz("Bakıdan") && stemAz("Bakıdan") === stemAz("Bakının") && stemAz("Bakının") === "baki", `${stemAz("Bakıda")}/${stemAz("Bakıdan")}/${stemAz("Bakının")}`);
+    assert("v113 #6: şəhər halı sayılan isim sayılmır", countNounFromQuery("Bakıda neçə universitet var") === "universitet" && countNounFromQuery("Bakıdan neçə stansiya keçir") === "stansiya", String(countNounFromQuery("Bakıdan neçə stansiya keçir")));
+    // === v113 (#7): türkcə "kaç ... var" ===
+    assert("v113 #7: 'kaç tane müze var' marker sayılır", hasCountMarker("İstanbulda kaç tane müze var") === true);
+    assert("v113 #7: 'kaç tane müze' → müze", countNounFromQuery("İstanbulda kaç tane müze var") === "müze", String(countNounFromQuery("İstanbulda kaç tane müze var")));
+    assert("v113 #7: 'kaç adet stüdyo' → stüdyo", countNounFromQuery("kaç adet stüdyo var Ankara da") === "stüdyo", String(countNounFromQuery("kaç adet stüdyo var Ankara da")));
+    assert("v113 #7: TR axtarışı 'sayısı' ilə", countSearchQuery("İstanbulda kaç tane müze var") === "İstanbulda müze sayısı", String(countSearchQuery("İstanbulda kaç tane müze var")));
   }
 
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);

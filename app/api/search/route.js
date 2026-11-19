@@ -6,8 +6,8 @@ import { matchWeather, fetchWeather, weatherToText } from "../../../lib/weather.
 import { matchTime, fetchTime, timeToText } from "../../../lib/time.js";
 import { matchCurrency, fetchCBAR, currencyToText } from "../../../lib/currency.js";
 import { matchUnits, unitsToText } from "../../../lib/units.js";
-import { extractCountFromResults, extractCountCross, countNounFromQuery, countSearchQuery, hasCountMarker } from "../../../lib/countextract.js";
-import { extractMeasureFromResults, matchMeasureQuery, extractDateFromResults, extractDateAnswer, matchDateQuery, unitFamilyOfQuery } from "../../../lib/measure.js";
+import { extractCountFromResults, extractCountCross, countNounFromQuery, countSearchQuery, hasCountMarker, isMeasureQuery } from "../../../lib/countextract.js";
+import { extractMeasureFromResults, measureWikiQuery, matchMeasureQuery, extractDateFromResults, extractDateAnswer, matchDateQuery, unitFamilyOfQuery } from "../../../lib/measure.js";
 import { matchCrypto, fetchCryptoPrice, cryptoToText } from "../../../lib/crypto.js";
 import { matchHoliday, holidayToText } from "../../../lib/holidays.js";
 import { matchLiveStat, extractLiveStatFromResults, liveStatToText } from "../../../lib/livestat.js";
@@ -33,7 +33,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 228; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 229; // v113: ölçü suallarına "sayı" əlavə olunmur (#2), hashtag/spam rəqəm mənbəyi deyil (#3), alt-domen = bir host (#4), fərqli qruplar → agreement conflict (#5), türkcə "kaç ... var" (#7); v112: çarpaz təsdiq, rus say sözü, site:/domen təmizliyi, 8s deadline // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -1008,7 +1008,7 @@ async function handleSearch(body, req) {
   // v61: SAY sualı — "neçə X var" cavabı mətndən çıxarılır və AYRICA strukturlu nəticə
   // kimi verilir (rəqəm + tapıldığı cümlə → yoxlanıla bilər, uydurma deyil).
   let countHitDone = false;
-  if (!hasStructured && hasCountMarker(normQueryForIntent) && finalResults.length) {
+  if (!hasStructured && hasCountMarker(normQueryForIntent) && !isMeasureQuery(normQueryForIntent) && finalResults.length) {  // v113 #2: ölçü sualı say blokuna düşmür
     try {
     let noun = countNounFromQuery(normQueryForIntent);
     // v112: qeyri-latın (rus) isim latın korpusunda uyğunlaşmır — tərcümə olunmuş
@@ -1098,6 +1098,47 @@ async function handleSearch(body, req) {
         if (bm && (bm.score ?? 0) >= 3 && (!mhit || (bm.score ?? 0) > mhit.score)) { mhit = bm; degradedStages.push("measure_bridge"); }
       } catch {}
     }
+    // v113: səhifə çıxarışı "extract_timeout" olanda yalnız ~130 simvolluq snippet qalır və
+    // hündürlük/əhali kimi faktlar itir. Vikipediya mətni sürətli API ilə alınır (≈300 ms)
+    // və ölçü oradan bir daha çıxarılır. Sayta bağlı deyil — istənilən vikipediya nəticəsi.
+    // yalnız MƏTN NAZİK olduqda (səhifə çıxarışı yarımçıq) vikipediya ehtiyatı işə düşür
+    const thinContent = (extractPool.slice(0, 5).reduce((a, r) => a + String(r.content || r.snippet || "").length, 0) < 1200) || degradedStages.includes("extract_timeout");
+    if ((!mhit || mhit.score < 2) && thinContent) {
+      try {
+        let wres = extractPool.slice(0, 5).filter(r => /^https?:\/\/[a-z-]+\.wikipedia\.org\//i.test(String(r.url || ""))).slice(0, 2);
+        if (!wres.length) {
+          try {
+            const wikiQ = measureWikiQuery(normQueryForIntent) || coreSearchQuery(normQueryForIntent, 4) || normQueryForIntent;
+            const ws = await withTimeout(searchWikipedia(wikiQ, 2), 1200, "measure wiki search timeout");
+            wres = (ws || []).slice(0, 1);
+            if (wres.length) degradedStages.push("measure_wiki_search");
+          } catch {}
+        }
+        for (const wr of wres) {
+          try {
+            const wt = await withTimeout(fetchWikiArticleText(wr.url), 1400, "measure wiki text timeout");
+            if (!wt) continue;
+            let pageTitle = "";
+            try { pageTitle = wikiTitleFromUrl(wr.url)?.title || ""; } catch {}
+            // yalnız ÖLÇÜ sözü olan sorğular (başlıq tək — ölçüsüz — işlədilmir: məqalədəki
+            // istənilən rəqəm cavab olurdu)
+            const mQueries = [...new Set([normQueryForIntent, searchResult.anchorQuery || ""]
+              .filter(Boolean)
+              .filter(x => /(?<![\p{L}])(n[əe]\s*q[əe]d[əe]r|səviyyə|[üu]nd[üu]rl|uzunlu|m[əe]saf|sah[əe]|[əe]hali|faiz|ya[şs]|h[əe]cm|borc|g[əe]lir|x[əe]rc|miqdar|[əe]m[əe]k|pensiya)/iu.test(x)))];
+            let best = null;
+            for (const mq of mQueries) {
+              const cand = extractMeasureFromResults([{ url: wr.url, title: pageTitle, content: wt }], mq, { strict: true });
+              if (cand && cand.score >= 3 && (!best || cand.score > best.score)) best = cand;
+            }
+            if (best && (!mhit || best.score > mhit.score)) {
+              mhit = { ...best, url: wr.url, sources: Array.isArray(best.sources) && best.sources.length ? best.sources : [wr.url] };
+              degradedStages.push("measure_wiki_text");
+              break;
+            }
+          } catch {}
+        }
+      } catch {}
+    }
     if (mhit && mhit.score >= 2) {
       degradedStages.push("measure_extracted");
       structured.unshift({
@@ -1107,6 +1148,11 @@ async function handleSearch(body, req) {
         content: `${mhit.text}${mhit.year ? ` (${mhit.year})` : ""}. Mənbə cümlə: "${mhit.sentence}"${mhit.sources.length > 1 ? ` (${mhit.sources.length} mənbədə eyni rəqəm)` : ""}`,
         sources: [(() => { try { return new URL(mhit.url).hostname.replace(/^www\./, ""); } catch { return "mənbə"; } })()],
         source: "measure-extract",
+        // v113: ölçüdə də çarpaz təsdiq — sayta uyğun EYNİ additiv sahələr
+        confirmations: Array.isArray(mhit.confirmations) && mhit.confirmations.length
+          ? mhit.confirmations.map(c => ({ value: c.value, count: c.count, hosts: c.hosts, urls: c.urls, official: c.official, newest_date: c.newest_date || null }))
+          : undefined,
+        agreement: mhit.agreement || undefined,
         published_at: null,
         updated_at: null,
         date_info: buildDateInfo(null, null, reqLang),
