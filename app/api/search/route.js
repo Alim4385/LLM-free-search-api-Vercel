@@ -33,7 +33,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 232; // v114: wikipedia provayderində `bridges` ReferenceError düzəldildi, çıxarış büdcəsi hər səhifə üçün ayrı (qismi nəticə), iki mərhələli axtarış + ayrı AbortController, yaxın dublikatların silinməsi, wiki variant sırası; v113: ölçü/say ayrımı, hashtag-spam, alt-domen, conflict, türkcə kaç // v113: ölçü suallarına "sayı" əlavə olunmur (#2), hashtag/spam rəqəm mənbəyi deyil (#3), alt-domen = bir host (#4), fərqli qruplar → agreement conflict (#5), türkcə "kaç ... var" (#7); v112: çarpaz təsdiq, rus say sözü, site:/domen təmizliyi, 8s deadline // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 233; // v116: provayder termin qapısı yumşaldıldı (subyekt/ad uyğunluğu), wiki kanonik məqalə qaydası + xüsusi ad/hal şəkilçisi variantları, say çıxarışında mövzu tokeni bonusu, r15 nMin buraxılışı; v114: wikipedia provayderində `bridges` ReferenceError düzəldildi, çıxarış büdcəsi hər səhifə üçün ayrı (qismi nəticə), iki mərhələli axtarış + ayrı AbortController, yaxın dublikatların silinməsi, wiki variant sırası; v113: ölçü/say ayrımı, hashtag-spam, alt-domen, conflict, türkcə kaç // v113: ölçü suallarına "sayı" əlavə olunmur (#2), hashtag/spam rəqəm mənbəyi deyil (#3), alt-domen = bir host (#4), fərqli qruplar → agreement conflict (#5), türkcə "kaç ... var" (#7); v112: çarpaz təsdiq, rus say sözü, site:/domen təmizliyi, 8s deadline // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -344,6 +344,16 @@ async function handleSearch(body, req) {
   const isTechQuery = /(?<![\p{L}])(react|javascript|python|docker|dns|api|sql|git|kotlin|java|css|html|typescript|vue|node|linux|gpt|llm|redux|useeffect|state\s+management)(?![\p{L}])/iu.test(normQuery);
   // v51.3: mənasız tokenlər uyğunluq termini sayılmır (bax: looksLikeGibberish) —
   // yoxsa "asdfqwer zxcvbnm nonsense" sorğusuna YouTube düşürdü.
+  // v116: QISA AKRONİM (DNT, BMT, NBA, CSS, SQL) — həm "gibberish" süzgəcindən, həm də
+  // uzunluq həddindən (>=4) keçməlidir, yoxsa "DNT-nin açılışı kimə aiddir" sualında düzgün
+  // məqalə ("DNT") termin siyahısına düşmür və bütün nəticələr 0 bal alırdı.
+  const acronymQ = new Set(String(sanitizeQuery(query) || query || "").split(/[\s,;:!?"'()\[\]]+/u)
+    .filter(w => w.length >= 2 && /^[A-Z0-9][A-Z0-9.+#_-]*$/u.test(w))
+    .map(w => w.toLowerCase()));
+  const isStrongTerm = (t) => {
+    const k = String(t).toLowerCase();
+    return k.length >= 4 || (k.length >= 2 && acronymQ.has(k));
+  };
   const qTerms = [...new Set([
     ...tokenize(query),
     ...tokenize(normQuery),
@@ -369,7 +379,28 @@ async function handleSearch(body, req) {
   scored = scored.map(r => ((r.source === "wiki-docs" || r.source === "mdn") ? { ...r, score: Math.max(r.score, 3.0) } : r));
   // v95: snippet boş olsa da güclü bal (>3) nəticə atılmır — məzmun ekstraksiya
   // mərhələsində çəkilir. Əvvəl bbc.com/interfax.az kimi dəqiq başlıqlar itirdi.
+  // v116: OBYEKT MƏQALƏSİ QORUNUR. Wikipedia nəticələri boş snippetlə gələ bilər
+  // (Wikimedia 429 / snippet yoxdur) və skor qapısı onları atırdı — nəticədə
+  // "Çinin paytaxtı", "Messi hansı ölkədəndir" kimi suallar tam boş qalırdı (n=0),
+  // sonra isə zibil "last resort" işə düşürdü. Qayda: "X-in <xassə>" quruluşunda X-in
+  // ÖZ məqaləsi (başlıq = X) həmişə saxlanılır.
+  const entityArticle = (() => {
+    const toks = String(normQuery || "").split(/[^\p{L}\p{N}-]+/u).filter(Boolean);
+    if (toks.length < 2) return null;
+    const PROP = /^(paytaxt|ölk|olk|ş[əe]h[əe]r|seher|q[əe]rargah|harada|hans[ıi]|n[əe]dir)/iu;
+    if (!PROP.test(toks[1])) return null;
+    const head = toks[0].toLowerCase();
+    const cands = new Set([head]);
+    if (head.length > 4) cands.add(head.slice(0, -2));
+    if (head.length > 5) cands.add(head.slice(0, -3));
+    return scored.find(r => /wikipedia\.org/.test(r.url || "")
+      && cands.has(String(r.title || "").toLowerCase().trim())) || null;
+  })();
   scored = scored.filter(r => r.score >= 1.5 && ((r.snippet || "").trim().length >= 10 || r.score >= 3));
+  if (entityArticle && !scored.includes(entityArticle)) {
+    scored.unshift({ ...entityArticle, score: Math.max(entityArticle.score || 0, 2.2) });
+    degradedStages.push("entity_article_kept");
+  }
 
   // v39.1: həm snippet, həm title yalnız "Həmçinin bax / © Copyright" → səhifə məzmunsuzdur, at
   // (atmaq əvəzinə −3: nəticə sayını 3-dən aşağı salmayaq, sadəcə dibə düşsün)
@@ -393,7 +424,7 @@ async function handleSearch(body, req) {
   scored = scored.filter(r => {
     if (!/wikipedia\.org/.test(r.url || "")) return true;
     const t = String(r.title || "").toLowerCase();
-    const hit = qTerms.some(x => x.length >= 4 && t.includes(String(x).slice(0, Math.max(4, x.length - 3)).toLowerCase()));
+    const hit = qTerms.some(x => isStrongTerm(x) && t.includes(String(x).slice(0, Math.max(2, x.length - 3)).toLowerCase()));
     return hit;
   });
 
@@ -611,7 +642,7 @@ async function handleSearch(body, req) {
     // (YouTube, Microsoft ana səhifəsi) və 0.4 skor qapısı hamısını keçirirdi.
     // İndi gate_relaxed də ƏN AZI BİR real termin uyğunluğu tələb edir.
     const relaxTerms = [...new Set([...qTerms, ...tokenize(searchResult.anchorQuery || "")])]
-      .map(t => String(t).toLowerCase()).filter(t => t.length >= 4);
+      .map(t => String(t).toLowerCase()).filter(t => isStrongTerm(t));
     const weak = ((siteLocked || unintelligible) ? [] : results)
       .filter(r => !isSpamDomain(r.url) && !seenU.has(r.url) && !ERR_PAGE.test(String(r.title || "").trim()))
       .filter(r => {
@@ -621,7 +652,7 @@ async function handleSearch(body, req) {
       .filter(r => {
         if (!/wikipedia\.org/.test(r.url || "")) return true;  // v39.5 filtrini təkrarla
         const t = String(r.title || "").toLowerCase();
-        return qTerms.some(x => x.length >= 4 && t.includes(String(x).slice(0, Math.max(4, x.length - 3)).toLowerCase()));
+        return qTerms.some(x => isStrongTerm(x) && t.includes(String(x).slice(0, Math.max(2, x.length - 3)).toLowerCase()));
       })
       .map(r => ({ ...r, score: scoreResult(r, qTerms, qLang, normQuery) }))
       .filter(r => r.score >= 0.4)
@@ -646,14 +677,14 @@ async function handleSearch(body, req) {
         const blob = `${r.title || ""} ${r.snippet || ""}`.toLowerCase();
         // v49.1: AZ sorğu ↔ EN nəticə — anchor (tərcümə) terminləri də sayılır,
         // yoxsa "südün tərkibində kalsium" kimi suallar tam boş qalırdı
-        const strong = [...new Set([...qTerms, ...tokenize(searchResult.anchorQuery || "")])].filter(t => String(t).length >= 4);
+        const strong = [...new Set([...qTerms, ...tokenize(searchResult.anchorQuery || "")])].filter(t => isStrongTerm(t));
         const need = strong.length >= 4 ? 2 : 1;
         return hitsOf(blob, strong) >= need;
       })
       .filter(r => {
         if (!/wikipedia\.org/.test(r.url || "")) return true;
         const t = String(r.title || "").toLowerCase();
-        return qTerms.some(x => x.length >= 4 && t.includes(String(x).slice(0, Math.max(4, x.length - 3)).toLowerCase()));
+        return qTerms.some(x => isStrongTerm(x) && t.includes(String(x).slice(0, Math.max(2, x.length - 3)).toLowerCase()));
       })
       .map(r => ({ ...r, score: scoreResult(r, qTerms, qLang, normQuery) }))
       .sort((a, b) => b.score - a.score)
