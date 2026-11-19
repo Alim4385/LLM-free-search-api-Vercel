@@ -45,3 +45,12 @@ Tarix: 2026-11-16 · FV **233** · HEAD bazası: v115 `18d3f4b`
 ## 4. Deploy
 
 Push/deploy bu mühitdə mümkün deyil (etimad yoxdur) — dəyişikliklər yalnız lokal `main` üzərindədir.
+
+## 5. v116b (əlavə) — rəqəm formatı
+
+`lib/units.js` → **`parseNumberToken()`**: minlik və onluq ayırıcıları düzgün oxuyur.
+Ölçmə: "Everest … **8,848.86** metr" cavabı **"848.86 metr"** kimi çıxırdı (minlik vergülü itirdi).
+İndi: `8,848.86 → 8848.86`, `8.848,86 → 8848.86`, `8 848,86 → 8848.86`, `12.000 → 12000`, `2,3 → 2.3`.
+Tətbiq olunduğu yerlər: `lib/measure.js` (`UNIT_RE` + rəqəm oxuması), `lib/countextract.js` (say namizədləri).
+
+Unit: **601 keçdi, 0 uğursuz**.
