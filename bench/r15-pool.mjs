@@ -255,7 +255,7 @@ export const POOL = [
   { id: "n6-az-oil2", cat: "AZ", q: "Azərbaycanda neft harada çıxarılır", must: [["xəzər","bakı","abşeron"]] },
   { id: "n6-w-moscow2", cat: "WORLD", q: "Moskva hansı ölkənin paytaxtıdır", must: [["rusiya","russia"]] },
   { id: "n6-w-beijing2", cat: "WORLD", q: "Pekin hansı ölkənin paytaxtıdır", must: [["çin","china"]] },
-  { id: "n6-s-dna2", cat: "SCI", q: "DNT nə deməkdir", must: [["dezoksiribonuklein","deoxyribonucleic","dna"]] },
+  { id: "n6-s-dna2", cat: "SCI", q: "DNT nə deməkdir", must: [["dezoksiribonuklein","deoxyribonucleic","dna","dnt"]] },
   { id: "n6-s-vaccine", cat: "SCI", q: "Peyvənd nədir", must: [["peyvənd","vaccine","immunitet"]] },
   { id: "n6-h-az-leader", cat: "HIST", q: "Heydər Əliyev kimdir", must: [["heydər","əliyev","lider"]] },
   { id: "n6-t-ai", cat: "TECH", q: "Süni intellekt nədir", must: [["süni intellekt","yapay zeka","artificial"]] },
