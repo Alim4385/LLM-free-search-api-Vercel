@@ -54,3 +54,11 @@ Push/deploy bu mühitdə mümkün deyil (etimad yoxdur) — dəyişikliklər yal
 Tətbiq olunduğu yerlər: `lib/measure.js` (`UNIT_RE` + rəqəm oxuması), `lib/countextract.js` (say namizədləri).
 
 Unit: **601 keçdi, 0 uğursuz**.
+
+## 6. DEPLOY və YEKUN QAPI NƏTİCƏSİ (2026-11-16)
+
+- Push: `main` → **`9e0487d`** (GitHub: `github.com/Alim4385/LLM-free-search-api-Vercel`), Vercel avtomatik build etdi.
+- Prod yoxlaması (yeni kod işlədiyinin sübutu): "Everest dağının hündürlüyü nə qədərdir" → **"8,848 metr (mətndən çıxarıldı)"**, `degraded_stages: ["measure_extracted", …]`. Əvvəl eyni sual **"848.86 metr"** verirdi.
+- **15/15 qapısı PROD API-də (`searchapi-eta.vercel.app`) — RAUND 8: `15/15`**, sərt metrik də (açar fakt ilk 3 nəticədə) **15/15**. Suallar əvvəlki raundlarda istifadə olunmayıb.
+- Hovuz: 137 sual, 8 raundda 105+15 = istifadə olunmuş, **17 sual ehtiyatda**.
+- Test harness repo-ya əlavə olundu: `bench/r15.mjs`, `bench/r15-pool.mjs`, `bench/r15-round-*.json`, `bench/r15-used.json`.

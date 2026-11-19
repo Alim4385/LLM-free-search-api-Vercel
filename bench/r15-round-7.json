@@ -1,0 +1,277 @@
+{
+ "round": 7,
+ "at": "2026-11-19T07:54:50.666Z",
+ "poolSize": 112,
+ "pass": 12,
+ "total": 15,
+ "items": [
+  {
+   "id": "n2-az-flag-day",
+   "cat": "AZ",
+   "q": "Azərbaycan Respublikasının Bayraq Günü nə vaxtdır",
+   "ok": false,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [
+    "n=1 < 2"
+   ],
+   "ms": 342,
+   "n": 1,
+   "hosts": [
+    "president.az"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n2-az-gobustan-unesco",
+   "cat": "AZ",
+   "q": "Qobustan Dövlət Tarixi-Bədii Qoruğu hansı ildə yaradılıb",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4834,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "en.wikipedia.org",
+    "irs.gov.az",
+    "az.wikipedia.org",
+    "azertag.az"
+   ],
+   "answer": "9 sentyabr 1966. Mənbə cümlə: \"Qobustanda tapılan maddi mədəniyyət qalıqları kompleksinin tarix və mədəniyyət üçün müstəsna əhəmiyyətini nəzərə alan Azərbaycan SSR-in Nazrilər Soveti 1966-cı il 9 sent"
+  },
+  {
+   "id": "sp-worldcup",
+   "cat": "SPORT",
+   "q": "FIFA Dünya Kuboku neçə ildən bir keçirilir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 3327,
+   "n": 3,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.irna.ir",
+    "qol.az"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "e-usd",
+   "cat": "ECON",
+   "q": "1 dollar neçə manatdır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 983,
+   "n": 1,
+   "hosts": [
+    "cbar.az"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n2-w-capital-japan",
+   "cat": "WORLD",
+   "q": "Yaponiyanın paytaxtı hansı şəhərdir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4321,
+   "n": 4,
+   "hosts": [
+    "az.wikipedia.org",
+    "en.wikipedia.org",
+    "wikimapia.org",
+    "az.wikiquote.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n2-az-aliyev-born",
+   "cat": "AZ",
+   "q": "Heydər Əliyev hansı ildə anadan olub",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 3263,
+   "n": 5,
+   "hosts": [
+    "heydar-aliyev-foundation.org",
+    "az.trend.az",
+    "salyan-ih.gov.az",
+    "heydar-aliyev-foundation.org",
+    "az.wikipedia.org"
+   ],
+   "answer": "10 may 1923. Mənbə cümlə: \"Heydər Əlirza oğlu Əliyev 1923-cü il mayın 10-da Azərbaycanın Naxçıvan şəhərində anadan olub. 1939-cu ildə Naxçıvan Pedaqoji Texnikumunu bitirdikdən sonra Azərbaycan Sənaye "
+  },
+  {
+   "id": "n2-w-everest",
+   "cat": "WORLD",
+   "q": "Everest dağının hündürlüyü nə qədərdir",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "yoxdur: 8848|8849|8 848|8 849"
+   ],
+   "ms": 6228,
+   "n": 3,
+   "hosts": [
+    "lifehimalayatrekking.com",
+    "lifehimalayatrekking.com",
+    "en.wikipedia.org"
+   ],
+   "answer": "848.86 metr. Mənbə cümlə: \"Fakt-2: Everest dağı indi 8,848.86 metr hündürlükdədir Uzun müddətdir ki, alimlər və millətlər Everestin hündürlüyünə maraq göstərirlər.\""
+  },
+  {
+   "id": "n2-s-ronaldo",
+   "cat": "SPORT",
+   "q": "Ronaldo hansı ölkədəndir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4905,
+   "n": 5,
+   "hosts": [
+    "en.wikipedia.org",
+    "biography.com",
+    "en.wikipedia.org",
+    "az.wikipedia.org",
+    "tesdiq.az"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n2-w-berlin-wall",
+   "cat": "WORLD",
+   "q": "Berlin divarı hansı ildə dağıldı",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 8602,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "usatoday.com",
+    "commondreams.org",
+    "atlasobscura.com",
+    "dw.com"
+   ],
+   "answer": "3 oktyabr 1990. Mənbə cümlə: \"Almaniyanın yenidən birləşdirilməsi ilə 3 oktyabr 1990-cı ildə Almaniya yenidən vahid millət-dövlət halına gəldi.\""
+  },
+  {
+   "id": "n2-t-python-list",
+   "cat": "TECH",
+   "q": "Python-da siyahı necə yaradılır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4026,
+   "n": 5,
+   "hosts": [
+    "stackoverflow.com",
+    "susam.in",
+    "en.wikipedia.org",
+    "python.org",
+    "stackoverflow.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "w-ankara",
+   "cat": "WORLD",
+   "q": "Türkiyənin paytaxtı hansı şəhərdir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5920,
+   "n": 3,
+   "hosts": [
+    "advantour.com",
+    "en.wikipedia.org",
+    "en.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n2-w-capital-italy",
+   "cat": "WORLD",
+   "q": "İtaliyanın paytaxtı hansı şəhərdir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 2933,
+   "n": 3,
+   "hosts": [
+    "worldatlas.com",
+    "en.wikipedia.org",
+    "tripprivacy.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "s-bones",
+   "cat": "SCI",
+   "q": "İnsan bədənində neçə sümük var",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "n=1 < 2",
+    "yoxdur: 206"
+   ],
+   "ms": 4718,
+   "n": 1,
+   "hosts": [
+    "news.google.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "t-docker",
+   "cat": "TECH",
+   "q": "Docker nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5524,
+   "n": 5,
+   "hosts": [
+    "en.wikipedia.org",
+    "en.wikipedia.org",
+    "hostinger.com",
+    "devopscube.com",
+    "docker.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n2-s-olympic-rings",
+   "cat": "SPORT",
+   "q": "Olimpiya halqaları neçə rəngdən ibarətdir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4884,
+   "n": 2,
+   "hosts": [
+    "scitechdaily.com",
+    "news.google.com"
+   ],
+   "answer": ""
+  }
+ ]
+}

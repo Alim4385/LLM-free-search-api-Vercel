@@ -1,0 +1,285 @@
+{
+ "round": 8,
+ "at": "2026-11-19T08:10:52.192Z",
+ "poolSize": 137,
+ "pass": 15,
+ "total": 15,
+ "items": [
+  {
+   "id": "n3-t-js-const",
+   "cat": "TECH",
+   "q": "JavaScript-də let ilə const arasındakı fərq nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 3677,
+   "n": 4,
+   "hosts": [
+    "geeksforgeeks.org",
+    "users.rust-lang.org",
+    "freecodecamp.org",
+    "developer.mozilla.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "h-ww1",
+   "cat": "HIST",
+   "q": "Birinci Dünya müharibəsi hansı ildə başlayıb",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4400,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "azertag.az",
+    "az.wikipedia.org",
+    "ordu.az",
+    "az.wikipedia.org"
+   ],
+   "answer": "1871-ci illərdə. Mənbə cümlə: \"Bundan başqa onlar, 1870–1871-ci illərdə Almaniya ilə olan müharibədə itirilmiş Elzas-Lotaringiya vilayətlərini geri almaq, Almaniyanın Reyn vilayətinin bir hissəsini əl"
+  },
+  {
+   "id": "n3-s-basket-hoop",
+   "cat": "SPORT",
+   "q": "Basketbol halqası hansı hündürlükdədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4617,
+   "n": 4,
+   "hosts": [
+    "en.wikipedia.org",
+    "en.wikipedia.org",
+    "az.wikipedia.org",
+    "npr.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n3-c-nizami-city",
+   "cat": "CULT",
+   "q": "Nizami Gəncəvi hansı şəhərdə anadan olub",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4054,
+   "n": 5,
+   "hosts": [
+    "qaynarinfo.az",
+    "azerbaycan-ruznamesi.org",
+    "gencexeber.az",
+    "az.wikipedia.org",
+    "525.az"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n3-sc-water-formula",
+   "cat": "SCI",
+   "q": "Suyun kimyəvi formulu nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 10621,
+   "n": 4,
+   "hosts": [
+    "sorumatik.co",
+    "static.bsu.az",
+    "en.wikipedia.org",
+    "geeksforgeeks.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n3-w-atlantic",
+   "cat": "WORLD",
+   "q": "Atlantik okeanı hansı qitələri ayırır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 7436,
+   "n": 5,
+   "hosts": [
+    "en.wikipedia.org",
+    "crh.wikipedia.org",
+    "en.wikipedia.org",
+    "fuyuzat.az",
+    "portal.azertag.az"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n2-az-mingachevir",
+   "cat": "AZ",
+   "q": "Mingəçevir su anbarı hansı çay üzərindədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 6095,
+   "n": 5,
+   "hosts": [
+    "ordu.az",
+    "euwipluseast.eu",
+    "kataloq.gomap.az",
+    "adsea.gov.az",
+    "en.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n3-h-ww1",
+   "cat": "HIST",
+   "q": "Birinci Dünya müharibəsi hansı ildə başladı",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 2936,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "ordu.az",
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "az.wikibooks.org"
+   ],
+   "answer": "28 iyun 1914. Mənbə cümlə: \"Avstriya-Macarıstan taxt-tacının vəliəhdi hersoq Frans Ferdinandın 28 iyun 1914-cü ildə serb terrorçusu Qavrilo Prinsip tərəfindən Sarayevoda qətlə yetirilməsi dünya mühari"
+  },
+  {
+   "id": "n3-sc-planets",
+   "cat": "SCI",
+   "q": "Günəş sistemində neçə planet var",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 3327,
+   "n": 5,
+   "hosts": [
+    "xalqqazeti.az",
+    "az.wikipedia.org",
+    "azertag.az",
+    "xalqqazeti.az",
+    "az.wikibooks.org"
+   ],
+   "answer": "8 planet. Mənbə cümlə: \"Rəsmi versiyaya görə, bura 8 planet daxildir .\""
+  },
+  {
+   "id": "n3-t-git-commit",
+   "cat": "TECH",
+   "q": "Git-də commit necə yazılır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5736,
+   "n": 5,
+   "hosts": [
+    "youtube.com",
+    "stackoverflow.com",
+    "en.wikipedia.org",
+    "stackoverflow.com",
+    "github.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n3-s-tennis-grand-slam",
+   "cat": "SPORT",
+   "q": "Tennisdə neçə Böyük Dəbilqə turniri var",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 6955,
+   "n": 3,
+   "hosts": [
+    "r-bloggers.com",
+    "news.google.com",
+    "cbs12.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n3-s-worldcup-2022",
+   "cat": "SPORT",
+   "q": "2022 FİFA Dünya Kubokunu hansı ölkə qazandı",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4017,
+   "n": 2,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n2-h-az-ssr",
+   "cat": "HIST",
+   "q": "Azərbaycan SSR hansı ildə yaradılıb",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 6953,
+   "n": 4,
+   "hosts": [
+    "dsx.gov.az",
+    "youtube.com",
+    "simple.wikipedia.org",
+    "dsx.gov.az"
+   ],
+   "answer": "12 mart 1922. Mənbə cümlə: \"1922-ci ilin martın 12-də Zaqafqaziya Sovet Federativ Sosialist Respublikası (ZSFSR) yaradıldı.\""
+  },
+  {
+   "id": "n3-sc-light-speed",
+   "cat": "SCI",
+   "q": "İşıq sürəti nə qədərdir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4696,
+   "n": 5,
+   "hosts": [
+    "livescience.com",
+    "en.m.wikipedia.org",
+    "physicsfundamentals.org",
+    "sciencenewstoday.org",
+    "space.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n2-az-sumgayit",
+   "cat": "AZ",
+   "q": "Sumqayıt hansı ildə şəhər statusu alıb",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5185,
+   "n": 5,
+   "hosts": [
+    "azertag.az",
+    "president.az",
+    "sumqayit-ih.gov.az",
+    "aak.gov.az",
+    "azertag.az"
+   ],
+   "answer": "22 noyabr 1949. Mənbə cümlə: \"63 il əvvəl-1949-cu il noyabrın 22-də Sumqayıta şəhər statusu verilmişdir.\" (2 mənbədə eyni tarix)"
+  }
+ ]
+}

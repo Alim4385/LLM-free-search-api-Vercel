@@ -1,0 +1,266 @@
+{
+ "round": 2,
+ "at": "2026-11-19T06:40:11.393Z",
+ "poolSize": 87,
+ "pass": 11,
+ "total": 15,
+ "items": [
+  {
+   "id": "w-canberra",
+   "cat": "WORLD",
+   "q": "Avstraliyanın paytaxtı hansı şəhərdir",
+   "ok": true,
+   "strictOk": false,
+   "fails": [],
+   "ms": 3955,
+   "n": 4,
+   "hosts": [
+    "youtube.com",
+    "az.wikipedia.org",
+    "azertag.az",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "s-light",
+   "cat": "SCI",
+   "q": "İşıq sürəti nə qədərdir",
+   "ok": true,
+   "strictOk": true,
+   "fails": [],
+   "ms": 3830,
+   "n": 3,
+   "hosts": [
+    "kayzen.az",
+    "kayzen.az",
+    "qebulol.az"
+   ],
+   "answer": "300.000 kilometr. Mənbə cümlə: \"İşıq sürəti saniyədə 300.000 kilometr sürətdir və bu zaman kainatdan keçə biləcək heç bir mexaniki və ya başqa bir fenomen yoxdur.\""
+  },
+  {
+   "id": "az-peak",
+   "cat": "AZ",
+   "q": "Azərbaycanın ən hündür zirvəsi hansıdır",
+   "ok": true,
+   "strictOk": true,
+   "fails": [],
+   "ms": 5087,
+   "n": 5,
+   "hosts": [
+    "e-derslik.edu.az",
+    "az.wikipedia.org",
+    "azerbaijan.travel",
+    "mountainguide.az",
+    "azerbaijan-news.az"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "s-un-hq",
+   "cat": "WORLD",
+   "q": "BMT-nin qərargahı hansı şəhərdədir",
+   "ok": false,
+   "strictOk": false,
+   "fails": [
+    "yoxdur: nyu-york|new york|nyu york"
+   ],
+   "ms": 5250,
+   "n": 2,
+   "hosts": [
+    "azertag.az",
+    "azerbaijan-news.az"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "az-city2",
+   "cat": "AZ",
+   "q": "Azərbaycanın ikinci ən böyük şəhəri hansıdır",
+   "ok": true,
+   "strictOk": true,
+   "fails": [],
+   "ms": 5171,
+   "n": 3,
+   "hosts": [
+    "azadliq.org",
+    "jetpunk.com",
+    "youtube.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "s-planets",
+   "cat": "SCI",
+   "q": "Günəş sistemində neçə planet var",
+   "ok": true,
+   "strictOk": true,
+   "fails": [],
+   "ms": 4633,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "azertag.az",
+    "news.milli.az",
+    "xalqqazeti.az"
+   ],
+   "answer": "8 planet — 4 müstəqil mənbə təsdiqləyir (wikipedia.org, milli.az, xalqqazeti.az, e-derslik.edu.az). Mənbə cümlə: \"Rəsmi versiyaya görə, bura 8 planet daxildir .\" (4 mənbədə eyni rəqəm)"
+  },
+  {
+   "id": "az-firstrep",
+   "cat": "AZ",
+   "q": "Azərbaycan Xalq Cümhuriyyəti hansı ildə yaradılıb",
+   "ok": true,
+   "strictOk": true,
+   "fails": [],
+   "ms": 4835,
+   "n": 5,
+   "hosts": [
+    "axc.preslib.az",
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "axc.preslib.az",
+    "youtube.com"
+   ],
+   "answer": "28 may 1918. Mənbə cümlə: \"1918-ci il mayın 28-də Azərbaycan Xalq Cümhuriyyətinin yaradılması Azərbaycan xalqının həyatına böyük və əlamətdar hadisə kimi əbədi daxil olmuşdur.\""
+  },
+  {
+   "id": "c-nowruz",
+   "cat": "CULT",
+   "q": "Novruz bayramı nə vaxt qeyd olunur",
+   "ok": false,
+   "strictOk": true,
+   "fails": [
+    "n=1 < 2"
+   ],
+   "ms": 57,
+   "n": 1,
+   "hosts": [
+    "president.az"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "az-wage",
+   "cat": "AZ",
+   "q": "Azərbaycanda minimum əmək haqqı nə qədərdir",
+   "ok": true,
+   "strictOk": true,
+   "fails": [],
+   "ms": 3868,
+   "n": 5,
+   "hosts": [
+    "xeber.azeri.net",
+    "xeber.azeri.net",
+    "azerbusiness.az",
+    "president.az",
+    "birjob.com"
+   ],
+   "answer": "Minimum aylıq əmək haqqı: 400 manat (2026 ili məlumatı). Mənbə cümlə: \"2026-cı ildə Azərbaycanda minimum aylıq əmək haqqı 400 manat, ölkə üzrə yaşayış minimumu 300 manat, minimum əmək pensiyası isə 32"
+  },
+  {
+   "id": "s-blood",
+   "cat": "SCI",
+   "q": "Neçə qan qrupu var",
+   "ok": true,
+   "strictOk": true,
+   "fails": [],
+   "ms": 2421,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "modern.az",
+    "btk.az",
+    "sherg.az"
+   ],
+   "answer": "4 qrup — 2 müstəqil mənbə təsdiqləyir (wikipedia.org, btk.az). Mənbə cümlə: \"Müəyyən edilmişdir ki, insanda 4 qan qrupu vardır.\" (2 mənbədə eyni rəqəm)"
+  },
+  {
+   "id": "e-min-wage-inflation",
+   "cat": "ECON",
+   "q": "Azərbaycanda orta əmək haqqı nə qədərdir",
+   "ok": true,
+   "strictOk": true,
+   "fails": [],
+   "ms": 4361,
+   "n": 5,
+   "hosts": [
+    "mks.az",
+    "ens.az",
+    "modern.az",
+    "mks.az",
+    "az.wikipedia.org"
+   ],
+   "answer": "Orta aylıq əmək haqqı: 400 manat. Mənbə cümlə: \"Orta əmək haqqı = (400 manat (avqust ayı üzrə əmək haqqı ) + 450 manat (sentyabr ayı üzrə əmək haqqı )) / (20 iş günü (avqust ayı üzrə iş günlərinin say"
+  },
+  {
+   "id": "w-ocean",
+   "cat": "WORLD",
+   "q": "Dünyanın ən böyük okeanı hansıdır",
+   "ok": true,
+   "strictOk": true,
+   "fails": [],
+   "ms": 4805,
+   "n": 5,
+   "hosts": [
+    "e-derslik.edu.az",
+    "az.wikipedia.org",
+    "ens.az",
+    "az.wikipedia.org",
+    "portal.azertag.az"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "sp-messi",
+   "cat": "SPORT",
+   "q": "Messi hansı ölkədəndir",
+   "ok": false,
+   "strictOk": false,
+   "fails": [
+    "n=0 < 2",
+    "yoxdur: argentina"
+   ],
+   "ms": 4715,
+   "n": 0,
+   "hosts": [],
+   "answer": ""
+  },
+  {
+   "id": "w-rome",
+   "cat": "WORLD",
+   "q": "İtaliyanın paytaxtı hansı şəhərdir",
+   "ok": true,
+   "strictOk": true,
+   "fails": [],
+   "ms": 4607,
+   "n": 3,
+   "hosts": [
+    "gezmeli.az",
+    "az.bilet.com",
+    "itazercom.it"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "sp-nba",
+   "cat": "SPORT",
+   "q": "NBA-də neçə komanda var",
+   "ok": false,
+   "strictOk": false,
+   "fails": [
+    "yoxdur: 30"
+   ],
+   "ms": 4532,
+   "n": 3,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  }
+ ]
+}

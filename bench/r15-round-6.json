@@ -1,0 +1,267 @@
+{
+ "round": 6,
+ "at": "2026-11-19T07:36:50.143Z",
+ "poolSize": 112,
+ "pass": 10,
+ "total": 15,
+ "items": [
+  {
+   "id": "n2-sc-dna",
+   "cat": "SCI",
+   "q": "DNT-nin açılışı kimə aiddir",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "n=0 < 2",
+    "yoxdur: uotson|krik|watson|crick|frenklin"
+   ],
+   "ms": 4714,
+   "n": 0,
+   "hosts": [],
+   "answer": ""
+  },
+  {
+   "id": "n2-s-fifa",
+   "cat": "SPORT",
+   "q": "FIFA Dünya Kuboku neçə ildən bir keçirilir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4046,
+   "n": 2,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "w-moscow",
+   "cat": "WORLD",
+   "q": "Rusiyanın paytaxtı hansı şəhərdir",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "n=1 < 2",
+    "yoxdur: moskva|moscow"
+   ],
+   "ms": 5717,
+   "n": 1,
+   "hosts": [
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n2-t-css-color",
+   "cat": "TECH",
+   "q": "CSS-də rəng necə təyin olunur",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "n=0 < 1",
+    "yoxdur: color|rəng"
+   ],
+   "ms": 3682,
+   "n": 0,
+   "hosts": [],
+   "answer": ""
+  },
+  {
+   "id": "n2-h-roman-empire",
+   "cat": "HIST",
+   "q": "Roma imperiyası hansı ildə süqut etdi",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 3719,
+   "n": 3,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "az.wikipedia.org"
+   ],
+   "answer": "6 avqust 1806. Mənbə cümlə: \"6 avqust 1806-cı ildə imperator II Fransın imperiyanı ləğv etməsindən bir ay sonra imperator Napoleon Bonapart tərəfindən Reyn Konfederasiyasının əsası qoyulmuşdur.\""
+  },
+  {
+   "id": "p-water-day",
+   "cat": "LIFE",
+   "q": "Gündə nə qədər su içmək lazımdır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 3684,
+   "n": 3,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "w-delhi",
+   "cat": "WORLD",
+   "q": "Hindistanın paytaxtı hansı şəhərdir",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "yoxdur: yeni dehli|nyu-dehli|new delhi|dehli"
+   ],
+   "ms": 4329,
+   "n": 3,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n2-sc-earth-moon",
+   "cat": "SCI",
+   "q": "Aya ilk dəfə hansı ilə uçulub",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "n=0 < 2",
+    "yoxdur: 1969"
+   ],
+   "ms": 4982,
+   "n": 0,
+   "hosts": [],
+   "answer": ""
+  },
+  {
+   "id": "t-js-map",
+   "cat": "TECH",
+   "q": "JavaScript-də map və forEach fərqi nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4430,
+   "n": 3,
+   "hosts": [
+    "stackoverflow.com",
+    "stackoverflow.com",
+    "developer.mozilla.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n2-az-xankendi",
+   "cat": "AZ",
+   "q": "Xankəndi hansı rayonda yerləşir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 3780,
+   "n": 3,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "t-python-file",
+   "cat": "TECH",
+   "q": "Python-da fayl oxuma necə olur",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4948,
+   "n": 5,
+   "hosts": [
+    "github.com",
+    "medium.com",
+    "urhoba.net",
+    "stackoverflow.com",
+    "developer.apple.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "w-berlin",
+   "cat": "WORLD",
+   "q": "Almaniyanın paytaxtı hansı şəhərdir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5323,
+   "n": 2,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n2-w-amazon",
+   "cat": "WORLD",
+   "q": "Amazon çayı hansı qitədədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5845,
+   "n": 4,
+   "hosts": [
+    "az.wikipedia.org",
+    "en.wikipedia.org",
+    "amc.amazon.com",
+    "gizc4550.nordiskmytologi.se"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n2-az-president",
+   "cat": "AZ",
+   "q": "Azərbaycan Respublikasının Prezidenti kimdir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4616,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "president.az",
+    "1news.az",
+    "azerbaijan.az"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n2-w-nile",
+   "cat": "WORLD",
+   "q": "Dünyanın ən uzun çayı hansıdır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5556,
+   "n": 3,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "trt.net.tr"
+   ],
+   "answer": ""
+  }
+ ]
+}

@@ -1,0 +1,258 @@
+{
+ "round": 1,
+ "at": "2026-11-19T06:38:36.883Z",
+ "poolSize": 87,
+ "pass": 15,
+ "total": 15,
+ "items": [
+  {
+   "id": "az-indep",
+   "cat": "AZ",
+   "q": "Azərbaycan hansı ildə müstəqillik qazandı",
+   "ok": true,
+   "fails": [],
+   "ms": 6021,
+   "n": 5,
+   "hosts": [
+    "meclis.gov.az",
+    "genprosecutor.gov.az",
+    "meclis.gov.az",
+    "republic.preslib.az",
+    "azerbaijan.az"
+   ],
+   "answer": "18 oktyabr 2021. Mənbə cümlə: \"2021-ci il oktyabrın 18-də Azərbaycan Respublikasının müstəqilliyinin bərpa edilməsinin 30 ili tamam olur.\""
+  },
+  {
+   "id": "sp-cl",
+   "cat": "SPORT",
+   "q": "UEFA Çempionlar Liqasını ən çox hansı klub qazanıb",
+   "ok": true,
+   "fails": [],
+   "ms": 3963,
+   "n": 5,
+   "hosts": [
+    "mediasport.com.az",
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "qol.az",
+    "estafet.az"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "h-berlin",
+   "cat": "HIST",
+   "q": "Berlin divarı hansı ildə sökülüb",
+   "ok": true,
+   "fails": [],
+   "ms": 4763,
+   "n": 5,
+   "hosts": [
+    "azadliq.org",
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "banker.az",
+    "azadliq.org"
+   ],
+   "answer": "9 noyabr 1989. Mənbə cümlə: \"« Berlin Divarı »nın tikilməsindən 50 il ötür - Azadliq.org. 2011/8/13 - 1945-ci ildə İkinci Dünya müharibəsi qurtarandan 1961-ci «Berlin Divarı» 1989-cu il noyabrın 9-da "
+  },
+  {
+   "id": "s-mars-moons",
+   "cat": "SCI",
+   "q": "Marsın neçə peyki var",
+   "ok": true,
+   "fails": [],
+   "ms": 5632,
+   "n": 3,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "marsonearthproject.org"
+   ],
+   "answer": "2 peyki — 2 müstəqil mənbə təsdiqləyir (wikipedia.org, marsonearthproject.org). Mənbə cümlə: \"Planetin kiçik və nizamsız formalaşmış iki peyki mövcuddur:\" (2 mənbədə eyni rəqəm)"
+  },
+  {
+   "id": "t-http",
+   "cat": "TECH",
+   "q": "HTTP ilə HTTPS arasındakı fərq nədir",
+   "ok": true,
+   "fails": [],
+   "ms": 5484,
+   "n": 5,
+   "hosts": [
+    "az.trend.az",
+    "technote.az",
+    "az.wikipedia.org",
+    "aws.amazon.com",
+    "turkustan.az"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "c-qobustan",
+   "cat": "CULT",
+   "q": "Qobustan qaya rəsmləri hansı ölkədədir",
+   "ok": true,
+   "fails": [],
+   "ms": 5149,
+   "n": 5,
+   "hosts": [
+    "unesco.az",
+    "irs.gov.az",
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "portal.azertag.az"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "c-eyfel",
+   "cat": "CULT",
+   "q": "Eyfel qülləsinin hündürlüyü nə qədərdir",
+   "ok": true,
+   "fails": [],
+   "ms": 4289,
+   "n": 5,
+   "hosts": [
+    "area.az",
+    "area.az",
+    "az.travelwaiting.com",
+    "az.wikipedia.org",
+    "hit.az"
+   ],
+   "answer": "330 metr. Mənbə cümlə: \"Hündürlüyü 330 metr olan bu qüllə güclü küləklərə qarşı dayanıqlıdır və İnşaatının dəqiq hesablanması: Eyfel Qülləsinin inşaatı zamanı Qustav Eyfel və onun.\""
+  },
+  {
+   "id": "c-nizami",
+   "cat": "CULT",
+   "q": "Nizami Gəncəvi hansı ildə doğulub",
+   "ok": true,
+   "fails": [],
+   "ms": 4629,
+   "n": 5,
+   "hosts": [
+    "525.az",
+    "525.az",
+    "az.wikipedia.org",
+    "files.preslib.az",
+    "az.wikipedia.org"
+   ],
+   "answer": "12 mart 1209. Mənbə cümlə: \"Nizami Gəncəvinin doğum günüdür - 525.az. 2016/10/20 - Nizami 1141-ci il oktyabrın 20-də Gəncə şəhərində anadan olub , bütün ömrü boyu orada yaşayıb yaradıb 12 mart 1209-cu"
+  },
+  {
+   "id": "c-fuzuli",
+   "cat": "CULT",
+   "q": "Füzuli hansı ildə vəfat edib",
+   "ok": true,
+   "fails": [],
+   "ms": 4900,
+   "n": 2,
+   "hosts": [
+    "uraqan.com",
+    "uraqan.com"
+   ],
+   "answer": "1556-cı ildə. Mənbə cümlə: \"Füzuli 1556-cı ildə vəfat edib.\""
+  },
+  {
+   "id": "h-tokyo-olympics",
+   "cat": "HIST",
+   "q": "Tokio Yay Olimpiya Oyunları hansı ildə keçirilib",
+   "ok": true,
+   "fails": [],
+   "ms": 5270,
+   "n": 5,
+   "hosts": [
+    "bbc.com",
+    "xalqcebhesi.az",
+    "bbc.com",
+    "mys.gov.az",
+    "1news.az"
+   ],
+   "answer": "23 iyul 2020. Mənbə cümlə: \"Tokio 2020 Olimpiya Oyunları başa çatıb - BBC News Azərbaycanca. 2021/7/23 - \"Tokio-2020\" XXXII Yay Olimpiya Oyunlarının açılış mərasimi iyulun 23-də keçirilib.\""
+  },
+  {
+   "id": "t-git-rebase",
+   "cat": "TECH",
+   "q": "Git rebase nədir",
+   "ok": true,
+   "fails": [],
+   "ms": 2988,
+   "n": 5,
+   "hosts": [
+    "github.com",
+    "git-scm.com",
+    "medium.com",
+    "stackoverflow.com",
+    "github.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "s-nato",
+   "cat": "WORLD",
+   "q": "NATO-ya neçə ölkə üzvdür",
+   "ok": true,
+   "fails": [],
+   "ms": 4741,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "banker.az",
+    "republic.preslib.az",
+    "az.wikipedia.org"
+   ],
+   "answer": "32 ölkə — 2 müstəqil mənbə təsdiqləyir (wikipedia.org, novator.az). Mənbə cümlə: \"Mənzil-qərargahı Belçikanın paytaxtı Brüsseldə yerləşən Şimali Atlantika Müqaviləsi Təşkilatında ( NATO ) 32 ölkə təms"
+  },
+  {
+   "id": "az-regions",
+   "cat": "AZ",
+   "q": "Azərbaycanda neçə rayon var",
+   "ok": true,
+   "fails": [],
+   "ms": 4155,
+   "n": 5,
+   "hosts": [
+    "tr.wikipedia.org",
+    "modern.az",
+    "baku.ws",
+    "az.wikipedia.org",
+    "stat.gov.az"
+   ],
+   "answer": "12 şehir rayon. Mənbə cümlə: \"12 şehir rayonu (ilçe)\""
+  },
+  {
+   "id": "s-chromosomes",
+   "cat": "SCI",
+   "q": "İnsan hüceyrəsində neçə xromosom var",
+   "ok": true,
+   "fails": [],
+   "ms": 3911,
+   "n": 4,
+   "hosts": [
+    "az.wikipedia.org",
+    "afgen.az",
+    "az.wikipedia.org",
+    "az.wikipedia.org"
+   ],
+   "answer": "46 xromosom. Mənbə cümlə: \"İnsanda 46 ədəd xromosom mövcuddur .\""
+  },
+  {
+   "id": "s-photosynthesis",
+   "cat": "SCI",
+   "q": "Fotosintez nədir",
+   "ok": true,
+   "fails": [],
+   "ms": 5068,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "e-derslik.edu.az",
+    "kayzen.az",
+    "portal.azertag.az",
+    "qebulol.az"
+   ],
+   "answer": ""
+  }
+ ]
+}

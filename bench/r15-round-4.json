@@ -1,0 +1,276 @@
+{
+ "round": 4,
+ "at": "2026-11-19T07:31:37.741Z",
+ "poolSize": 87,
+ "pass": 4,
+ "total": 15,
+ "items": [
+  {
+   "id": "h-moon",
+   "cat": "HIST",
+   "q": "Aya ilk dəfə hansı ildə eniş edilib",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "yoxdur: 1969"
+   ],
+   "ms": 4919,
+   "n": 3,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "az-constitution",
+   "cat": "AZ",
+   "q": "Azərbaycan Konstitusiyası nə vaxt qəbul olunub",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "yoxdur: 1995"
+   ],
+   "ms": 5767,
+   "n": 3,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "s-moon",
+   "cat": "SCI",
+   "q": "Ay Yerdən nə qədər uzaqdır",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "yoxdur: 384|380|385"
+   ],
+   "ms": 6069,
+   "n": 3,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "az-pop",
+   "cat": "AZ",
+   "q": "Azərbaycanın əhalisi nə qədərdir",
+   "ok": false,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [
+    "n=1 < 2"
+   ],
+   "ms": 938,
+   "n": 1,
+   "hosts": [
+    "wikidata.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "az-river",
+   "cat": "AZ",
+   "q": "Azərbaycanın ən uzun çayı hansıdır",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "n=1 < 2",
+    "yoxdur: kür|kur"
+   ],
+   "ms": 5682,
+   "n": 1,
+   "hosts": [
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "w-madrid",
+   "cat": "WORLD",
+   "q": "İspaniyanın paytaxtı hansı şəhərdir",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "n=1 < 2",
+    "yoxdur: madrid"
+   ],
+   "ms": 4387,
+   "n": 1,
+   "hosts": [
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "w-largest-country",
+   "cat": "WORLD",
+   "q": "Dünyanın ən böyük ölkəsi hansıdır",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "n=0 < 2",
+    "yoxdur: rusiya|russia"
+   ],
+   "ms": 5000,
+   "n": 0,
+   "hosts": [],
+   "answer": ""
+  },
+  {
+   "id": "c-azerbaijan-language",
+   "cat": "CULT",
+   "q": "Azərbaycan dili hansı dil ailəsinə aiddir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4695,
+   "n": 3,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "az-un",
+   "cat": "AZ",
+   "q": "Azərbaycan BMT-yə nə vaxt üzv olub",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5281,
+   "n": 2,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "p-sleep",
+   "cat": "LIFE",
+   "q": "Gündə nə qədər yatmaq lazımdır",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "n=1 < 2",
+    "yoxdur: 7|8|saat"
+   ],
+   "ms": 4942,
+   "n": 1,
+   "hosts": [
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "az-metro-st",
+   "cat": "AZ",
+   "q": "Bakı metrosunda neçə stansiya var",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 6239,
+   "n": 5,
+   "hosts": [
+    "operativmm.az",
+    "metro.gov.az",
+    "inn.az",
+    "operativmm.az",
+    "az.wikipedia.org"
+   ],
+   "answer": "26 stansiya. Mənbə cümlə: \"Memar Əcəmi iki xəttə aid olduğu üçün siyahılarda iki dəfə keçir — ayrı stansiyaların sayı 26.\""
+  },
+  {
+   "id": "az-metro-open",
+   "cat": "AZ",
+   "q": "Bakı metrosu hansı ildə açılıb",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "yoxdur: 1967"
+   ],
+   "ms": 4080,
+   "n": 2,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "az-area",
+   "cat": "AZ",
+   "q": "Azərbaycanın sahəsi nə qədərdir",
+   "ok": false,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [
+    "n=1 < 2"
+   ],
+   "ms": 2751,
+   "n": 1,
+   "hosts": [
+    "wikidata.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "az-uni",
+   "cat": "AZ",
+   "q": "Bakıda neçə universitet var",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5045,
+   "n": 4,
+   "hosts": [
+    "navigator.az",
+    "navigator.az",
+    "ens.az",
+    "bsu.edu.az"
+   ],
+   "answer": "2 universitet. Mənbə cümlə: \"Azərbaycanda əsasən də Bakıda universitetlər dövlət və özəl olaraq 2 istiqamətdə fəaliyyət göstərir.\""
+  },
+  {
+   "id": "w-us-states",
+   "cat": "WORLD",
+   "q": "ABŞ-da neçə ştat var",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "n=1 < 2",
+    "yoxdur: 50"
+   ],
+   "ms": 6158,
+   "n": 1,
+   "hosts": [
+    "popularmechanics.com"
+   ],
+   "answer": ""
+  }
+ ]
+}

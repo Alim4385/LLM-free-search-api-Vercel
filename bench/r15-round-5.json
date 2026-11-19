@@ -1,0 +1,274 @@
+{
+ "round": 5,
+ "at": "2026-11-19T07:34:36.036Z",
+ "poolSize": 87,
+ "pass": 7,
+ "total": 15,
+ "items": [
+  {
+   "id": "t-sqljoin",
+   "cat": "TECH",
+   "q": "SQL JOIN növləri hansılardır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4858,
+   "n": 5,
+   "hosts": [
+    "programiz.com",
+    "geeksforgeeks.org",
+    "coursera.org",
+    "learn.microsoft.com",
+    "w3schools.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "w-brasilia",
+   "cat": "WORLD",
+   "q": "Braziliyanın paytaxtı hansı şəhərdir",
+   "ok": false,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [
+    "n=1 < 2"
+   ],
+   "ms": 4782,
+   "n": 1,
+   "hosts": [
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "t-python-venv",
+   "cat": "TECH",
+   "q": "Python-da virtual mühit necə yaradılır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 3151,
+   "n": 5,
+   "hosts": [
+    "earthly.dev",
+    "code.mu",
+    "youtube.com",
+    "github.com",
+    "docs.python.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "w-ottawa",
+   "cat": "WORLD",
+   "q": "Kanadanın paytaxtı hansı şəhərdir",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "n=0 < 2",
+    "yoxdur: ottava|ottawa"
+   ],
+   "ms": 4679,
+   "n": 0,
+   "hosts": [],
+   "answer": ""
+  },
+  {
+   "id": "sp-pl-teams",
+   "cat": "SPORT",
+   "q": "Azərbaycan Premyer Liqasında neçə komanda var",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5958,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "en.wikipedia.org",
+    "1news.az",
+    "az.wikipedia.org",
+    "az.wikipedia.org"
+   ],
+   "answer": "12 komanda. Mənbə cümlə: \"Azərbaycan Premyer Liqasının ən uğurlu komandası \"Qarabağ\"-dır.\"Qarabağ\" bu titulu 12 dəfə qazanmışdır.\""
+  },
+  {
+   "id": "h-olympics",
+   "cat": "HIST",
+   "q": "Olimpiya oyunları neçə ildən bir keçirilir",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "yoxdur: 4"
+   ],
+   "ms": 5428,
+   "n": 3,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "c-monet",
+   "cat": "CULT",
+   "q": "Mona Liza əsəri kimindir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4412,
+   "n": 2,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org"
+   ],
+   "answer": "Aşağıda, İtaliya intibahı dövründə Florensiyada Leonardo da Vinçi tərəfindən çəkilmiş Liza del Cakondonun \"Mona Liza\" adlı portretinə həsr edilmiş və ya qismən əsərdən bəhs edilən uyruma və yarım-uydu"
+  },
+  {
+   "id": "t-gpt5",
+   "cat": "TECH",
+   "q": "GPT-5 nə vaxt çıxdı",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 6127,
+   "n": 2,
+   "hosts": [
+    "en.wikipedia.org",
+    "arxiv.org"
+   ],
+   "answer": "7 avqust 2025. Mənbə cümlə: \"Preceded in the series by GPT-4, it was launched on August 7, 2025.\""
+  },
+  {
+   "id": "az-borders",
+   "cat": "AZ",
+   "q": "Azərbaycan neçə ölkə ilə həmsərhəddir",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "n=1 < 2",
+    "yoxdur: 5"
+   ],
+   "ms": 7062,
+   "n": 1,
+   "hosts": [
+    "abc.az"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "h-ww2",
+   "cat": "HIST",
+   "q": "İkinci Dünya müharibəsi hansı ildə bitib",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "yoxdur: 1945"
+   ],
+   "ms": 4774,
+   "n": 3,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "t-json",
+   "cat": "TECH",
+   "q": "JSON nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5322,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "en.wikipedia.org",
+    "w3schools.com",
+    "en.wikipedia.org",
+    "github.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "p-caffeine",
+   "cat": "LIFE",
+   "q": "Kofein nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5755,
+   "n": 3,
+   "hosts": [
+    "az.wikipedia.org",
+    "kofein.si",
+    "ikofein.cz"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "w-smallest-country",
+   "cat": "WORLD",
+   "q": "Dünyanın ən kiçik ölkəsi hansıdır",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "n=0 < 2",
+    "yoxdur: vatikan|vatican"
+   ],
+   "ms": 4349,
+   "n": 0,
+   "hosts": [],
+   "answer": ""
+  },
+  {
+   "id": "az-caspian",
+   "cat": "AZ",
+   "q": "Xəzər dənizinin sahəsi nə qədərdir",
+   "ok": false,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [
+    "n=1 < 2",
+    "yoxdur: 371|370|372"
+   ],
+   "ms": 896,
+   "n": 1,
+   "hosts": [
+    "wikidata.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "w-paris",
+   "cat": "WORLD",
+   "q": "Fransanın paytaxtı hansı şəhərdir",
+   "ok": false,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [
+    "n=1 < 2"
+   ],
+   "ms": 4580,
+   "n": 1,
+   "hosts": [
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  }
+ ]
+}
