@@ -33,7 +33,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 233; // v116: provayder termin qapısı yumşaldıldı (subyekt/ad uyğunluğu), wiki kanonik məqalə qaydası + xüsusi ad/hal şəkilçisi variantları, say çıxarışında mövzu tokeni bonusu, r15 nMin buraxılışı; v114: wikipedia provayderində `bridges` ReferenceError düzəldildi, çıxarış büdcəsi hər səhifə üçün ayrı (qismi nəticə), iki mərhələli axtarış + ayrı AbortController, yaxın dublikatların silinməsi, wiki variant sırası; v113: ölçü/say ayrımı, hashtag-spam, alt-domen, conflict, türkcə kaç // v113: ölçü suallarına "sayı" əlavə olunmur (#2), hashtag/spam rəqəm mənbəyi deyil (#3), alt-domen = bir host (#4), fərqli qruplar → agreement conflict (#5), türkcə "kaç ... var" (#7); v112: çarpaz təsdiq, rus say sözü, site:/domen təmizliyi, 8s deadline // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 234; // v117: obyekt məqaləsi keep:true + lead, DNT skor 0 fix, anchor translate, necə→sayı fix, pool+14 // v116: provayder termin qapısı yumşaldıldı (subyekt/ad uyğunluğu), wiki kanonik məqalə qaydası + xüsusi ad/hal şəkilçisi variantları, say çıxarışında mövzu tokeni bonusu, r15 nMin buraxılışı; v114: wikipedia provayderində `bridges` ReferenceError düzəldildi, çıxarış büdcəsi hər səhifə üçün ayrı (qismi nəticə), iki mərhələli axtarış + ayrı AbortController, yaxın dublikatların silinməsi, wiki variant sırası; v113: ölçü/say ayrımı, hashtag-spam, alt-domen, conflict, türkcə kaç // v113: ölçü suallarına "sayı" əlavə olunmur (#2), hashtag/spam rəqəm mənbəyi deyil (#3), alt-domen = bir host (#4), fərqli qruplar → agreement conflict (#5), türkcə "kaç ... var" (#7); v112: çarpaz təsdiq, rus say sözü, site:/domen təmizliyi, 8s deadline // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -347,7 +347,10 @@ async function handleSearch(body, req) {
   // v116: QISA AKRONİM (DNT, BMT, NBA, CSS, SQL) — həm "gibberish" süzgəcindən, həm də
   // uzunluq həddindən (>=4) keçməlidir, yoxsa "DNT-nin açılışı kimə aiddir" sualında düzgün
   // məqalə ("DNT") termin siyahısına düşmür və bütün nəticələr 0 bal alırdı.
-  const acronymQ = new Set(String(sanitizeQuery(query) || query || "").split(/[\s,;:!?"'()\[\]]+/u)
+  // v117: akronim (DNT, NBA) "DNT-nin" kimi şəkilçili formada gələ bilər — defisdən əvvəlki hissə götürülür
+  const rawForAcronym = String(query || "");
+  const acronymQ = new Set(rawForAcronym.split(/[\s,;:!?"'()\[\]]+/u)
+    .map(w => w.split("-")[0])
     .filter(w => w.length >= 2 && /^[A-Z0-9][A-Z0-9.+#_-]*$/u.test(w))
     .map(w => w.toLowerCase()));
   const isStrongTerm = (t) => {
@@ -358,12 +361,10 @@ async function handleSearch(body, req) {
     ...tokenize(query),
     ...tokenize(normQuery),
     ...(isTechQuery ? [] : tokenize(exp.expanded || "")),
-    // v115: texniki sualda AZ terminləri ilə yanaşı İNGİLİSCƏ ekvivalentlər də skor termini olur
-    // (əks halda docs.python.org/stackoverflow səhifələri 0 bal alıb süzgəcdən düşürdü)
     ...(isTechQuery ? tokenize(techEnQuery(query)) : []),
     ...(isAzCount ? [] : tokenize(exp.english || "")),
     ...(isAzCount ? [] : tokenize(effAnchor || ""))
-  ])].filter(t => !looksLikeGibberish(t));
+  ])].filter(t => !looksLikeGibberish(t) || acronymQ.has(String(t).toLowerCase()));
 
   const rawCount = results.length;
   // v42.5: "Access Denied / Just a moment / 403 Forbidden" kimi bloklanmış səhifələr nəticə deyil
@@ -379,27 +380,44 @@ async function handleSearch(body, req) {
   scored = scored.map(r => ((r.source === "wiki-docs" || r.source === "mdn") ? { ...r, score: Math.max(r.score, 3.0) } : r));
   // v95: snippet boş olsa da güclü bal (>3) nəticə atılmır — məzmun ekstraksiya
   // mərhələsində çəkilir. Əvvəl bbc.com/interfax.az kimi dəqiq başlıqlar itirdi.
-  // v116: OBYEKT MƏQALƏSİ QORUNUR. Wikipedia nəticələri boş snippetlə gələ bilər
-  // (Wikimedia 429 / snippet yoxdur) və skor qapısı onları atırdı — nəticədə
-  // "Çinin paytaxtı", "Messi hansı ölkədəndir" kimi suallar tam boş qalırdı (n=0),
-  // sonra isə zibil "last resort" işə düşürdü. Qayda: "X-in <xassə>" quruluşunda X-in
-  // ÖZ məqaləsi (başlıq = X) həmişə saxlanılır.
+  // v117: OBYEKT MƏQALƏSİ QORUNUR (keep:true). Wikipedia nəticələri boş snippetlə gələ bilər
+  // (Wikimedia 429) və skor qapısı onları atırdı — nəticədə "Çinin paytaxtı", "Messi hansı ölkədəndir",
+  // "Misirin paytaxtı", "ən böyük göl", "Füzulinin əsəri" kimi suallar tam boş qalırdı (n=0).
+  // Qayda: "X-in <xassə>" və ya "X ən ..." quruluşunda X-in ÖZ məqaləsi (başlıq = X) həmişə saxlanılır
+  // və sonrakı bütün filtrlərdə (content_off_topic, junk, limit) qorunur.
+  const stripEntityCase = (w) => {
+    const low = String(w || "").toLowerCase();
+    if (low.length < 5) return low;
+    const vowel = /[aeiouəıöü]/u;
+    if (/(nın|nin|nun|nün)$/u.test(low)) return vowel.test(low[low.length - 4]) ? low.slice(0, -3) : low.slice(0, -2);
+    if (/(ın|in|un|ün|da|də|dan|dən|ya|yə|na|nə)$/u.test(low)) return low.slice(0, -2);
+    return low;
+  };
   const entityArticle = (() => {
     const toks = String(normQuery || "").split(/[^\p{L}\p{N}-]+/u).filter(Boolean);
     if (toks.length < 2) return null;
-    const PROP = /^(paytaxt|ölk|olk|ş[əe]h[əe]r|seher|q[əe]rargah|harada|hans[ıi]|n[əe]dir)/iu;
-    if (!PROP.test(toks[1])) return null;
-    const head = toks[0].toLowerCase();
-    const cands = new Set([head]);
+    const PROP = /^(paytaxt|ölk|olk|ş[əe]h[əe]r|seher|q[əe]rargah|harada|hans[ıi]|n[əe]dir|ən|en|böyük|boyuk|məşhur|meshur|kiçik|kicik|uzun|derin|dərin|köhnə|kohne|yeni|əsəri|eseri|göl|gol|çay|cay|dağ|dag|zirvə|zirve|ada|dəniz|deniz)/iu;
+    const isSuperlative = /^(ən|en)$/iu.test(toks[1]);
+    if (!PROP.test(toks[1]) && !isSuperlative) return null;
+    const headRaw = toks[0].toLowerCase();
+    const head = stripEntityCase(headRaw);
+    const cands = new Set([headRaw, head]);
     if (head.length > 4) cands.add(head.slice(0, -2));
     if (head.length > 5) cands.add(head.slice(0, -3));
+    // əlavə: orijinal başlıqdakı halı da nəzərə al
+    const head2 = toks[0].toLowerCase();
+    if (head2 !== head) cands.add(head2);
     return scored.find(r => /wikipedia\.org/.test(r.url || "")
       && cands.has(String(r.title || "").toLowerCase().trim())) || null;
   })();
-  scored = scored.filter(r => r.score >= 1.5 && ((r.snippet || "").trim().length >= 10 || r.score >= 3));
+  scored = scored.filter(r => r.score >= 1.5 && ((r.snippet || "").trim().length >= 10 || r.score >= 3) || r.keep);
   if (entityArticle && !scored.includes(entityArticle)) {
-    scored.unshift({ ...entityArticle, score: Math.max(entityArticle.score || 0, 2.2) });
+    scored.unshift({ ...entityArticle, score: Math.max(entityArticle.score || 0, 2.2), keep: true });
     degradedStages.push("entity_article_kept");
+  } else if (entityArticle && scored.includes(entityArticle)) {
+    // artıq siyahıdadırsa da keep işarəsi ver ki, sonrakı filtrlər atmasın
+    const idx = scored.indexOf(entityArticle);
+    if (idx >= 0) scored[idx] = { ...scored[idx], keep: true };
   }
 
   // v39.1: həm snippet, həm title yalnız "Həmçinin bax / © Copyright" → səhifə məzmunsuzdur, at
@@ -422,6 +440,7 @@ async function handleSearch(body, req) {
   // ("saç bakımı ipuçları" → "John Romero", "cildə qulluq" → "Şaqun Şarma")
   const laxEq = (a, b) => String(a || "").toLowerCase().includes(String(b || "").toLowerCase());
   scored = scored.filter(r => {
+    if (r.keep) return true;
     if (!/wikipedia\.org/.test(r.url || "")) return true;
     const t = String(r.title || "").toLowerCase();
     const hit = qTerms.some(x => isStrongTerm(x) && t.includes(String(x).slice(0, Math.max(2, x.length - 3)).toLowerCase()));
@@ -699,7 +718,14 @@ async function handleSearch(body, req) {
   // mənbələrə qalsın. `site:` sorğusunda eyni domenin səhifələri isə SİLİNMİR.
   const scoredDedup = siteMatch ? scored : dedupeNearDuplicates(scored);
   if (scoredDedup.length < scored.length) degradedStages.push("near_dup_removed");
-  let filtered = diversifyByDomain(scoredDedup, maxResults + 2, siteMatch ? 4 : 1, Math.max(2, siteMatch ? 4 : 2)); // v43: 2 ehtiyat səhifə həqiqətən saxlanılır
+  let filtered = diversifyByDomain(scoredDedup, maxResults + 2, siteMatch ? 4 : 1, Math.max(2, siteMatch ? 4 : 2));
+  // v117: keep işarəli obyekt məqaləsi diversifikasiyada itibsə geri qaytar (domain limiti səbəbi)
+  for (const k of scored.filter(r => r.keep)) {
+    if (!filtered.some(f => f.url === k.url)) {
+      filtered.unshift(k);
+      degradedStages.push("entity_kept_after_diversify");
+    }
+  }
   const filteredCount = scored.length;
 
   const toFetch = filtered.slice(0, maxResults + 2); // v39.4: 2 ehtiyat namizəd (zibil səhifə düşsə əvəzlənsin)
@@ -822,7 +848,7 @@ async function handleSearch(body, req) {
     // yüklənən tibbi saytın yalnız şüarı gəlir: "Biz pasiyent mərkəzli qayğıya..."),
     // nəticə zibil hovuzuna düşür. Yalnız mətn sorğu dilindədirsə tətbiq olunur ki,
     // tərcümə olunmamış EN səhifələr təsadüfən silinməsin.
-    if (!genericNewsQ && clippedContent && clippedContent.length > 200) {
+    if (!genericNewsQ && clippedContent && clippedContent.length > 200 && !base.keep) {
       const cNorm = cleanContent(clippedContent).toLowerCase();
       const contentInQueryLang = qLang === "en" || /[əğışöüç]/.test(cNorm);
       const offTopic = contentInQueryLang && qTerms.length > 0 && !qTerms.some(t => {
@@ -842,12 +868,36 @@ async function handleSearch(body, req) {
     // v39.4: nə content, nə snippet məzmun daşımırsa (yalnız "© Copyright" / "Həmçinin bax")
     // → nəticəni göstərmə, ehtiyat namizədlə əvəzlə
     if (finalResults.length >= maxResults) break;
+    // v117: keep bayraqlı obyekt üçün lead fallback
+    let finalClipped = clippedContent;
+    let finalSnippet = rawSnippet;
+    if (base.keep && (!finalClipped || finalClipped.trim().length < 40)) {
+      // 1) əvvəlcə snippet-i lead kimi istifadə et
+      if (finalSnippet && finalSnippet.trim().length >= 30) {
+        finalClipped = finalSnippet.slice(0, itemBudget);
+      } else if (base.snippet && base.snippet.trim().length >= 30) {
+        finalClipped = cleanContent(base.snippet || "").slice(0, itemBudget);
+      }
+      // 2) hələ də boşdursa, Wikipedia extract API-dən lead al (429-a baxmayaraq cache)
+      if ((!finalClipped || finalClipped.trim().length < 40) && /wikipedia\.org/.test(base.url || "")) {
+        try {
+          const wTitle = wikiTitleFromUrl(base.url);
+          if (wTitle) {
+            const wEx = await fetchWikiExtract(wTitle, reqLang, 900);
+            if (wEx && wEx.text && wEx.text.trim().length >= 40) {
+              finalClipped = cleanContent(wEx.text).slice(0, itemBudget);
+              degradedStages.push("entity_lead_fetched");
+            }
+          }
+        } catch {}
+      }
+    }
     const out = {
       id: finalResults.length + 1,
       title,
       url: base.url,
-      snippet: dedupeSnippet(rawSnippet, clippedContent),
-      content: clippedContent,
+      snippet: dedupeSnippet(finalSnippet, finalClipped),
+      content: finalClipped,
       source: base.source,
       provider: base.source,
       providers: base.providers || [base.source],
@@ -857,41 +907,36 @@ async function handleSearch(body, req) {
       published_at: pubAt,
       updated_at: updAt,
       date_info: buildDateInfo(pubAt, updAt, reqLang),
-      // v57: məqalədə og:image varsa göstər (bəzi saytlar cavabı şəkildə verir) —
-      // mövcud sahələr dəyişmir, yalnız əlavə olunur
       ...(base.image ? { image: base.image } : {}),
-      // v112: `site:` üçün birbaşa oxunmuş tam mətn — say çıxarışı kəsilmiş məzmunla işləməsin
       ...(base.raw_content ? { raw_content: base.raw_content } : {}),
+      ...(base.keep ? { keep: true } : {}),
       untrusted: true
     };
-    // v41.2: məzmunsuz səhifə göstərilmir — amma tam boş qalmasın deyə "ehtiyat hovuz"a yığılır
-    // v41.6: zibil səhifə YALNIZ 2 nəticə artıq varsa atılır — tək nəticə qalmaqdansa,
-    // zəif content göstərmək yaxşıdır (n=1 problemi 15 sualda idi)
-    const canSkip = finalResults.length >= 2 && (toFetch.length - i - 1) >= 1;
+    const canSkip = !base.keep && finalResults.length >= 2 && (toFetch.length - i - 1) >= 1;
     // v55.1: mətni sorğuya aidiyyəti olmayan səhifə həmişə atılır (canSkip gözləmir) —
     // "C vitamini hansı qidalarda var" sualında Medera Hospital 1-ci nəticə kimi qalırdı
     // v66: "Client Challenge" / captcha / JS tələb edən səhifə NƏTİCƏ DEYİL — tam atılır
     // (əvvəl scribd-in captcha səhifəsi "14 şəhər" cavabı kimi göstərilirdi).
     const challengePage = /client\s*challenge|a\s+required\s+part\s+of\s+this\s+site|required\s+part\s+of\s+this\s+site|enable\s+javascript|just\s+a\s+moment|checking\s+your\s+browser|tələb\s+olunan\s+bir\s+hissəsi\s+yüklənmədi/i
-      .test(`${clippedContent || ""} ${rawSnippet || ""}`.slice(0, 1200));
+      .test(`${finalClipped || ""} ${finalSnippet || ""}`.slice(0, 1200));
     if (challengePage) { degradedStages.push("challenge_page_skipped"); continue; }
     // v86: səhifə mətni kənar mövzudursa, AMMA axtarış snippet-i sorğuya uyğundursa —
     // nəticə ATILMIR: məzmun snippet-lə əvəzlənir (əvvəl n=0/1-ə düşürdü).
     if (contentOffTopic) {
-      const snipNorm = String(rawSnippet || "").toLowerCase();
+      const snipNorm = String(finalSnippet || "").toLowerCase();
       const snipRelevant = qTerms.some(t => {
         const k = String(t).toLowerCase();
         return k.length >= 3 && snipNorm.includes(k.slice(0, Math.max(4, k.length - 2)));
       });
       if (snipRelevant && snipNorm.length >= 60) {
-        out.content = String(rawSnippet).slice(0, itemBudget);
+        out.content = String(finalSnippet).slice(0, itemBudget);
         out.content_off_topic = true;
         out.score = (out.score ?? 1.5) - 1;
         degradedStages.push("content_replaced_by_snippet");
         contentOffTopic = false;
       }
     }
-    if (contentOffTopic || (canSkip && isBoilerplateOnly(clippedContent) && (isBoilerplateOnly(rawSnippet) || !rawSnippet.trim()))) {
+    if (contentOffTopic || (canSkip && isBoilerplateOnly(finalClipped) && (isBoilerplateOnly(finalSnippet) || !finalSnippet.trim()))) {
       if (!contentOffTopic) degradedStages.push("junk_page_skipped");
       junkPool.push({ ...out, content_off_topic: contentOffTopic || undefined });
       continue;
@@ -987,7 +1032,7 @@ async function handleSearch(body, req) {
     if (added) degradedStages.push("rescue_retry");
     // ikinci cəhd faydalı nəticə gətirdisə, bypass ilə gələn zəif namizədləri at
     if (added && bypassFilled) {
-      const keep = finalResults.filter(x => x.rescued || (x.score ?? 0) >= 1.5);
+      const keep = finalResults.filter(x => x.rescued || x.keep || (x.score ?? 0) >= 1.5);
       if (keep.length >= 1 && keep.length < finalResults.length) {
         degradedStages.push("junk_pruned_after_rescue");
         finalResults.length = 0;
@@ -1012,7 +1057,7 @@ async function handleSearch(body, req) {
   // Səhifə tarixindən sonra köhnə mənbə cəzalandırılıbsa, sıralamanı yenilə və həddən aşağı düşənləri çıxar
   if (currentIntent && finalResults.length > 1) {
     finalResults.sort((a, b) => ((b.score ?? 0) - (a.score ?? 0)) || ((b.voteCount || 0) - (a.voteCount || 0)));
-    const freshEnough = finalResults.filter(r => (r.score ?? 0) >= 1.5);
+    const freshEnough = finalResults.filter(r => r.keep || (r.score ?? 0) >= 1.5);
     if (freshEnough.length >= 1) {
       finalResults.length = 0;
       finalResults.push(...freshEnough);

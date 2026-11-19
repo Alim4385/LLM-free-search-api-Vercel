@@ -170,5 +170,32 @@ export const POOL = [
   { id: "n4-s-olympic-first", cat: "SPORT", q: "İlk müasir Olimpiya Oyunları hansı ildə keçirilib", must: [["1896"]] },
   { id: "n4-t-python-version", cat: "TECH", q: "Python proqramlaşdırma dili ilk dəfə hansı ildə buraxılıb", must: [["1991", "1990", "1989"]], nMin: 1 },
   { id: "n4-sc-blood-type", cat: "SCI", q: "İnsan qanında neçə əsas qan qrupu var", must: [["4", "dörd"]] },
-  { id: "n4-h-az-republic-day", cat: "HIST", q: "Azərbaycanda Respublika Günü nə vaxt qeyd olunur", must: [["28 may", "may"]] }
+  { id: "n4-h-az-republic-day", cat: "HIST", q: "Azərbaycanda Respublika Günü nə vaxt qeyd olunur", must: [["28 may", "may"]] },
+  // ---------- v117: beşinci dəst (hovuz tükənməsin, 25 yeni sual) ----------
+  { id: "n5-az-national-park", cat: "AZ", q: "Azərbaycanda neçə milli park var", must: [["10", "on"]], nMin: 2 },
+  { id: "n5-az-shahdag", cat: "AZ", q: "Şahdağ hansı ölkədə yerləşir", must: [["azərbaycan", "azerbaycan"]] },
+  { id: "n5-az-mud-volcano", cat: "AZ", q: "Azərbaycanda neçə palçıq vulkanı var", must: [["300", "400", "350"]] },
+  { id: "n5-az-carpet", cat: "CULT", q: "Azərbaycan xalçası UNESCO siyahısına hansı ildə daxil edilib", must: [["2010"]] },
+  { id: "n5-az-baku-founded", cat: "AZ", q: "Bakı şəhərinin əsasının qoyulması hansı əsrə aiddir", must: [["v", "5", "vi"]] },
+  { id: "n5-w-london", cat: "WORLD", q: "İngiltərənin paytaxtı hansı şəhərdir", must: [["london"]] },
+  { id: "n5-w-amsterdam", cat: "WORLD", q: "Niderlandın paytaxtı hansı şəhərdir", must: [["amsterdam"]] },
+  { id: "n5-w-athens", cat: "WORLD", q: "Yunanıstanın paytaxtı hansı şəhərdir", must: [["afina", "athens"]] },
+  { id: "n5-w-cairo-check", cat: "WORLD", q: "Qahirə hansı ölkənin paytaxtıdır", must: [["misir", "egypt"]] },
+  { id: "n5-w-oslo", cat: "WORLD", q: "Norveçin paytaxtı hansı şəhərdir", must: [["oslo"]] },
+  { id: "n5-s-chess", cat: "SPORT", q: "Şahmat taxtasında neçə xana var", must: [["64"]] },
+  { id: "n5-s-football-players", cat: "SPORT", q: "Futbol komandasında neçə oyunçu olur", must: [["11"]] },
+  { id: "n5-s-olympic-motto", cat: "SPORT", q: "Olimpiya şüarı nədir", must: [["citius", "altius", "fortius", "daha sürətli"]] },
+  { id: "n5-t-python-print", cat: "TECH", q: "Python-da çap etmək üçün hansı funksiya istifadə olunur", must: [["print"]] },
+  { id: "n5-t-html-tag", cat: "TECH", q: "HTML-də link yaratmaq üçün hansı teq istifadə olunur", must: [["a", "anchor", "href"]] },
+  { id: "n5-t-git-branch", cat: "TECH", q: "Git-də yeni branch necə yaradılır", must: [["branch", "checkout"]] },
+  { id: "n5-sc-human-brain", cat: "SCI", q: "İnsan beynində təxminən neçə neyron var", must: [["86", "100", "milyard"]], nMin: 2 },
+  { id: "n5-sc-mendeleev", cat: "SCI", q: "Mendeleyev cədvəlində neçə element var", must: [["118"]] },
+  { id: "n5-sc-atoms", cat: "SCI", q: "Suyun qaynama nöqtəsi neçə dərəcədir", must: [["100"]] },
+  { id: "n5-h-az-independence-restored", cat: "HIST", q: "Azərbaycan müstəqilliyini hansı ildə bərpa etdi", must: [["1991"]] },
+  { id: "n5-h-usa-independence", cat: "HIST", q: "ABŞ müstəqilliyini hansı ildə elan etdi", must: [["1776"]] },
+  { id: "n5-h-french-revolution", cat: "HIST", q: "Fransız inqilabı hansı ildə başladı", must: [["1789"]] },
+  { id: "n5-c-nizami-works", cat: "CULT", q: "Nizami Gəncəvinin Xəmsəsinə neçə əsər daxildir", must: [["5", "beş"]] },
+  { id: "n5-c-mugam", cat: "CULT", q: "Muğam nədir", must: [["muğam", "mugam"]], nMin: 1 },
+  { id: "n5-e-bitcoin", cat: "ECON", q: "Bitcoin hansı ildə yaradılıb", must: [["2009", "2008"]] }
 ];
+
