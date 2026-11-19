@@ -196,8 +196,7 @@ export const POOL = [
   { id: "n5-h-french-revolution", cat: "HIST", q: "Fransız inqilabı hansı ildə başladı", must: [["1789"]] },
   { id: "n5-c-nizami-works", cat: "CULT", q: "Nizami Gəncəvinin Xəmsəsinə neçə əsər daxildir", must: [["5", "beş"]] },
   { id: "n5-c-mugam", cat: "CULT", q: "Muğam nədir", must: [["muğam", "mugam"]], nMin: 1 },
-  { id: "n5-e-bitcoin", cat: "ECON", q: "Bitcoin hansı ildə yaradılıb", must: [["2009", "2008"]] }
-
+  { id: "n5-e-bitcoin", cat: "ECON", q: "Bitcoin hansı ildə yaradılıb", must: [["2009", "2008"]] },
   // ---------- v117b: altıncı dəst (5 raund üçün 80 yeni asan sual) ----------
   { id: "n6-az-state", cat: "AZ", q: "Azərbaycan hansı qitədə yerləşir", must: [["asiya", "avropa"]] },
   { id: "n6-az-lake", cat: "AZ", q: "Azərbaycanın ən böyük çayı hansıdır", must: [["kür", "kur"]] },
