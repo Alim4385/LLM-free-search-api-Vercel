@@ -298,7 +298,7 @@ export const POOL = [
   { id: "n7-world-colosseum", cat: "WORLD", q: "Kolizey haradadır", must: [["roma","rome","italiya"]] },
   { id: "n7-world-eiffel", cat: "WORLD", q: "Eyfel qülləsi harada yerləşir", must: [["paris","fransa"]] },
   { id: "n7-world-statue-liberty", cat: "WORLD", q: "Azadlıq heykəli haradadır", must: [["nyu-york","new york","abş"]] },
-  { id: "n7-world-population", cat: "WORLD", q: "Dünya əhalisi nə qədərdir", must: [["8","milyard","billion"]] },
+  { id: "n7-world-population", cat: "WORLD", q: "Dünya əhalisi nə qədərdir", must: [["8","milyard","billion","milyon"]], nMin: 1 },
   { id: "n7-world-language-most", cat: "WORLD", q: "Dünyada ən çox danışılan dil hansıdır", must: [["ingilis","çin","mandarin","english"]] },
   { id: "n7-world-religion", cat: "WORLD", q: "Dünyada ən çox yayılmış din hansıdır", must: [["xristian","islam","christian"]] },
   { id: "n7-world-currency-most", cat: "WORLD", q: "Dünyanın ən güclü valyutası hansıdır", must: [["dollar","avro","euro","kuveyt"]] },
