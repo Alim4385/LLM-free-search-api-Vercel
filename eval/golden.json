@@ -1,584 +1,593 @@
 [
- {
-  "q": "Azərbaycanın əhalisi nə qədərdir",
-  "type": "count",
-  "expect": {
-   "num": null,
-   "unit": "nəfər",
-   "requiresDigits": true,
-   "page": [
-    "stat.gov.az",
-    "wikipedia.org",
-    "wikidata.org"
-   ]
+  {
+    "q": "Azərbaycanın əhalisi nə qədərdir",
+    "type": "count",
+    "expect": {
+      "num": null,
+      "unit": "nəfər",
+      "requiresDigits": true,
+      "page": [
+        "stat.gov.az",
+        "wikipedia.org",
+        "wikidata.org"
+      ],
+      "answerNum": 10180770,
+      "tol": 0
+    },
+    "sources": [
+      "stat.gov.az",
+      "wikipedia.org"
+    ],
+    "note": "rəqəm + nəfər; rəqəmsiz PASS olmaz | v112: answerNum 10 180 770 (Wikidata, 2023)"
   },
-  "sources": [
-   "stat.gov.az",
-   "wikipedia.org"
-  ],
-  "note": "rəqəm + nəfər; rəqəmsiz PASS olmaz"
- },
- {
-  "q": "Bakı metrosunda neçə stansiya var",
-  "type": "count",
-  "expect": {
-   "num": 27,
-   "unit": "stansiya",
-   "tol": 0,
-   "must_not": [
-    28
-   ],
-   "page": [
-    "wikipedia.org"
-   ],
-   "answerNum": 27
+  {
+    "q": "Bakı metrosunda neçə stansiya var",
+    "type": "count",
+    "expect": {
+      "num": 27,
+      "unit": "stansiya",
+      "tol": 0,
+      "must_not": [
+        28
+      ],
+      "page": [
+        "wikipedia.org"
+      ],
+      "answerNum": 27
+    },
+    "sources": [
+      "wikipedia.org"
+    ],
+    "note": "27 stansiya — seçilmiş cavabda rəqəm yoxlanılır (v111)"
   },
-  "sources": [
-   "wikipedia.org"
-  ],
-  "note": "27 stansiya — seçilmiş cavabda rəqəm yoxlanılır (v111)"
- },
- {
-  "q": "Xəzər dənizinin sahəsi nə qədərdir",
-  "type": "count",
-  "expect": {
-   "num": 371000,
-   "unit": "(km²|km2)",
-   "tol": 20000,
-   "page": [
-    "wikipedia.org",
-    "wikidata.org"
-   ]
+  {
+    "q": "Xəzər dənizinin sahəsi nə qədərdir",
+    "type": "count",
+    "expect": {
+      "num": 371000,
+      "unit": "(km²|km2)",
+      "tol": 20000,
+      "page": [
+        "wikipedia.org",
+        "wikidata.org"
+      ]
+    },
+    "sources": [
+      "wikipedia.org"
+    ],
+    "note": "371 000 km²"
   },
-  "sources": [
-   "wikipedia.org"
-  ],
-  "note": "371 000 km²"
- },
- {
-  "q": "Python-da list ilə tuple arasındakı fərq nədir",
-  "type": "compare",
-  "expect": {
-   "all": [
-    "list",
-    "tuple"
-   ],
-   "page": [
-    "docs.python.org",
-    "stackoverflow.com",
-    "geeksforgeeks.org"
-   ]
+  {
+    "q": "Python-da list ilə tuple arasındakı fərq nədir",
+    "type": "compare",
+    "expect": {
+      "all": [
+        "list",
+        "tuple"
+      ],
+      "page": [
+        "docs.python.org",
+        "stackoverflow.com",
+        "geeksforgeeks.org"
+      ]
+    },
+    "sources": [
+      "docs.python.org",
+      "stackoverflow.com",
+      "geeksforgeeks.org"
+    ],
+    "note": ""
   },
-  "sources": [
-   "docs.python.org",
-   "stackoverflow.com",
-   "geeksforgeeks.org"
-  ],
-  "note": ""
- },
- {
-  "q": "React useEffect nə vaxt işləyir",
-  "type": "howto",
-  "expect": {
-   "all": [
-    "useeffect"
-   ],
-   "page": [
-    "react.dev",
-    "w3schools.com",
-    "stackoverflow.com"
-   ]
+  {
+    "q": "React useEffect nə vaxt işləyir",
+    "type": "howto",
+    "expect": {
+      "all": [
+        "useeffect"
+      ],
+      "page": [
+        "react.dev",
+        "w3schools.com",
+        "stackoverflow.com"
+      ]
+    },
+    "sources": [
+      "react.dev",
+      "w3schools.com",
+      "stackoverflow.com"
+    ],
+    "note": ""
   },
-  "sources": [
-   "react.dev",
-   "w3schools.com",
-   "stackoverflow.com"
-  ],
-  "note": ""
- },
- {
-  "q": "Nobel mükafatı ilk dəfə nə vaxt verilib",
-  "type": "date",
-  "expect": {
-   "year": 1901,
-   "must_not": [],
-   "page": [
-    "wikipedia.org",
-    "nobelprize.org"
-   ]
+  {
+    "q": "Nobel mükafatı ilk dəfə nə vaxt verilib",
+    "type": "date",
+    "expect": {
+      "year": 1901,
+      "must_not": [],
+      "page": [
+        "wikipedia.org",
+        "nobelprize.org"
+      ]
+    },
+    "sources": [
+      "wikipedia.org",
+      "nobelprize.org"
+    ],
+    "note": ""
   },
-  "sources": [
-   "wikipedia.org",
-   "nobelprize.org"
-  ],
-  "note": ""
- },
- {
-  "q": "Fransanın paytaxtı haradır",
-  "type": "entity",
-  "expect": {
-   "any": [
-    "paris"
-   ],
-   "page": [
-    "wikipedia.org"
-   ]
+  {
+    "q": "Fransanın paytaxtı haradır",
+    "type": "entity",
+    "expect": {
+      "any": [
+        "paris"
+      ],
+      "page": [
+        "wikipedia.org"
+      ]
+    },
+    "sources": [
+      "wikipedia.org"
+    ],
+    "note": ""
   },
-  "sources": [
-   "wikipedia.org"
-  ],
-  "note": ""
- },
- {
-  "q": "Türkiyədə saat neçədir",
-  "type": "time",
-  "expect": {
-   "all": [
-    "istanbul"
-   ],
-   "page": [
-    "time.is"
-   ]
+  {
+    "q": "Türkiyədə saat neçədir",
+    "type": "time",
+    "expect": {
+      "all": [
+        "istanbul"
+      ],
+      "page": [
+        "time.is"
+      ]
+    },
+    "sources": [
+      "time.is"
+    ],
+    "note": "structured"
   },
-  "sources": [
-   "time.is"
-  ],
-  "note": "structured"
- },
- {
-  "q": "1 avro neçə manatdır",
-  "type": "currency",
-  "expect": {
-   "all": [
-    "manat"
-   ],
-   "page": [
-    "cbar.az"
-   ]
+  {
+    "q": "1 avro neçə manatdır",
+    "type": "currency",
+    "expect": {
+      "all": [
+        "manat"
+      ],
+      "page": [
+        "cbar.az"
+      ]
+    },
+    "sources": [
+      "cbar.az"
+    ],
+    "note": "structured"
   },
-  "sources": [
-   "cbar.az"
-  ],
-  "note": "structured"
- },
- {
-  "q": "Bakıda hava necədir",
-  "type": "weather",
-  "expect": {
-   "all": [
-    "temperatur"
-   ],
-   "page": [
-    "open-meteo.com"
-   ]
+  {
+    "q": "Bakıda hava necədir",
+    "type": "weather",
+    "expect": {
+      "all": [
+        "temperatur"
+      ],
+      "page": [
+        "open-meteo.com"
+      ]
+    },
+    "sources": [
+      "open-meteo.com"
+    ],
+    "note": "structured"
   },
-  "sources": [
-   "open-meteo.com"
-  ],
-  "note": "structured"
- },
- {
-  "q": "SQL JOIN növləri hansılardır",
-  "type": "list",
-  "expect": {
-   "any": [
-    "inner join",
-    "left join",
-    "join"
-   ],
-   "page": [
-    "stackoverflow.com",
-    "wikipedia.org",
-    "w3schools.com"
-   ]
+  {
+    "q": "SQL JOIN növləri hansılardır",
+    "type": "list",
+    "expect": {
+      "any": [
+        "inner join",
+        "left join",
+        "join"
+      ],
+      "page": [
+        "stackoverflow.com",
+        "wikipedia.org",
+        "w3schools.com"
+      ]
+    },
+    "sources": [
+      "stackoverflow.com",
+      "wikipedia.org",
+      "w3schools.com"
+    ],
+    "note": ""
   },
-  "sources": [
-   "stackoverflow.com",
-   "wikipedia.org",
-   "w3schools.com"
-  ],
-  "note": ""
- },
- {
-  "q": "Docker nədir",
-  "type": "definition",
-  "expect": {
-   "all": [
-    "konteyner"
-   ],
-   "page": [
-    "wikipedia.org",
-    "docker.com"
-   ]
+  {
+    "q": "Docker nədir",
+    "type": "definition",
+    "expect": {
+      "all": [
+        "konteyner"
+      ],
+      "page": [
+        "wikipedia.org",
+        "docker.com"
+      ]
+    },
+    "sources": [
+      "wikipedia.org",
+      "docker.com"
+    ],
+    "note": ""
   },
-  "sources": [
-   "wikipedia.org",
-   "docker.com"
-  ],
-  "note": ""
- },
- {
-  "q": "Kantın kateqorik imperativi nədir",
-  "type": "definition",
-  "expect": {
-   "all": [
-    "kateqorik imperativ"
-   ],
-   "page": [
-    "wikipedia.org"
-   ]
+  {
+    "q": "Kantın kateqorik imperativi nədir",
+    "type": "definition",
+    "expect": {
+      "all": [
+        "kateqorik imperativ"
+      ],
+      "page": [
+        "wikipedia.org"
+      ]
+    },
+    "sources": [
+      "wikipedia.org"
+    ],
+    "note": ""
   },
-  "sources": [
-   "wikipedia.org"
-  ],
-  "note": ""
- },
- {
-  "q": "Python-da virtual mühit necə yaradılır",
-  "type": "howto",
-  "expect": {
-   "any": [
-    "venv",
-    "virtualenv"
-   ],
-   "codeTokens": [
-    "venv"
-   ],
-   "page": [
-    "docs.python.org",
-    "stackoverflow.com"
-   ]
+  {
+    "q": "Python-da virtual mühit necə yaradılır",
+    "type": "howto",
+    "expect": {
+      "any": [
+        "venv",
+        "virtualenv"
+      ],
+      "codeTokens": [
+        "venv"
+      ],
+      "page": [
+        "docs.python.org",
+        "stackoverflow.com"
+      ]
+    },
+    "sources": [
+      "docs.python.org",
+      "stackoverflow.com"
+    ],
+    "note": ""
   },
-  "sources": [
-   "docs.python.org",
-   "stackoverflow.com"
-  ],
-  "note": ""
- },
- {
-  "q": "Linux-da faylı necə silmək olar",
-  "type": "howto",
-  "expect": {
-   "all": [
-    "rm"
-   ],
-   "codeTokens": [
-    "rm"
-   ]
+  {
+    "q": "Linux-da faylı necə silmək olar",
+    "type": "howto",
+    "expect": {
+      "all": [
+        "rm"
+      ],
+      "codeTokens": [
+        "rm"
+      ]
+    },
+    "sources": [
+      "linuxize.com",
+      "geeksforgeeks.org",
+      "stackoverflow.com",
+      "man7.org"
+    ],
+    "note": "rm əmri (söz sərhədi) | mənbə qəsdən sərbəst: kod tokeni həlledicidir"
   },
-  "sources": [
-   "linuxize.com",
-   "geeksforgeeks.org",
-   "stackoverflow.com",
-   "man7.org"
-  ],
-  "note": "rm əmri (söz sərhədi) | mənbə qəsdən sərbəst: kod tokeni həlledicidir"
- },
- {
-  "q": "Coroutine nədir Kotlin",
-  "type": "definition",
-  "expect": {
-   "any": [
-    "korutin",
-    "coroutine",
-    "kotlin"
-   ],
-   "page": [
-    "kotlinlang.org",
-    "developer.android.com"
-   ]
+  {
+    "q": "Coroutine nədir Kotlin",
+    "type": "definition",
+    "expect": {
+      "any": [
+        "korutin",
+        "coroutine",
+        "kotlin"
+      ],
+      "page": [
+        "kotlinlang.org",
+        "developer.android.com"
+      ]
+    },
+    "sources": [
+      "kotlinlang.org",
+      "developer.android.com"
+    ],
+    "note": ""
   },
-  "sources": [
-   "kotlinlang.org",
-   "developer.android.com"
-  ],
-  "note": ""
- },
- {
-  "q": "Azərbaycanda minimum əmək haqqı nə qədərdir",
-  "type": "count",
-  "expect": {
-   "num": 400,
-   "unit": "(manat|azn|₼)",
-   "requiresDigits": true,
-   "page": [
-    "azerbusiness.az",
-    "president.az",
-    "sosial.gov.az",
-    "e-qanun.az",
-    "tradingeconomics.com",
-    "operativmm.az"
-   ],
-   "tol": 0
+  {
+    "q": "Azərbaycanda minimum əmək haqqı nə qədərdir",
+    "type": "count",
+    "expect": {
+      "num": 400,
+      "unit": "(manat|azn|₼)",
+      "requiresDigits": true,
+      "page": [
+        "azerbusiness.az",
+        "president.az",
+        "sosial.gov.az",
+        "e-qanun.az",
+        "tradingeconomics.com",
+        "operativmm.az"
+      ],
+      "tol": 0,
+      "answerNum": 400
+    },
+    "sources": [
+      "azerbusiness.az",
+      "president.az",
+      "sosial.gov.az",
+      "e-qanun.az"
+    ],
+    "note": "rəqəm + manat | v112: answerNum 400 (2025-dən qüvvədə olan minimum)"
   },
-  "sources": [
-   "azerbusiness.az",
-   "president.az",
-   "sosial.gov.az",
-   "e-qanun.az"
-  ],
-  "note": "rəqəm + manat"
- },
- {
-  "q": "HTTP ilə HTTPS arasındakı fərq nədir",
-  "type": "compare",
-  "expect": {
-   "all": [
-    "https"
-   ],
-   "any": [
-    "fərq",
-    "şifrə",
-    "tls",
-    "ssl",
-    "difference"
-   ],
-   "page": [
-    "cloudflare.com",
-    "wikipedia.org",
-    "geeksforgeeks.org",
-    "hostinger.com"
-   ]
+  {
+    "q": "HTTP ilə HTTPS arasındakı fərq nədir",
+    "type": "compare",
+    "expect": {
+      "all": [
+        "https"
+      ],
+      "any": [
+        "fərq",
+        "şifrə",
+        "tls",
+        "ssl",
+        "difference"
+      ],
+      "page": [
+        "cloudflare.com",
+        "wikipedia.org",
+        "geeksforgeeks.org",
+        "hostinger.com"
+      ]
+    },
+    "sources": [
+      "cloudflare.com",
+      "wikipedia.org"
+    ],
+    "note": ""
   },
-  "sources": [
-   "cloudflare.com",
-   "wikipedia.org"
-  ],
-  "note": ""
- },
- {
-  "q": "Nizami Gəncəvinin əsərləri hansılardır",
-  "type": "list",
-  "expect": {
-   "any": [
-    "xəmsə",
-    "xamsə",
-    "leyli",
-    "xosrov"
-   ],
-   "page": [
-    "wikipedia.org",
-    "wikidata.org"
-   ]
+  {
+    "q": "Nizami Gəncəvinin əsərləri hansılardır",
+    "type": "list",
+    "expect": {
+      "any": [
+        "xəmsə",
+        "xamsə",
+        "leyli",
+        "xosrov"
+      ],
+      "page": [
+        "wikipedia.org",
+        "wikidata.org"
+      ]
+    },
+    "sources": [
+      "wikipedia.org"
+    ],
+    "note": ""
   },
-  "sources": [
-   "wikipedia.org"
-  ],
-  "note": ""
- },
- {
-  "q": "JavaScript-də map ilə forEach fərqi nədir",
-  "type": "compare",
-  "expect": {
-   "all": [
-    "map",
-    "foreach"
-   ],
-   "page": [
-    "stackoverflow.com",
-    "developer.mozilla.org",
-    "geeksforgeeks.org"
-   ]
+  {
+    "q": "JavaScript-də map ilə forEach fərqi nədir",
+    "type": "compare",
+    "expect": {
+      "all": [
+        "map",
+        "foreach"
+      ],
+      "page": [
+        "stackoverflow.com",
+        "developer.mozilla.org",
+        "geeksforgeeks.org"
+      ]
+    },
+    "sources": [
+      "stackoverflow.com",
+      "developer.mozilla.org",
+      "geeksforgeeks.org"
+    ],
+    "note": ""
   },
-  "sources": [
-   "stackoverflow.com",
-   "developer.mozilla.org",
-   "geeksforgeeks.org"
-  ],
-  "note": ""
- },
- {
-  "q": "Docker ilə virtual maşın arasındakı fərq",
-  "type": "compare",
-  "expect": {
-   "any": [
-    "konteyner",
-    "container"
-   ],
-   "page": [
-    "stackoverflow.com",
-    "docker.com"
-   ]
+  {
+    "q": "Docker ilə virtual maşın arasındakı fərq",
+    "type": "compare",
+    "expect": {
+      "any": [
+        "konteyner",
+        "container"
+      ],
+      "page": [
+        "stackoverflow.com",
+        "docker.com"
+      ]
+    },
+    "sources": [
+      "stackoverflow.com",
+      "docker.com"
+    ],
+    "note": ""
   },
-  "sources": [
-   "stackoverflow.com",
-   "docker.com"
-  ],
-  "note": ""
- },
- {
-  "q": "Azərbaycan Neft Fondu nə vaxt yaradılıb",
-  "type": "date",
-  "expect": {
-   "year": 1999,
-   "must_not": [],
-   "page": [
-    "wikipedia.org",
-    "oilfund.az"
-   ]
+  {
+    "q": "Azərbaycan Neft Fondu nə vaxt yaradılıb",
+    "type": "date",
+    "expect": {
+      "year": 1999,
+      "must_not": [],
+      "page": [
+        "wikipedia.org",
+        "oilfund.az"
+      ]
+    },
+    "sources": [
+      "wikipedia.org",
+      "oilfund.az"
+    ],
+    "note": ""
   },
-  "sources": [
-   "wikipedia.org",
-   "oilfund.az"
-  ],
-  "note": ""
- },
- {
-  "q": "Xocalı faciəsi nə vaxt olub",
-  "type": "date",
-  "expect": {
-   "year": 1992,
-   "must_not": [],
-   "page": [
-    "wikipedia.org",
-    "president.az",
-    "e-qanun.az"
-   ]
+  {
+    "q": "Xocalı faciəsi nə vaxt olub",
+    "type": "date",
+    "expect": {
+      "year": 1992,
+      "must_not": [],
+      "page": [
+        "wikipedia.org",
+        "president.az",
+        "e-qanun.az"
+      ],
+      "answerYear": 1992,
+      "answerContains": [
+        "26 fevral"
+      ]
+    },
+    "sources": [
+      "wikipedia.org"
+    ],
+    "note": "v112: cavabda 26 fevral 1992"
   },
-  "sources": [
-   "wikipedia.org"
-  ],
-  "note": ""
- },
- {
-  "q": "Rusiya-Ukrayna müharibəsi nə vaxt başladı",
-  "type": "date",
-  "expect": {
-   "year": 2022,
-   "must_not": [],
-   "page": [
-    "wikipedia.org"
-   ]
+  {
+    "q": "Rusiya-Ukrayna müharibəsi nə vaxt başladı",
+    "type": "date",
+    "expect": {
+      "year": 2022,
+      "must_not": [],
+      "page": [
+        "wikipedia.org"
+      ]
+    },
+    "sources": [
+      "wikipedia.org"
+    ],
+    "note": ""
   },
-  "sources": [
-   "wikipedia.org"
-  ],
-  "note": ""
- },
- {
-  "q": "Bakıda neçə universitet var",
-  "type": "count",
-  "expect": {
-   "num": null,
-   "unit": "universitet",
-   "requiresDigits": true,
-   "page": [
-    "stat.gov.az",
-    "wikipedia.org",
-    "edu.gov.az",
-    "report.az",
-    "azerbaijan.az"
-   ]
+  {
+    "q": "Bakıda neçə universitet var",
+    "type": "count",
+    "expect": {
+      "num": null,
+      "unit": "universitet",
+      "requiresDigits": true,
+      "page": [
+        "stat.gov.az",
+        "wikipedia.org",
+        "edu.gov.az",
+        "report.az",
+        "azerbaijan.az"
+      ],
+      "answerNum": 49,
+      "tol": 4
+    },
+    "sources": [
+      "stat.gov.az",
+      "wikipedia.org"
+    ],
+    "note": "say olmalıdır — rəqəmsiz PASS deyil | v112: answerNum 49±4 (canlı ölçmə; rəsmi statistika ilə fərqlənə bilər)"
   },
-  "sources": [
-   "stat.gov.az",
-   "wikipedia.org"
-  ],
-  "note": "say olmalıdır — rəqəmsiz PASS deyil"
- },
- {
-  "q": "GPT-5 nə vaxt çıxdı",
-  "type": "date",
-  "expect": {
-   "year": 2025,
-   "must_not": [
-    2024
-   ],
-   "page": [
-    "openai.com",
-    "wikipedia.org",
-    "techiefied.com",
-    "beebom.com",
-    "digitalnewsbreak.com"
-   ]
+  {
+    "q": "GPT-5 nə vaxt çıxdı",
+    "type": "date",
+    "expect": {
+      "year": 2025,
+      "must_not": [
+        2024
+      ],
+      "page": [
+        "openai.com",
+        "wikipedia.org",
+        "techiefied.com",
+        "beebom.com",
+        "digitalnewsbreak.com"
+      ]
+    },
+    "sources": [
+      "openai.com",
+      "wikipedia.org"
+    ],
+    "note": "buraxılış tarixi 7 avqust 2025 — mənbə:xülasə səhifələri"
   },
-  "sources": [
-   "openai.com",
-   "wikipedia.org"
-  ],
-  "note": "buraxılış tarixi 7 avqust 2025 — mənbə:xülasə səhifələri"
- },
- {
-  "q": "how does DNS work",
-  "type": "howto",
-  "expect": {
-   "all": [
-    "dns"
-   ],
-   "any": [
-    "resolver",
-    "ip address",
-    "domain name",
-    "server"
-   ]
+  {
+    "q": "how does DNS work",
+    "type": "howto",
+    "expect": {
+      "all": [
+        "dns"
+      ],
+      "any": [
+        "resolver",
+        "ip address",
+        "domain name",
+        "server"
+      ]
+    },
+    "sources": [
+      "cloudflare.com",
+      "developer.mozilla.org",
+      "wikipedia.org"
+    ],
+    "note": ""
   },
-  "sources": [
-   "cloudflare.com",
-   "developer.mozilla.org",
-   "wikipedia.org"
-  ],
-  "note": ""
- },
- {
-  "q": "dünyanın ən böyük səhrası hansıdır",
-  "type": "list",
-  "expect": {
-   "any": [
-    "antarktida",
-    "antarktika"
-   ],
-   "must_not": [],
-   "page": [
-    "wikipedia.org",
-    "geology.com",
-    "worldatlas.com",
-    "geographypin.com"
-   ]
+  {
+    "q": "dünyanın ən böyük səhrası hansıdır",
+    "type": "list",
+    "expect": {
+      "any": [
+        "antarktida",
+        "antarktika"
+      ],
+      "must_not": [],
+      "page": [
+        "wikipedia.org",
+        "geology.com",
+        "worldatlas.com",
+        "geographypin.com"
+      ]
+    },
+    "sources": [
+      "wikipedia.org"
+    ],
+    "note": "ən böyük səhra (Antarktida/Sahara) — ensiklopedik və ya coğrafiya mənbəyi"
   },
-  "sources": [
-   "wikipedia.org"
-  ],
-  "note": "ən böyük səhra (Antarktida/Sahara) — ensiklopedik və ya coğrafiya mənbəyi"
- },
- {
-  "q": "Python-da fayl oxuma necə olur",
-  "type": "howto",
-  "expect": {
-   "any": [
-    "open("
-   ],
-   "codeTokens": [
-    "open("
-   ],
-   "page": [
-    "docs.python.org",
-    "stackoverflow.com"
-   ]
+  {
+    "q": "Python-da fayl oxuma necə olur",
+    "type": "howto",
+    "expect": {
+      "any": [
+        "open("
+      ],
+      "codeTokens": [
+        "open("
+      ],
+      "page": [
+        "docs.python.org",
+        "stackoverflow.com"
+      ]
+    },
+    "sources": [
+      "docs.python.org",
+      "stackoverflow.com"
+    ],
+    "note": "open()"
   },
-  "sources": [
-   "docs.python.org",
-   "stackoverflow.com"
-  ],
-  "note": "open()"
- },
- {
-  "q": "Azərbaycanda pambıq istehsalı nə qədərdir",
-  "type": "count",
-  "expect": {
-   "unit": "ton",
-   "requiresDigits": true,
-   "page": [
-    "stat.gov.az",
-    "report.az",
-    "banker.az",
-    "agro.gov.az"
-   ]
-  },
-  "sources": [
-   "stat.gov.az",
-   "report.az",
-   "banker.az"
-  ],
-  "note": "istehsal rəqəmi (min ton) — rəsmi aqro/stat mənbəyi"
- }
+  {
+    "q": "Azərbaycanda pambıq istehsalı nə qədərdir",
+    "type": "count",
+    "expect": {
+      "unit": "ton",
+      "requiresDigits": true,
+      "page": [
+        "stat.gov.az",
+        "report.az",
+        "banker.az",
+        "agro.gov.az"
+      ]
+    },
+    "sources": [
+      "stat.gov.az",
+      "report.az",
+      "banker.az"
+    ],
+    "note": "istehsal rəqəmi (min ton) — rəsmi aqro/stat mənbəyi"
+  }
 ]

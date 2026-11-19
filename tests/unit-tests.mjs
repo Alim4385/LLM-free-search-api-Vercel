@@ -29,7 +29,8 @@ import { matchHoliday } from "../lib/holidays.js";
 import { matchLiveStat, extractMoneySentence } from "../lib/livestat.js";
 import { matchCrypto, cryptoToText } from "../lib/crypto.js";
 import { extractMeasure, extractMeasureFromResults, matchMeasureQuery, extractDateAnswer, matchDateQuery, extractDateFromResults, unitFamilyOfQuery, unitFamilyOfUnit } from "../lib/measure.js";
-import { extractCount, extractCountFromResults, countNounFromQuery, countSearchQuery, hasCountMarker } from "../lib/countextract.js";
+import { extractCount, extractCountFromResults, extractCountCross, collectCandidates, countNounFromQuery, countSearchQuery, hasCountMarker } from "../lib/countextract.js";
+import { stripSiteAndDomains } from "../lib/expand.js";
 import { parseSitemap, parseArticleHtml, matchSitemapItems } from "../lib/sitemapnews.js";
 import { normalizeUrl, decodeEntities, stripQuestionWords, parseDDGLite, normalizeMwmbl, parseYahooJP, parseMilliArxiv, isArchiveTopic, providerTermGate } from "../lib/search.js";
 import { parseJinaMarkdown } from "../lib/extract.js";
@@ -1422,6 +1423,75 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v75: '2 dövlət və 19 kommersiya bankı' → 21", bk && bk.value === 21 && bk.summed === true, JSON.stringify(bk));
     assert("v75: fərqli isimlər cəmlənmir", extractCount("Ölkədə 24 teatr və 3 muzey fəaliyyət göstərir.", "teatr").value === 24);
     assert("v62: tək sözlü sorğuda gate işləmir", providerTermGate([{ title: "MANY definition", url: "u", snippet: "x" }], "many").length === 1);
+
+    // === v112: rədd qaydaları (hər qayda üçün rədd + qəbul halı) ===
+    const rejOf = (t, n) => (collectCandidates(t, n, { query: "neçə " + n + " var" }).rejected || []).map(x => String(x.value));
+    // alt-obyekt: "12 stansiyadan ibarət olan ... xətt"
+    assert("v112: alt-obyekt rədd olunur (12)",
+      rejOf("Bənövşəyi xəttin 3-cü stansiyası 12 stansiyadan ibarət olan xəttin hissəsidir.", "stansiya").includes("12"),
+      JSON.stringify(rejOf("Bənövşəyi xəttin 3-cü stansiyası 12 stansiyadan ibarət olan xəttin hissəsidir.", "stansiya")));
+    assert("v112: ümumi say qəbul olunur (27)",
+      (extractCount("Bakı Metropoliteni 3 xət və 27 stansiyadan ibarətdir.", "stansiya") || {}).value === 27);
+    // per-unit
+    assert("v112: per-unit rədd olunur (17)",
+      rejOf("Hər stansiya üçün 17 avtobus ayrılıb.", "stansiya").includes("17"));
+    assert("v112: per-unit olmayan say qalır (17)",
+      (extractCount("Stansiyaya 17 avtobus xidmət edir.", "stansiya") || {}).value === 17);
+    // sıra sayı
+    assert("v112: sıra sayı rədd olunur (3-cü)",
+      rejOf("Bakı metrosunun 3-cü stansiyası açıldı.", "stansiya").some(v => v === "3"),
+      JSON.stringify(rejOf("Bakı metrosunun 3-cü stansiyası açıldı.", "stansiya")));
+    // tarix fraqmenti
+    assert("v112: tarix fraqmenti rədd olunur (2013-10-21)",
+      rejOf("Bakı metrostansiyalarının siyahısı 2013-10-21 tarixində yenilənib.", "stansiya").includes("10"),
+      JSON.stringify(rejOf("Bakı metrostansiyalarının siyahısı 2013-10-21 tarixində yenilənib.", "stansiya")));
+    assert("v112: tarixsiz say qalır (26)",
+      (extractCount("Bakı metropolitenində 26 stansiya var.", "stansiya") || {}).value === 26);
+    // gələcək / plan
+    assert("v112: plan rəqəmi rədd olunur (10)",
+      rejOf("Bakıda 10 yeni stansiya inşa ediləcək.", "stansiya").includes("10"));
+    // alt-siyahı: "13 stansiyası ("A", "B", "C")" — qrup sayı, ümumi say deyil
+    assert("v112: mötərizəli alt-siyahı rədd olunur (13)",
+      rejOf('Hazırda 13 stansiyası ("İçərişəhər", "Sahil", "28 May", "Gənclik") fəaliyyət göstərir.', "stansiya").includes("13"),
+      JSON.stringify(rejOf('Hazırda 13 stansiyası ("İçərişəhər", "Sahil", "28 May", "Gənclik") fəaliyyət göstərir.', "stansiya")));
+    // eyni cümlədə isim rəqəmə birbaşa bağlıdırsa, uzaq rəqəm say deyil
+    assert("v112: uzaq rəqəm say deyil (41)",
+      (extractCount("Bakı metropoliteni 27 stansiya və 41 vaqonla işləyir.", "stansiya") || {}).value === 27,
+      JSON.stringify(extractCount("Bakı metropoliteni 27 stansiya və 41 vaqonla işləyir.", "stansiya")));
+    // === v112: çarpaz təsdiq ===
+    const mk = (url, content, date = null) => ({ url, title: "", content, snippet: "", published_at: date });
+    const x1 = extractCountCross([
+      mk("https://a.az/1", "Bakı Metropoliteni 3 xət və 27 stansiyadan ibarətdir."),
+      mk("https://b.az/2", "Hazırda Bakı metrosunda 27 stansiya fəaliyyət göstərir."),
+      mk("https://c.az/3", "Bənövşəyi xəttin 12 stansiyadan ibarət hissəsi açılacaq.")
+    ], "stansiya", "Bakı metrosunda neçə stansiya var");
+    assert("v112: 27 iki hostla təsdiqlənir (count=2)", x1 && x1.value === 27 && x1.confirmations[0].count === 2, JSON.stringify(x1 && x1.confirmations.slice(0, 2)));
+    // eyni cümlə iki saytda → 1 təsdiq
+    const x2 = extractCountCross([
+      mk("https://a.az/1", "Bakı metropolitenində 26 stansiya var."),
+      mk("https://b.az/2", "Bakı metropolitenində 26 stansiya var.")
+    ], "stansiya", "neçə stansiya var");
+    assert("v112: eyni cümlə 2 saytda = 1 təsdiq", x2.confirmations[0].count === 1, JSON.stringify(x2.confirmations[0]));
+    // 26 (3 köhnə yer) vs 27 (rəsmi, təzə) → conflict, gizlədilmir
+    const x3 = extractCountCross([
+      mk("https://a.az/1", "Bakı metropolitenində 26 stansiya var.", "2020-01-01"),
+      mk("https://b.az/2", "Paytaxt metrosunda 26 stansiya qeydə alınıb.", "2020-02-01"),
+      mk("https://c.az/3", "Metroda 26 stansiya işləyir.", "2020-03-01"),
+      mk("https://metro.gov.az/about", "Bu gün Bakı metropoliteni 27 stansiyaya malikdir.", "2026-05-01")
+    ], "stansiya", "neçə stansiya var");
+    assert("v112: köhnə çoxluq + rəsmi təzə → conflict", x3.agreement === "conflict", JSON.stringify({ v: x3.value, a: x3.agreement, c: x3.confirmations.map(c => [c.value, c.count]) }));
+    assert("v112: conflict rəqib gizlədilmir", x3.confirmations.some(c => c.value === 27 && c.official), JSON.stringify(x3.confirmations.map(c => [c.value, c.official])));
+    // === v112: B1 — say sözü sorğu dilindədir ===
+    const ruQ = countSearchQuery("сколько станций в бакинском метро");
+    assert("v112: RU say sözü 'количество' olur", ruQ && /количество/.test(ruQ) && !/say[ıi]/.test(ruQ), String(ruQ));
+    assert("v112: AZ say sözü 'sayı' qalır", countSearchQuery("Bakıda neçə universitet var") === "Bakıda universitet sayı");
+    assert("v112: EN say sözü əlavə olunmur", countSearchQuery("how many stations in baku metro") === "stations in baku metro", String(countSearchQuery("how many stations in baku metro")));
+    assert("v112: RU 'вceго' markeri tanınır", hasCountMarker("всего станций в метро") === true);
+    // === v112: B2 — site:/domen təmizliyi ===
+    assert("v112: site: tokenu təmizlənir", stripSiteAndDomains("site:metro.gov.az stansiyaların sayı") === "stansiyaların sayı", stripSiteAndDomains("site:metro.gov.az stansiyaların sayı"));
+    assert("v112: domen tokenu təmizlənir", stripSiteAndDomains("https://metro.gov.az/about haqqında") === "haqqında", stripSiteAndDomains("https://metro.gov.az/about haqqında"));
+    // === v112: isim marker-dən əvvəl gələndə tapılır ===
+    assert("v112: 'stansiyaların sayı' → stansiya", countNounFromQuery("Bakı metrosunda stansiyaların sayı") === "stansiya", String(countNounFromQuery("Bakı metrosunda stansiyaların sayı")));
   }
 
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);

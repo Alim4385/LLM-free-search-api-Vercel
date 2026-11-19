@@ -1,12 +1,12 @@
 import { searchAll, searchMilliArxiv, isArchiveTopic, searchAzWikiHint, searchWikipedia } from "../../../lib/search.js";
-import { fetchAndExtract, buildDateInfo, normalizeValidIsoDate } from "../../../lib/extract.js";
+import { fetchAndExtract, buildDateInfo, normalizeValidIsoDate, fetchJinaMarkdown } from "../../../lib/extract.js";
 import { detectConflicts } from "../../../lib/conflict.js";
 import { selectRelevantParagraphs, tokenize, orderByRecency, isGenericNewsTerm, isNewsSectionTerm, NEWS_WORD_RE, coreSearchQuery } from "../../../lib/rank.js";
 import { matchWeather, fetchWeather, weatherToText } from "../../../lib/weather.js";
 import { matchTime, fetchTime, timeToText } from "../../../lib/time.js";
 import { matchCurrency, fetchCBAR, currencyToText } from "../../../lib/currency.js";
 import { matchUnits, unitsToText } from "../../../lib/units.js";
-import { extractCountFromResults, countNounFromQuery, countSearchQuery, hasCountMarker } from "../../../lib/countextract.js";
+import { extractCountFromResults, extractCountCross, countNounFromQuery, countSearchQuery, hasCountMarker } from "../../../lib/countextract.js";
 import { extractMeasureFromResults, matchMeasureQuery, extractDateFromResults, extractDateAnswer, matchDateQuery, unitFamilyOfQuery } from "../../../lib/measure.js";
 import { matchCrypto, fetchCryptoPrice, cryptoToText } from "../../../lib/crypto.js";
 import { matchHoliday, holidayToText } from "../../../lib/holidays.js";
@@ -25,7 +25,7 @@ import { bridgeCount, bridgeDate, bridgeMeasure, wikiTitleFromUrl, fetchWikiExtr
 import { translateAzToEn } from "../../../lib/translate.js";
 import { parseMaxResults, parseMaxChars, parseFormat, parseFreshness, parseExcludeDomains, parseBool, parseTranslateResults, parseLang } from "../../../lib/pipeline/params.js";
 import { cleanContent, cutWord, dedupeSnippet, detectQueryLanguage, isBoilerplateOnly, stripBoilerplateHead } from "../../../lib/clean.js";
-import { expandQuery, isMetaQuery, stripMetaInstructions, rewriteSearchIntentAz } from "../../../lib/expand.js";
+import { expandQuery, isMetaQuery, stripMetaInstructions, rewriteSearchIntentAz, stripSiteAndDomains } from "../../../lib/expand.js";
 import { translateResultsToQueryLang } from "../../../lib/translate.js";
 import { cacheGet, cacheSet, cacheKey } from "../../../lib/cache.js";
 import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../../lib/ratelimit.js";
@@ -33,7 +33,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 227; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 228; // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -107,7 +107,9 @@ async function handleSearch(body, req) {
   // v41.4: "bu gün / live / son dəqiqə" → provayderə avtomatik günlük təzəlik filtri
   const freshness = parseFreshness(body, query, sameDayCue);
   const excludeDomains = parseExcludeDomains(body);
-  const qLang = detectQueryLanguage(rewriteSearchIntentAz(query) || query);
+  // v112: `site:`/domen tokenları dil aşkarlanmasına qarışmır (əks halda AZ sorğu TR görünürdü)
+  const langProbeQuery = stripSiteAndDomains(rewriteSearchIntentAz(query) || query) || (rewriteSearchIntentAz(query) || query);
+  const qLang = detectQueryLanguage(langProbeQuery);
   const reqLang = parseLang(body, qLang);
   const shouldTranslateResults = parseTranslateResults(body.translate_results);
 
@@ -259,6 +261,13 @@ async function handleSearch(body, req) {
       }
     } catch { siteHintPromise = null; }
   }
+  // v112: `site:` sorğusunda provayderlərin çoxu operatoru SAYMIR → domenin öz səhifəsi
+  // paralel oxunur (rəsmi mənbə). "haqqında/about" daxili linki varsa o da oxunur.
+  const siteQ = query.match(/site:([a-z0-9.-]+\.[a-z]{2,})/i);
+  const siteDirectPromise = siteQ
+    ? readSiteDirect(siteQ[1].toLowerCase().replace(/^www\./, ""), reqLang, stripSiteAndDomains(query) || query).catch(() => [])
+    : null;
+
   let results = [], providersUsed = [], errors = {};
   if (!hasStructured && !unintelligible) {
     try {
@@ -272,6 +281,11 @@ async function handleSearch(body, req) {
       throw e;
     }
     ({ results, providersUsed, errors } = searchResult);
+    // v112: site: → domen səhifəsi nəticələrin BAŞINA (rəsmi mənbə, süzgəcdən keçir)
+    if (siteDirectPromise) {
+      const sd = await Promise.race([siteDirectPromise, new Promise(r => setTimeout(() => r([]), 2200))]);
+      if (sd && sd.length) { results = [...sd, ...results]; if (!degradedStages.includes("site_direct_read")) degradedStages.push("site_direct_read"); }
+    }
     // v106: dil körpüsü ERKƏN başladılır (səhifə oxunuşu ilə paralel) — gec başlayanda
     // 8 saniyəlik büdcə bitirdi və "neçə universitet" kimi suallar cavabsız qalırdı.
     if (!hasStructured) {
@@ -343,6 +357,9 @@ async function handleSearch(body, req) {
   const ERR_PAGE = /^(access\s+denied|forbidden|403\s+forbidden|404|not\s+found|just\s+a\s+moment|attention\s+required|are\s+you\s+a\s+robot|robot\s+check|blocked|Əlçatmaz|Giriş\s+qadağandır|Доступ\s+запрещ|拒绝访问)/iu;
   results = results.filter(r => !ERR_PAGE.test(String(r.title || "").trim()));
   let scored = results.map(r => ({ ...r, score: scoreResult(r, qTerms, qLang, normQuery) }));
+  // v112: `site:` sorğusunda BİRBAŞA oxunmuş domen səhifəsi istifadəçinin AÇIQ istədiyi
+  // mənbədir — termin uyğunluğu azdırsa da siyahıda qalır (skor yenidən hesablananda itirdi).
+  scored = scored.map(r => (r.source === "site-direct" ? { ...r, score: Math.max(r.score, 3.2) } : r));
   // v95: snippet boş olsa da güclü bal (>3) nəticə atılmır — məzmun ekstraksiya
   // mərhələsində çəkilir. Əvvəl bbc.com/interfax.az kimi dəqiq başlıqlar itirdi.
   scored = scored.filter(r => r.score >= 1.5 && ((r.snippet || "").trim().length >= 10 || r.score >= 3));
@@ -447,6 +464,7 @@ async function handleSearch(body, req) {
   if (siteMatch) {
     const domain = siteMatch[1].toLowerCase().replace(/^www\./, "");
     scored = scored.filter(r => hostMatches(r.url, domain));
+    // (v112: domen səhifəsi paralel oxunur — aşağıda readSiteDirect)
   }
 
   // v15 (Claude #3 fix): ümumi saytlarda maxPerDomain=1, rəsmi sənəd/ensiklopediya
@@ -637,7 +655,9 @@ async function handleSearch(body, req) {
     if (byRaw.length) scored = byRaw;
   }
 
-  let filtered = diversifyByDomain(scored, maxResults + 2, 1, 2); // v43: 2 ehtiyat səhifə həqiqətən saxlanılır
+  // v112: `site:` sorğusunda istifadəçi BİR domeni istəyir → həmin domendən 1 səhifə
+  // limiti mənasızdır (ana səhifə + haqqında səhifəsi birlikdə gəlməlidir).
+  let filtered = diversifyByDomain(scored, maxResults + 2, siteMatch ? 4 : 1, Math.max(2, siteMatch ? 4 : 2)); // v43: 2 ehtiyat səhifə həqiqətən saxlanılır
   const filteredCount = scored.length;
 
   const toFetch = filtered.slice(0, maxResults + 2); // v39.4: 2 ehtiyat namizəd (zibil səhifə düşsə əvəzlənsin)
@@ -780,6 +800,8 @@ async function handleSearch(body, req) {
       // v57: məqalədə og:image varsa göstər (bəzi saytlar cavabı şəkildə verir) —
       // mövcud sahələr dəyişmir, yalnız əlavə olunur
       ...(base.image ? { image: base.image } : {}),
+      // v112: `site:` üçün birbaşa oxunmuş tam mətn — say çıxarışı kəsilmiş məzmunla işləməsin
+      ...(base.raw_content ? { raw_content: base.raw_content } : {}),
       untrusted: true
     };
     // v41.2: məzmunsuz səhifə göstərilmir — amma tam boş qalmasın deyə "ehtiyat hovuz"a yığılır
@@ -962,6 +984,15 @@ async function handleSearch(body, req) {
     if (liveStatHit) degradedStages.push("livestat_extracted");
   }
 
+  // v112: QLOBAL DEADLINE (~8 s) — vaxt bitibsə, qalan provayder/körpü cavabını GÖZLƏMİRİK.
+  // Əvvəl "took_ms 7944" kimi hallarda sorğu 8 saniyəyə qədər uzanırdı.
+  const deadlineLeft = () => HARD_DEADLINE_MS - (Date.now() - started);
+  const withinDeadline = (p, reserveMs = 400) => {
+    const ms = Math.max(200, deadlineLeft() - reserveMs);
+    if (deadlineLeft() <= 0) return Promise.resolve(null);
+    return Promise.race([p, new Promise(r => setTimeout(() => r(null), ms))]).catch(() => null);
+  };
+
   const structured = [];
   if (weather && weatherText) structured.push({ title: `${weather.city} - hava məlumatı (Open-Meteo)`, url: "https://open-meteo.com", snippet: undefined, content: weatherText, sources: ["open-meteo"], source: "open-meteo", published_at: weather.fetched_at, updated_at: null, date_info: buildDateInfo(weather.fetched_at, null, reqLang), untrusted: false });
   if (timeData && timeText && intentExact) structured.push({ title: `${timeData.place || "Azərbaycan"} üçün hazırkı vaxt (${timeData.timezone})`, url: "https://time.is", snippet: undefined, content: timeText, sources: ["asia-baku-time"], source: "asia-baku-time", published_at: timeData.fetched_at, updated_at: null, date_info: buildDateInfo(timeData.fetched_at, null, reqLang), untrusted: false });
@@ -979,14 +1010,50 @@ async function handleSearch(body, req) {
   let countHitDone = false;
   if (!hasStructured && hasCountMarker(normQueryForIntent) && finalResults.length) {
     try {
-    const noun = countNounFromQuery(normQueryForIntent);
+    let noun = countNounFromQuery(normQueryForIntent);
+    // v112: qeyri-latın (rus) isim latın korpusunda uyğunlaşmır — tərcümə olunmuş
+    // sorğudan isim götürülür ("сколько станций..." → "stations").
+    if (noun && /[\u0400-\u04FF]/.test(noun)) {
+      const alt = countNounFromQuery(String(searchResult && (searchResult.anchorQuery || searchResult.rewrittenQuery || "") || "")) || null;
+      if (alt && !/[\u0400-\u04FF]/.test(alt)) noun = alt;
+    }
     if (noun) {
+      // v112: ÇARPAZ TƏSDİQ — rəqəm BÜTÜN nəticələrdən çıxarılır, müstəqil mənbələrlə
+      // qruplaşdırılır. Əvvəl yalnız ilk nəticə sayılırdı ("12 stansiya" hadisəsi).
+      let cross = null;
+      try {
+        const cP = extractPool.filter(r => r && r.source !== "count-extract" && !(Array.isArray(r.confirmations) && r.confirmations.length))
+          .slice(0, 10)
+          .map(r => ({ ...r, content: r.raw_content || r.content, snippet: r.snippet || "" }));
+        cross = extractCountCross(cP, noun, normQueryForIntent);
+      } catch { cross = null; }
+      if (cross && cross.rejected && cross.rejected.length) degradedStages.push("count_rejected_filtered");
       let got = extractCountFromResults(extractPool.slice(0, 5), noun, normQueryForIntent);
+      // çarpaz təsdiq var və ən azı 1 müstəqil mənbə varsa — o üstündür
+      // v112: çarpaz təsdiq yalnız KƏLİYYƏTLİ aparıcı qrup olduqda say seçimini əvəz edir
+      // (tək, zəif cümlə — "It cooperates within its academic network ..." → 49 kimi səhvlər)
+      const crossOk = cross && cross.value !== null && cross.top &&
+        (cross.top.count >= 2 || (cross.top.score >= 2.5 && cross.rejected.length >= 0));
+      if (crossOk) {
+        got = {
+          value: cross.value,
+          sentence: cross.top.sentence,
+          score: Math.max(2.5, cross.top.score),
+          year: cross.top.year || null,
+          summed: cross.top.summed,
+          atLeast: false,
+          qualifier: null,
+          fromWord: false,
+          url: cross.top.urls[0],
+          sources: cross.top.urls.map(u => ({ url: u, title: cross.top.hosts[0] }))
+        };
+        degradedStages.push("count_cross");
+      }
       // v106: mətn yerli mənbələrdə cavab vermədisə → dil körpüsü (EN sual → TR/RU məqalə).
       // Ölçmə: "neçə universitet" → tr.wiki listesi → 51 (birbaşa cavab, ~600 ms).
       if ((!got || !(got.score >= 1.5 || got.fromWord)) && earlyBridge) {
         try {
-          const bg = await earlyBridge;
+          const bg = await withinDeadline(earlyBridge);
           if (bg && bg.value !== undefined) { got = bg; degradedStages.push("count_bridge"); }
         } catch { /* körpü yoxdur */ }
       }
@@ -998,7 +1065,9 @@ async function handleSearch(body, req) {
           title: `${fmtNum(got.value)} ${got.qualifier && got.qualifier.length ? got.qualifier.join(" ") + " " : ""}${noun}${got.summed ? " (cəmi)" : ""}${got.atLeast ? " (ən azı)" : ""} (mətndən çıxarıldı)`,
           url: got.url,
           snippet: undefined,
-          content: `${fmtNum(got.value)} ${got.qualifier && got.qualifier.length ? got.qualifier.join(" ") + " " : ""}${noun}${got.atLeast ? " (ən azı)" : ""}${got.year && got.year < new Date().getFullYear() ? ` (${got.year} ili məlumatı)` : ""}. Mənbə cümlə: "${got.sentence}"${got.sources.length > 1 ? ` (${got.sources.length} mənbədə eyni rəqəm)` : ""}`,
+          content: `${fmtNum(got.value)} ${got.qualifier && got.qualifier.length ? got.qualifier.join(" ") + " " : ""}${noun}${got.atLeast ? " (ən azı)" : ""}${got.year && got.year < new Date().getFullYear() ? ` (${got.year} ili məlumatı)` : ""}${cross && cross.top && cross.top.count > 1 ? ` — ${cross.top.count} müstəqil mənbə təsdiqləyir (${cross.top.hosts.join(", ")})` : ""}. Mənbə cümlə: "${got.sentence}"${got.sources.length > 1 ? ` (${got.sources.length} mənbədə eyni rəqəm)` : ""}`,
+          confirmations: cross ? cross.confirmations.map(c => ({ value: c.value, count: c.count, hosts: c.hosts, urls: c.urls, official: c.official, newest_date: c.newest_date })) : undefined,
+          agreement: cross ? cross.agreement : undefined,
           sources: [hostOf(got.url)],
           source: "count-extract",
           published_at: null,
@@ -1025,7 +1094,7 @@ async function handleSearch(body, req) {
     // v108: yerli mətndən rəqəm çıxmadısa — körpüdən (TR/EN) cəhd; hədd yüksəkdir (≥3)
     if ((!mhit || mhit.score < 2) && earlyBridge) {
       try {
-        const bm = await earlyBridge;
+        const bm = await withinDeadline(earlyBridge);
         if (bm && (bm.score ?? 0) >= 3 && (!mhit || (bm.score ?? 0) > mhit.score)) { mhit = bm; degradedStages.push("measure_bridge"); }
       } catch {}
     }
@@ -1092,7 +1161,7 @@ async function handleSearch(body, req) {
     // v106: tarix yerli mətndə yoxdursa → dil körpüsü (TR ayları artıq oxunur)
     if (!dhit && earlyBridge) {
       try {
-        const bd = await earlyBridge;
+        const bd = await withinDeadline(earlyBridge);
         if (bd && bd.dateText) { dhit = bd; degradedStages.push("date_bridge"); }
       } catch { /* körpü yoxdur */ }
     }
@@ -1340,7 +1409,20 @@ async function handleSearch(body, req) {
     finalResults.push(...limited);
     if (!degradedStages.includes("limit_applied")) degradedStages.push("limit_applied");
   }
-  const conflicts = /^(1|true|on)$/i.test(String(process.env.ENABLE_CONFLICTS || "0")) ? detectConflicts(finalResults, query) : [];
+  // v112: ziddiyyətlər REAL qruplara görə (əvvəl meta.conflicts_count həmişə 0 idi)
+  let conflicts = [];
+  try {
+    const ex0 = finalResults.find(r => r && Array.isArray(r.confirmations) && r.confirmations.length);
+    if (ex0) {
+      const groups = ex0.confirmations;
+      const topV = groups[0] && groups[0].value;
+      conflicts = groups.filter(g => g.value !== topV && g.count >= 1)
+        .map(g => ({ value: g.value, count: g.count, hosts: g.hosts, official: !!g.official }));
+      if (ex0.agreement === "conflict" && !conflicts.length) conflicts = [{ value: null, count: 0, note: "rəqiblər rəsmidir/təzədir" }];
+    } else if (/^(1|true|on)$/i.test(String(process.env.ENABLE_CONFLICTS || "0"))) {
+      conflicts = detectConflicts(finalResults, query);
+    }
+  } catch { conflicts = []; }
   const confidence = computeConfidence(finalResults, safeErrors, usedFallback);
   const datedResults = finalResults.filter(r => r.published_at || r.updated_at).length;
   const debug = !!(body && (body.debug === true || body.debug === "1" || body.debug === 1));
@@ -1431,6 +1513,36 @@ async function fetchWikiArticleText(url) {
   const w = wikiTitleFromUrl(url);
   if (!w) return null;
   return await fetchWikiExtract(w.lang, w.title, 6000);
+}
+
+// v112: verilmiş domenin ana səhifəsini (və varsa "haqqında/about" səhifəsini) oxuyur.
+// Sayta bağlı söz yoxdur — yalnız ümumi "about/haqqında/info" link naxışı.
+async function readSiteDirect(domain, lang = "az", probe = "") {
+  const out = [];
+  // ümumi "haqqında/about" yolları — domenə bağlı heç nə yoxdur
+  const urls = [`https://${domain}/`, `https://${domain}/about`, `https://${domain}/haqqinda`, `https://${domain}/haqqimizda`];
+  const got = await Promise.all(urls.map(u => withTimeout(fetchAndExtract(u, probe, 2600, lang), 2800, "site read timeout").catch(() => null)));
+  for (const [i, r] of got.entries()) {
+    const t = String((r && r.text) || "").replace(/\s+/g, " ").trim();
+    if (t.length < 150) continue;
+    if (process.env.SITE_DEBUG) console.log(JSON.stringify({u: urls[i], len: t.length}));
+    out.push({
+      title: `${domain} — ${i === 0 ? "ana səhifə" : urls[i].split("/").pop()}`,
+      url: urls[i],
+      snippet: t.slice(0, 300),
+      content: t.slice(0, 4000),
+      raw_content: t.slice(0, 4000),   // v112: məzmun kəsmə mərhələsi say çıxarışını yoxsullaşdırmasın
+      source: "site-direct",
+      sources: [domain],
+      score: i === 0 ? 6 : 6.2,
+      voteCount: 1,
+      published_at: (r && r.published_at) || null,
+      updated_at: null,
+      date_info: buildDateInfo((r && r.published_at) || null, null, lang),
+      untrusted: true
+    });
+  }
+  return out;
 }
 
 export async function GET(req) {
