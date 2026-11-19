@@ -18,7 +18,8 @@ import { extractHydrationText } from "../lib/extract.js";
 import { wikiTitleFromUrl, cleanWikiQuery } from "../lib/wikilink.js";
 import { parseMaxResults, parseMaxChars, parseFormat, parseFreshness, parseExcludeDomains, parseLang } from "../lib/pipeline/params.js";
 import { makeJsonResponse, makeJsonlResponse, jsonlLines } from "../lib/pipeline/respond.js";
-import { scoreResult, isSpamDomain, hostMatches, diversifyByDomain, isJunkDomain, computeConfidence, looksLikeGibberish, strongAnchor } from "../lib/score.js";
+import fs from "node:fs";
+import { scoreResult, isSpamDomain, hostMatches, diversifyByDomain, dedupeNearDuplicates, isJunkDomain, computeConfidence, looksLikeGibberish, strongAnchor } from "../lib/score.js";
 import { cleanContent, pickAnswer, cutWord, dedupeSnippet, normalizeColloquialAz, detectQueryLanguage, acceptLanguageHeader, wikiExtractUrl, restoreAsciiAz } from "../lib/clean.js";
 import { matchAzertagItems, azertagLangFor } from "../lib/azertag.js";
 import { newsTrustBoost, AZ_NEWS_TRUSTED, howtoTrustBoost, isHowtoQuery, HOWTO_TRUSTED } from "../lib/router.js";
@@ -28,7 +29,7 @@ import { matchMath } from "../lib/math.js";
 import { matchHoliday } from "../lib/holidays.js";
 import { matchLiveStat, extractMoneySentence } from "../lib/livestat.js";
 import { matchCrypto, cryptoToText } from "../lib/crypto.js";
-import { extractMeasure, extractMeasureFromResults, matchMeasureQuery, extractDateAnswer, matchDateQuery, extractDateFromResults, unitFamilyOfQuery, unitFamilyOfUnit } from "../lib/measure.js";
+import { extractMeasure, extractMeasureFromResults, matchMeasureQuery, extractDateAnswer, matchDateQuery, extractDateFromResults, unitFamilyOfQuery, unitFamilyOfUnit, dateEventCue } from "../lib/measure.js";
 import { extractCount, extractCountFromResults, extractCountCross, collectCandidates, countNounFromQuery, countSearchQuery, hasCountMarker, regDomain } from "../lib/countextract.js";
 import { stripSiteAndDomains } from "../lib/expand.js";
 import { parseSitemap, parseArticleHtml, matchSitemapItems } from "../lib/sitemapnews.js";
@@ -852,6 +853,25 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
   }
 
 
+  // === v114: tarix cavabı — giriş cümləsi, inkar, hadisə cue-su, rəqəmlə başlayan cümlə ===
+  {
+    const gpt5 = "GPT-5 is a multimodal large language model. Preceded in the series by GPT-4, it was launched on August 7, 2025. == Background == On April 14, 2023, Sam Altman said that the company was not training GPT-5 at that time.";
+    assert("v114 tarix: giriş cümləsi inkardan üstündür", extractDateAnswer(gpt5, "GPT-5 nə vaxt çıxdı")?.dateText === "7 avqust 2025", JSON.stringify(extractDateAnswer(gpt5, "GPT-5 nə vaxt çıxdı")));
+    const metro = "1967-ci il noyabrın 6-da Bakı şəhərində metrosunun birinci növbəsi istismara verilir. 27 fevral 2014-cü il tarixində Prezident fərmanı imzalandı.";
+    assert("v114 tarix: istismara verilir cue-su və rəqəmlə başlayan cümlə", /1967/.test(extractDateAnswer(metro, "Bakı metrosu hansı ildə açılıb")?.dateText || ""), JSON.stringify(extractDateAnswer(metro, "Bakı metrosu hansı ildə açılıb")));
+    assert("v114 tarix: doğum cue-su işləyir", dateEventCue("Heydər Əliyev nə vaxt doğulub")?.test("1923-cü il mayın 10-da anadan olub") === true);
+    const award = "Mükafat hər il 10 may tarixində verilir.";
+    const aw = extractDateAnswer(award, "Heydər Əliyev nə vaxt doğulub");
+    assert("v114 tarix: cue-suz cümlə tam tarix kimi qaytarılmır", !aw || !/\d{4}/.test(aw.dateText), JSON.stringify(aw));
+  }
+
+  // === v114: texniki akronimlər "zibil" sayılmır ===
+  {
+    const tech = ["http","https","gpt","sql","css","html","npm","metro","taskgroup","abs","bmt"];
+    assert("v114 gibberish: texniki akronim/real söz keçir", tech.every(w => !looksLikeGibberish(w)), JSON.stringify(tech.filter(w => looksLikeGibberish(w))));
+    assert("v114 gibberish: klaviatura zibili tutulur", ["zxcvbnm","asdfqwer","sdfgsdfg"].every(w => looksLikeGibberish(w)));
+  }
+
   // === v51.3: mənasız token aşkarlayıcı ===
   {
     assert("v51.3 gibberish: 'asdfqwer' tutulur", looksLikeGibberish("asdfqwer") === true);
@@ -1588,7 +1608,27 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v113 #7: 'kaç tane müze' → müze", countNounFromQuery("İstanbulda kaç tane müze var") === "müze", String(countNounFromQuery("İstanbulda kaç tane müze var")));
     assert("v113 #7: 'kaç adet stüdyo' → stüdyo", countNounFromQuery("kaç adet stüdyo var Ankara da") === "stüdyo", String(countNounFromQuery("kaç adet stüdyo var Ankara da")));
     assert("v113 #7: TR axtarışı 'sayısı' ilə", countSearchQuery("İstanbulda kaç tane müze var") === "İstanbulda müze sayısı", String(countSearchQuery("İstanbulda kaç tane müze var")));
+  
+  // === v114: axtarış boru xətti ===
+  {
+    const rs = [
+      { title: "Bakı metrosunda stansiya sayı açıqlandı", url: "https://a.az/1", snippet: "qısa", score: 5 },
+      { title: "Bakı metrosunda stansiya sayı açıqlandı!", url: "https://b.az/2", snippet: "daha uzun mətn burada saxlanılır və ətraflı izah var", score: 4.8 },
+      { title: "Bakı metrosu: xəritə və qiymətlər", url: "https://c.az/3", snippet: "başqa məzmun", score: 4 },
+      { title: "Tamamilə başqa xəbər başlığı", url: "https://d.az/4", snippet: "x", score: 3 }
+    ];
+    const out = dedupeNearDuplicates(rs);
+    assert("v114: yaxın dublikat başlıq silinir (eyni xəbər 2 saytda)", out.length === 3 && !out.some(r => r.url === "https://a.az/1"), JSON.stringify(out.map(r => r.url)));
+    const keep = dedupeNearDuplicates([{ title: "Fərqli başlıq bir", url: "u1", score: 3 }, { title: "Tamam başqa mövzu iki", url: "u2", score: 2 }]);
+    assert("v114: fərqli başlıqlar toxunulmur", keep.length === 2);
   }
+  // v114: wikipedia tapşırığında `bridges` ReferenceError-u təkrarlanmasın (statik qoruma)
+  {
+    const src = fs.readFileSync(new URL("../lib/search.js", import.meta.url), "utf8");
+    assert("v114: wikipedia taskında bridges təyin olunub", !/searchWikipedia\(q, n, sig, \{ bridges \}\)/.test(src) && /bridges:\s*bridgesReady/.test(src));
+    assert("v114: mərhələ üçün ayrı AbortController var", /let deadlineAbort = new AbortController\(\)/.test(src) && /const ctrl = deadlineAbort;/.test(src));
+  }
+}
 
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);
 process.exit(fail?1:0);

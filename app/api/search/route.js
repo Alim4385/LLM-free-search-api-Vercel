@@ -7,7 +7,7 @@ import { matchTime, fetchTime, timeToText } from "../../../lib/time.js";
 import { matchCurrency, fetchCBAR, currencyToText } from "../../../lib/currency.js";
 import { matchUnits, unitsToText } from "../../../lib/units.js";
 import { extractCountFromResults, extractCountCross, countNounFromQuery, countSearchQuery, hasCountMarker, isMeasureQuery } from "../../../lib/countextract.js";
-import { extractMeasureFromResults, measureWikiQuery, matchMeasureQuery, extractDateFromResults, extractDateAnswer, matchDateQuery, unitFamilyOfQuery } from "../../../lib/measure.js";
+import { extractMeasureFromResults, measureWikiQuery, matchMeasureQuery, extractDateFromResults, extractDateAnswer, matchDateQuery, unitFamilyOfQuery, dateEventCue } from "../../../lib/measure.js";
 import { matchCrypto, fetchCryptoPrice, cryptoToText } from "../../../lib/crypto.js";
 import { matchHoliday, holidayToText } from "../../../lib/holidays.js";
 import { matchLiveStat, extractLiveStatFromResults, liveStatToText } from "../../../lib/livestat.js";
@@ -17,7 +17,7 @@ import { matchSports, fetchLastMatch, lastMatchToText } from "../../../lib/sport
 import { matchNutrition, fetchNutrient, nutrientToText } from "../../../lib/nutrition.js";
 import { leadAnswerSentence } from "../../../lib/rank.js";
 import { classifyType, officialBoost, wantsFresh, sameDayCue, newsTrustBoost, AZ_NEWS_TRUSTED, howtoTrustBoost, isHowtoQuery } from "../../../lib/router.js";
-import { scoreResult, diversifyByDomain, extractQuotedPhrases, containsPhrase, isSpamDomain, hostMatches, computeConfidence, isNewsQuery, looksLikeGibberish } from "../../../lib/score.js";
+import { scoreResult, diversifyByDomain, dedupeNearDuplicates, extractQuotedPhrases, containsPhrase, isSpamDomain, hostMatches, computeConfidence, isNewsQuery, looksLikeGibberish } from "../../../lib/score.js";
 import { applyFinalLimits, filterByFreshness } from "../../../lib/finalize.js";
 import { CORS_HEADERS, makeJsonResponse, makeJsonlResponse, makeSimpleResponse, rateLimitHeaders as makeRateLimitHeaders } from "../../../lib/pipeline/respond.js";
 import { strongAnchor } from "../../../lib/score.js";
@@ -33,7 +33,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 229; // v113: ölçü suallarına "sayı" əlavə olunmur (#2), hashtag/spam rəqəm mənbəyi deyil (#3), alt-domen = bir host (#4), fərqli qruplar → agreement conflict (#5), türkcə "kaç ... var" (#7); v112: çarpaz təsdiq, rus say sözü, site:/domen təmizliyi, 8s deadline // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 231; // v114: wikipedia provayderində `bridges` ReferenceError düzəldildi, çıxarış büdcəsi hər səhifə üçün ayrı (qismi nəticə), iki mərhələli axtarış + ayrı AbortController, yaxın dublikatların silinməsi, wiki variant sırası; v113: ölçü/say ayrımı, hashtag-spam, alt-domen, conflict, türkcə kaç // v113: ölçü suallarına "sayı" əlavə olunmur (#2), hashtag/spam rəqəm mənbəyi deyil (#3), alt-domen = bir host (#4), fərqli qruplar → agreement conflict (#5), türkcə "kaç ... var" (#7); v112: çarpaz təsdiq, rus say sözü, site:/domen təmizliyi, 8s deadline // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -657,7 +657,11 @@ async function handleSearch(body, req) {
 
   // v112: `site:` sorğusunda istifadəçi BİR domeni istəyir → həmin domendən 1 səhifə
   // limiti mənasızdır (ana səhifə + haqqında səhifəsi birlikdə gəlməlidir).
-  let filtered = diversifyByDomain(scored, maxResults + 2, siteMatch ? 4 : 1, Math.max(2, siteMatch ? 4 : 2)); // v43: 2 ehtiyat səhifə həqiqətən saxlanılır
+  // v114: yaxın dublikatlar (eyni xəbər, eyni başlıq) əvvəlcə silinir — kvota müxtəlif
+  // mənbələrə qalsın. `site:` sorğusunda eyni domenin səhifələri isə SİLİNMİR.
+  const scoredDedup = siteMatch ? scored : dedupeNearDuplicates(scored);
+  if (scoredDedup.length < scored.length) degradedStages.push("near_dup_removed");
+  let filtered = diversifyByDomain(scoredDedup, maxResults + 2, siteMatch ? 4 : 1, Math.max(2, siteMatch ? 4 : 2)); // v43: 2 ehtiyat səhifə həqiqətən saxlanılır
   const filteredCount = scored.length;
 
   const toFetch = filtered.slice(0, maxResults + 2); // v39.4: 2 ehtiyat namizəd (zibil səhifə düşsə əvəzlənsin)
@@ -665,7 +669,9 @@ async function handleSearch(body, req) {
   const searchTookMs = Date.now() - started;
   // v15: 3500ms -> 5500ms (mənbə gecikəndə tam məqalə oxunuşunu yarıda kəsməsin)
   // v52.2: 8s deadline sərt qalsın — vaxt azalıbsa səhifə oxunuşunu keç (snippet kifayətdir)
-  const skipFetch = format === "simple" || searchTookMs > 4500 || (HARD_DEADLINE_MS - (Date.now() - started)) < 1600;
+  // v114: axtarış 4.5 s çəkdiyi üçün çıxarışı TAMamilə atmaq olmaz — qalan vaxt varsa
+  // qısa büdcə ilə cəhd edilir (əvvəl nəticə yalnız snippet qalırdı).
+  const skipFetch = format === "simple" || (HARD_DEADLINE_MS - (Date.now() - started)) < 1800;
   // v15/v17: həm normallaşmış sual, həm də ingilis tərcüməsi ilə abzas seçimi + saytı sorğu dilində aç!
   const extractQuery = effAnchor ? `${normQuery} ${effAnchor}` : normQuery;
   // v26: çıxarış mərhələsi ümumi deadline-a sığmalıdır — əvvəl jina fallback 5 nəticədə
@@ -674,18 +680,34 @@ async function handleSearch(body, req) {
   // uzun gözləmə yalnız yavaş saytlarda olurdu.
   // v89: 1700 → 1200ms. Səhifə oxunuşu paraleldir; 1.2s-də cavab verməyən sayt
   // onsuz da snippet ilə təmsil olunur (debug timing: bu mərhələ ən böyük gecikmə idi).
-  const extractBudget = Math.max(600, Math.min(1200, HARD_DEADLINE_MS - (Date.now() - started) - 1200));
-  // v97: skipFetch olduqda heç bir şəbəkə sorğusu BAŞLAMIR — əvvəl Promise.allSettled
-  // yuxarıda qurulurdu və format=simple/deadline halında da fetch-lər arxa fonda gedirdi.
-  const extractAll = skipFetch ? null : Promise.allSettled(
-    toFetch.map((r, i) => fetchAndExtract(r.url, extractQuery, Math.min(1500, extractBudget), reqLang, { jina: i < 2 }))
-  );
+  // v114: ÇIXARIŞ BÜDCƏSİ və QİSMİ NƏTİCƏ
+  // Əvvəl bütün səhifələr üçün 1200 ms-lik ÜMUMİ yarış var idi: biri gecikəndə
+  // HAMISININ mətni atılırdı (26 sorğudan 19-unda `extract_timeout`).
+  // İndi hər səhifə ÖZ vaxtında bitir — sürətli səhifənin mətni qalır, yavaş olan
+  // snippet ilə təmsil olunur. Büdcə qalan vaxta görə uyğunlaşır (sərt 8 s qorunur).
+  const remainingMs = HARD_DEADLINE_MS - (Date.now() - started);
+  const extractBudget = Math.max(700, Math.min(2600, remainingMs - 1100));
+  // ilk 2 səhifə cavab üçün kritikdir — tam büdcə, qalanlar 75%-i (hamısı paralel)
+  const perItemMs = (i) => (i < 2 ? extractBudget : Math.max(800, Math.round(extractBudget * 0.75)));
+  let extractDropped = 0;
   const extracted = skipFetch
     ? toFetch.map(() => ({ status: "fulfilled", value: null }))
-    : await Promise.race([
-        extractAll,
-        new Promise((resolve) => setTimeout(() => { degradedStages.push("extract_timeout"); resolve(toFetch.map(() => ({ status: "fulfilled", value: null }))); }, extractBudget))
-      ]);
+    : await Promise.all(toFetch.map(async (r, i) => {
+        const pkey = cacheKey("page", { u: r.url, l: reqLang });
+        try {
+          const hit = await cacheGet(pkey);
+          if (hit && hit.text) return { status: "fulfilled", value: hit };
+        } catch {}
+        try {
+          const v = await withTimeout(
+            fetchAndExtract(r.url, extractQuery, perItemMs(i), reqLang, { jina: i < 2 }),
+            perItemMs(i) + 150, "extract item timeout"
+          );
+          if (v && v.text) { try { await cacheSet(pkey, v, 600); } catch {} }
+          return { status: "fulfilled", value: v };
+        } catch { extractDropped++; return { status: "rejected", value: null }; }
+      }));
+  if (extractDropped) degradedStages.push(extractDropped >= Math.ceil(toFetch.length / 2) ? "extract_timeout" : "extract_partial");
 
   const currentIntent = /(?<![\p{L}])(ən\s+çox|son|bu\s+gün|bugün|hazırda|indiki|yeni|top|best|most\s+visited|most\s+popular|latest|current)(?![\p{L}])/iu.test(normQuery) && !/\b(1\d{3}|20[01]\d)\b/.test(normQuery);
   const junkPool = [];
@@ -1105,7 +1127,7 @@ async function handleSearch(body, req) {
     const thinContent = (extractPool.slice(0, 5).reduce((a, r) => a + String(r.content || r.snippet || "").length, 0) < 1200) || degradedStages.includes("extract_timeout");
     if ((!mhit || mhit.score < 2) && thinContent) {
       try {
-        let wres = extractPool.slice(0, 5).filter(r => /^https?:\/\/[a-z-]+\.wikipedia\.org\//i.test(String(r.url || ""))).slice(0, 2);
+        let wres = extractPool.slice(0, 5).filter(r => /^https?:\/\/[a-z-]+\.wikipedia\.org\//i.test(String(r.url || ""))).filter(notMedia).slice(0, 2);
         if (!wres.length) {
           try {
             const wikiQ = measureWikiQuery(normQueryForIntent) || coreSearchQuery(normQueryForIntent, 4) || normQueryForIntent;
@@ -1165,7 +1187,27 @@ async function handleSearch(body, req) {
   }
   // v80: TARİX cavabı — "Konstitusiya nə vaxt qəbul olunub", "BMT-yə nə vaxt üzv olub"
   if (!hasStructured && !countHitDone && finalResults.length && matchDateQuery(normQueryForIntent)) {
-    let dhit = extractDateFromResults(extractPool.slice(0, 5), normQueryForIntent);
+    // v114: güclü anchor varsa yalnız anchor-u başlığında saxlayan nəticələrdən tarix çıxarılır
+    // ("GPT-5 nə vaxt çıxdı" → "OpenAI" məqaləsinin 2023 sitatı cavab kimi verilirdi).
+    const datePoolRaw = extractPool.slice(0, 5);
+    // v114: sual MEDİA haqqında deyilsə, film/mahnı/kitab səhifəsi tarix mənbəyi deyil.
+    // Ölçmə: "Bakı metrosu hansı ildə açılıb" → az.wikipedia "Bakı metrosu (film, 1992)"
+    // məqaləsindən "1992-ci ildə" cavabı verilirdi (düzgün: 1967).
+    const MEDIA_CUE = /(film|rejissor|albom|mahn[ıi]|kitab|roman|serial|tama[şs]a|m[üu]zik|konsert|oyun|sənədli)/iu;
+    const mediaQ = MEDIA_CUE.test(normQueryForIntent);
+    const notMedia = (r) => mediaQ || !MEDIA_CUE.test(`${r.title || ""} ${r.snippet || ""}`);
+    const datePoolBase = datePoolRaw.filter(notMedia);
+    const datePoolSrc = datePoolBase.length ? datePoolBase : datePoolRaw;
+    const datePool = anchorKeyStrong ? datePoolSrc.filter(r => hasAnchorTitle(r)) : datePoolSrc;
+    let dhit = extractDateFromResults(datePool, normQueryForIntent);
+    // v114: hovuzdan çıxarılan tarix yoxlanılır — cümlədə sualın HADİSƏ cue-su olmalı və
+    // tarixdə İL olmalıdır. Əks halda wiki mətninə keçilir.
+    // Ölçmə: "Heydər Əliyev nə vaxt doğulub" → "…mükafatı…" parçasından "10 may" (ilsiz) cavabı.
+    if (dhit) {
+      const cueR = dateEventCue(normQueryForIntent);
+      if (cueR && !cueR.test(String(dhit.sentence || ""))) dhit = null;
+      else if (!/\d{4}/.test(String(dhit.dateText || ""))) dhit = null;
+    }
     // v111: tarix nəticə mətnlərində yoxdursa, AMMA nəticələrdə vikipediya varsa —
     // wiki API-dən mətni birbaşa çək (sürətli, ~300 ms). Prod-da səhifə çıxarışı
     // "extract_timeout" olanda 1967 kimi faktlar itirdi.
@@ -1177,24 +1219,51 @@ async function handleSearch(body, req) {
       let wres = extractPool.slice(0, 5).filter(r => /^https?:\/\/[a-z-]+\.wikipedia\.org\//i.test(String(r.url || ""))).slice(0, 2);
       if (!wres.length) {
         try {
-          const ws = await withTimeout(searchWikipedia(coreSearchQuery(normQueryForIntent, 4) || normQueryForIntent, 2), 1200, "wiki search timeout");
-          wres = (ws || []).slice(0, 1);
+          const ws = await withTimeout(searchWikipedia(coreSearchQuery(normQueryForIntent, 4) || normQueryForIntent, 3), 1200, "wiki search timeout");
+          wres = (ws || []).filter(notMedia).slice(0, 2);
           if (wres.length) degradedStages.push("date_wiki_search");
         } catch {}
       }
+      // v114: başlıqda sorğudan ƏLAVƏ söz daşıyan məqalə həmin mövzunun BAŞQA obyektidir
+      // ("Heydər Əliyev" → "... mükafatı"/"... ordeni"). Az əlavə sözlü (daha dəqiq) məqalə
+      // əvvəl yoxlanılır.
+      {
+        const subjToks = new Set([...tokenize(normQueryForIntent), ...tokenize(query)].filter(t => t.length >= 3));
+        const extraTok = (r) => String(r.title || "").toLowerCase().split(/[^\p{L}\p{N}]+/u)
+          .filter(w => w.length >= 3 && !subjToks.has(w) && !/^(və|ve|и|the|of|and)$/.test(w)).length;
+        wres = wres.slice().sort((a, b) => extraTok(a) - extraTok(b));
+      }
+      // v114: güclü anchor varsa (GPT-5, FIFA 2022...) məqalə BAŞLIĞI anchor-u saxlamalıdır.
+      // Ölçmə: "GPT-5 nə vaxt çıxdı" → wiki "OpenAI" məqaləsinin mətnindən "14 aprel 2023"
+      // (Altmanın sitatı) çıxarılıb 7 avqust 2025 əvəzinə cavab kimi verilirdi.
+      if (anchorKeyStrong) {
+        const anchored = wres.filter(r => hasAnchorTitle(r));
+        wres = anchored.length ? anchored : [];
+        if (!wres.length) degradedStages.push("date_wiki_anchor_miss");
+      }
+      // v114: məqalənin GİRİŞİ sualın hadisə növünü ehtiva etməlidir (doğum/açılış/buraxılış).
+      // "Bakı metrosu hansı ildə açılıb" → "Bakı metrosu (film, 1992)" məqaləsi; "Heydər Əliyev
+      // nə vaxt doğulub" → "Heydər Əliyev ordeni" məqaləsi səhv cavab verirdi.
+      const dateCue = dateEventCue(normQueryForIntent);
       for (const wr of wres) {
         try {
           const wt = await withTimeout(fetchWikiArticleText(wr.url), 1400, "wiki text timeout");
           if (!wt) continue;
+          if (dateCue && !dateCue.test(String(wt).slice(0, 700))) continue;
           // mətn ingiliscə ola bilər — AZ sorğu termini ora düşmür, ona görə EN anker sorğusu da yoxlanır
           // məqalənin ÖZ başlığı da sorğu kimi sınanır: EN məqalədə AZ termin yoxdur,
           // amma "Baku Metro" başlığı cümlədə keçir və tarixi tapmağa bəs edir.
           const pageTitle = (() => { try { return wikiTitleFromUrl(wr.url)?.title || ""; } catch { return ""; } })();
           const dQueries = [...new Set([normQueryForIntent, searchResult.anchorQuery || "", coreSearchQuery(normQueryForIntent), pageTitle].filter(Boolean))];
-          let best = null;
-          for (const dq of dQueries) {
-            const cand = extractDateAnswer(wt, dq);
-            if (cand && cand.score >= 2 && (!best || cand.score > best.score)) best = cand;
+          // v114: ƏVVƏL sorğunun ÖZÜ ilə çıxarılır (orada "açılıb" kimi hadisə cue-su var və
+          // ən erkən il seçilir); yalnız o boş qaytaranda başlıq/anchor variantları sınanır.
+          let best = extractDateAnswer(wt, normQueryForIntent);
+          if (!best || best.score < 2) {
+            best = null;
+            for (const dq of dQueries.slice(1)) {
+              const cand = extractDateAnswer(wt, dq);
+              if (cand && cand.score >= 2 && (!best || cand.score > best.score)) best = cand;
+            }
           }
           if (best && (!dhit || best.score > dhit.score || foundingQ)) {
             dhit = { ...best, url: wr.url, sources: [wr.url] };
@@ -1202,6 +1271,36 @@ async function handleSearch(body, req) {
             break;
           }
         } catch {}
+      }
+      // v114: hovuzdaki məqalələrin HEÇ BİRİ hadisə növünə uyğun deyildisə (və ya yox idisə)
+      // — mövzunun özü ilə wiki axtarışı ("Bakı metrosu" → "Bakı metropoliteni", "1967").
+      if (!dhit || dhit.score < 2) {
+        try {
+          const subj = coreSearchQuery(normQueryForIntent, 4) || normQueryForIntent;
+          const ws2 = await withTimeout(searchWikipedia(subj, 3), 1300, "wiki search timeout 2");
+          for (const wr of (ws2 || []).filter(notMedia)) {
+            if (anchorKeyStrong && !hasAnchorTitle(wr)) continue;
+            const wt = await withTimeout(fetchWikiArticleText(wr.url), 1300, "wiki text timeout 2").catch(() => null);
+            if (!wt) continue;
+            const cue2 = dateEventCue(normQueryForIntent);
+            if (cue2 && !cue2.test(String(wt).slice(0, 700))) continue;
+            const pageTitle2 = (() => { try { return wikiTitleFromUrl(wr.url)?.title || ""; } catch { return ""; } })();
+            const dqs = [...new Set([normQueryForIntent, coreSearchQuery(normQueryForIntent), pageTitle2].filter(Boolean))];
+            let best2 = extractDateAnswer(wt, normQueryForIntent);
+            if (!best2 || best2.score < 2) {
+              best2 = null;
+              for (const dq of dqs.slice(1)) {
+                const c2 = extractDateAnswer(wt, dq);
+                if (c2 && c2.score >= 2 && (!best2 || c2.score > best2.score)) best2 = c2;
+              }
+            }
+            if (best2) {
+              dhit = { ...best2, url: wr.url, sources: [wr.url] };
+              degradedStages.push("date_wiki_subject");
+              break;
+            }
+          }
+        } catch { /* wiki axtarışı alınmadı */ }
       }
     }
     // v106: tarix yerli mətndə yoxdursa → dil körpüsü (TR ayları artıq oxunur)
