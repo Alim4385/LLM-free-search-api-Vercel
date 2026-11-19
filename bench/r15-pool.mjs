@@ -337,7 +337,7 @@ export const POOL = [
   { id: "n7-math-probability", cat: "MATH", q: "Ehtimal nədir", must: [["ehtimal","probability","0","1"]] },
   { id: "n7-math-calculus", cat: "MATH", q: "Riyazi analiz nədir", must: [["analiz","calculus","limit","törəmə"]] },
   { id: "n7-math-algebra", cat: "MATH", q: "Cəbr nədir", must: [["cəbr","algebra","tənlik","dəyişən"]] },
-  { id: "n7-math-2plus2", cat: "MATH", q: "2 üstəgəl 2 neçə edir", must: [["4","dörd"]] },
+  { id: "n7-math-2plus2", cat: "MATH", q: "2 üstəgəl 2 neçə edir", must: [["4","dörd"]], nMin: 1 },
   // LLM / AI / TEXNOLOGİYA (20)
   { id: "n7-llm-what", cat: "LLM", q: "LLM nə deməkdir", must: [["large language","böyük dil","modeli"]] },
   { id: "n7-llm-gpt", cat: "LLM", q: "GPT nədir", must: [["generative","transformer","gpt"]] },
@@ -392,7 +392,7 @@ export const POOL = [
   { id: "n8-tech-robot", cat: "TECH", q: "Robot nədir", must: [["robot","avtomat","sensor","proqram"]] },
   { id: "n8-tech-ar", cat: "TECH", q: "Artırılmış reallıq nədir", must: [["artırılmış","reallıq","ar ","virtual"]] },
   { id: "n8-meta-prompt2", cat: "META", q: "Prompt engineering nədir", must: [["prompt","sorğu","mühəndislik","llm"]] },
-  { id: "n8-meta-hallucination2", cat: "META", q: "LLM niyə hallüsinasiya edir", must: [["hallüsinasiya","uydurma","məlumat","təlim"]] },
+  { id: "n8-meta-hallucination2", cat: "META", q: "LLM niyə hallüsinasiya edir", must: [["hallüsinasiya","hallucination","uydurma","təlim","model"]] },
   { id: "n8-meta-bias", cat: "META", q: "Süni intellektdə qərəz nədir", must: [["bias","qərəz","ədalət","ayrıseçkilik"]] },
   { id: "n8-meta-eval", cat: "META", q: "LLM necə qiymətləndirilir", must: [["benchmark","qiymət","mme","test"]] },
   { id: "n8-meta-safety", cat: "META", q: "AI təhlükəsizliyi nədir", must: [["təhlükəsizlik","alignment","risk","nəzarət"]] },
