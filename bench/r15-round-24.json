@@ -1,0 +1,274 @@
+{
+ "round": 24,
+ "at": "2026-11-19T10:34:30.905Z",
+ "poolSize": 389,
+ "pass": 15,
+ "total": 15,
+ "items": [
+  {
+   "id": "n8-nature-desert",
+   "cat": "NATURE",
+   "q": "Səhrada hansı heyvanlar yaşayır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 6501,
+   "n": 3,
+   "hosts": [
+    "faqs.org",
+    "syfy.com",
+    "livescience.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n8-nature-whale2",
+   "cat": "NATURE",
+   "q": "Mavi balina harada yaşayır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 3912,
+   "n": 4,
+   "hosts": [
+    "answers.com",
+    "en.wikipedia.org",
+    "az.wikipedia.org",
+    "lwn.net"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n8-culture-chess",
+   "cat": "WORLD",
+   "q": "Şahmat nə vaxt yaranıb",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5656,
+   "n": 2,
+   "hosts": [
+    "en.wikipedia.org",
+    "en.wikipedia.org"
+   ],
+   "answer": "16 oktyabr 1969. Mənbə cümlə: \"On October 16, 1969, six months after selling his namesake label to General Recorded Tape, Leonard Chess died of a heart attack.\""
+  },
+  {
+   "id": "n8-food-coffee",
+   "cat": "WORLD",
+   "q": "Qəhvə haradan gəlir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": true,
+   "fails": [],
+   "ms": 4309,
+   "n": 1,
+   "hosts": [
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n8-math-geometry",
+   "cat": "MATH",
+   "q": "Həndəsə nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4844,
+   "n": 2,
+   "hosts": [
+    "az.wikipedia.org",
+    "en.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n8-astro-moon2",
+   "cat": "NATURE",
+   "q": "Ay neçə gündə Yer ətrafında fırlanır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 7574,
+   "n": 3,
+   "hosts": [
+    "robotgeorgezip.tumblr.com",
+    "1x57.com",
+    "news.google.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n8-llm-alignment",
+   "cat": "LLM",
+   "q": "AI alignment nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 7163,
+   "n": 5,
+   "hosts": [
+    "en.wikipedia.org",
+    "hai.stanford.edu",
+    "research.ibm.com",
+    "aiweekly.co",
+    "techtarget.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-math-geometry",
+   "cat": "MATH",
+   "q": "Üçbucağın sahəsi necə hesablanır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 6229,
+   "n": 5,
+   "hosts": [
+    "bbc.co.uk",
+    "mathnasium.com",
+    "wikihow.com",
+    "gigacalculator.com",
+    "geeksforgeeks.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n8-llm-gpt4",
+   "cat": "LLM",
+   "q": "GPT-4 nə vaxt buraxıldı",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 6438,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "github.com",
+    "az.wikipedia.org",
+    "stackoverflow.com",
+    "fastvoiceagent.cerebrium.ai"
+   ],
+   "answer": "14 mart 2023. Mənbə cümlə: \"O, ilkin olaraq 14 mart 2023-cü ildə buraxıldı və ödənişli çatbot məhsulu ChatGPT Plus və OpenAI-ın API-si vasitəsilə ictimaiyyətə təqdim edildi.\""
+  },
+  {
+   "id": "n8-sport-football2",
+   "cat": "WORLD",
+   "q": "Futbol neçə nəfərlə oynanılır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 3805,
+   "n": 3,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "az.wikipedia.org"
+   ],
+   "answer": "10 nəfərlə. Mənbə cümlə: \"Oyunun ikinci hissəsində Sadio Tounkara 64-cü dəqiqədə aldığı ikinci sarı vərəqədən sonra qızmızı kart görmüş və \"Xəzər-Lənkəran\" oyunu 10 nəfərlə davam etdirmişdir.\""
+  },
+  {
+   "id": "n8-med-sleep2",
+   "cat": "MED",
+   "q": "Yuxu nə üçün vacibdir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5900,
+   "n": 5,
+   "hosts": [
+    "nhlbi.nih.gov",
+    "sleepfoundation.org",
+    "apa.org",
+    "takingcharge.csh.umn.edu",
+    "qz.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n8-world-pop2",
+   "cat": "WORLD",
+   "q": "Dünyada neçə insan yaşayır 2025",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 6205,
+   "n": 2,
+   "hosts": [
+    "en.wikipedia.org",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n8-food-honey2",
+   "cat": "NATURE",
+   "q": "Bal necə yaranır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 7195,
+   "n": 5,
+   "hosts": [
+    "morningchores.com",
+    "youtube.com",
+    "biologyinsights.com",
+    "britannica.com",
+    "beekeepercorner.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n8-astro-mars",
+   "cat": "WORLD",
+   "q": "Marsda həyat varmı",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 6575,
+   "n": 5,
+   "hosts": [
+    "marsprogress.com",
+    "en.wikipedia.org",
+    "daily.jstor.org",
+    "science.nasa.gov",
+    "astronomy.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n8-world-capital2",
+   "cat": "WORLD",
+   "q": "Ankara hansı ölkənin paytaxtıdır",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 7420,
+   "n": 5,
+   "hosts": [
+    "en.wikipedia.org",
+    "britannica.com",
+    "goturkiye.org",
+    "nomads-travel-guide.com",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  }
+ ]
+}

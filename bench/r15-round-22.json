@@ -1,0 +1,287 @@
+{
+ "round": 22,
+ "at": "2026-11-19T10:30:32.046Z",
+ "poolSize": 389,
+ "pass": 15,
+ "total": 15,
+ "items": [
+  {
+   "id": "n7-med-eye",
+   "cat": "MED",
+   "q": "Göz hansı rəngləri görür",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5334,
+   "n": 5,
+   "hosts": [
+    "pantone.com",
+    "blogs.sas.com",
+    "motorbiscuit.com",
+    "answers.com",
+    "az.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n8-math-calculus",
+   "cat": "MATH",
+   "q": "Riyazi analiz nəyi öyrənir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5858,
+   "n": 5,
+   "hosts": [
+    "khazar.org",
+    "az.wikipedia.org",
+    "rif.gdu.edu.az",
+    "wcu.edu.az",
+    "cs.bsu.edu.az"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-med-pregnancy",
+   "cat": "MED",
+   "q": "Hamiləlik neçə həftə davam edir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5216,
+   "n": 5,
+   "hosts": [
+    "eudi.az",
+    "eudi.az",
+    "doctorramila.az",
+    "btk.az",
+    "ginekologiya-hamilelik.az"
+   ],
+   "answer": "10 davam — 2 müstəqil mənbə təsdiqləyir (eudi.az, doctorramila.az). Mənbə cümlə: \"Hamiləliklərin əksəriyyəti 40 həftə və ya 9 ay 10 gün davam edir.\" (3 mənbədə eyni rəqəm)"
+  },
+  {
+   "id": "n8-llm-rag",
+   "cat": "LLM",
+   "q": "RAG nədir süni intellektdə",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4056,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "itbrains.edu.az",
+    "family.gov.az",
+    "en.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n8-math-fractal",
+   "cat": "MATH",
+   "q": "Fraktal nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 9415,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "matder.org.tr",
+    "en.wikipedia.org",
+    "hurriyet.com.tr"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n8-med-vaccine2",
+   "cat": "MED",
+   "q": "Peyvənd nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4453,
+   "n": 2,
+   "hosts": [
+    "az.wikipedia.org",
+    "doktorm.az"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n8-llm-transformer2",
+   "cat": "LLM",
+   "q": "Transformer arxitekturası kim tərəfindən təklif olunub",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5156,
+   "n": 3,
+   "hosts": [
+    "fourweekmba.com",
+    "en.wikipedia.org",
+    "klu.ai"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n8-world-currency",
+   "cat": "WORLD",
+   "q": "Yapon yeni hansı ölkənin puludur",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 4312,
+   "n": 3,
+   "hosts": [
+    "az.wikipedia.org",
+    "en.wikipedia.org",
+    "watcher.guru"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n8-world-un",
+   "cat": "WORLD",
+   "q": "BMT nə vaxt qurulub",
+   "ok": true,
+   "strictOk": false,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 8256,
+   "n": 5,
+   "hosts": [
+    "worldatlas.com",
+    "motorbiscuit.com",
+    "essar.com",
+    "bartehrman.com",
+    "taxes.gov.az"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-tech-blockchain",
+   "cat": "TECH",
+   "q": "Blokçeyn nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 9195,
+   "n": 5,
+   "hosts": [
+    "en.wikipedia.org",
+    "az.wikipedia.org",
+    "4sim.gov.az",
+    "binance.com",
+    "aws.amazon.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n8-tech-robot",
+   "cat": "TECH",
+   "q": "Robot nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 6074,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "plus.maths.org",
+    "newscientist.com",
+    "en.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n7-llm-embedding",
+   "cat": "LLM",
+   "q": "Embedding nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 8193,
+   "n": 5,
+   "hosts": [
+    "en.wikipedia.org",
+    "ibm.com",
+    "en.wikipedia.org",
+    "voxel51.com",
+    "aws.amazon.com"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n8-tech-5g",
+   "cat": "TECH",
+   "q": "5G nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5951,
+   "n": 5,
+   "hosts": [
+    "en.wikipedia.org",
+    "az.wikipedia.org",
+    "ibm.com",
+    "pcmag.com",
+    "en.wikipedia.org"
+   ],
+   "answer": ""
+  },
+  {
+   "id": "n8-med-antibiotic2",
+   "cat": "MED",
+   "q": "Antibiotik nə vaxt kəşf edilib",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 5103,
+   "n": 5,
+   "hosts": [
+    "az.wikipedia.org",
+    "az.wikipedia.org",
+    "en.wikipedia.org",
+    "andop.az",
+    "doktorinfo.az"
+   ],
+   "answer": "1929-cu ildə. Mənbə cümlə: \"İlk antibiotik 1929-cu ildə penisilini Aleksandr Fleminq tərəfindən kəşf edilmişdir.\" (2 mənbədə eyni tarix)"
+  },
+  {
+   "id": "n8-tech-cloud2",
+   "cat": "TECH",
+   "q": "Bulud hesablama nədir",
+   "ok": true,
+   "strictOk": true,
+   "nMinWaived": false,
+   "fails": [],
+   "ms": 7752,
+   "n": 5,
+   "hosts": [
+    "ibm.com",
+    "dmlc.ml",
+    "az.wikipedia.org",
+    "en.wikipedia.org",
+    "aws.amazon.com"
+   ],
+   "answer": ""
+  }
+ ]
+}

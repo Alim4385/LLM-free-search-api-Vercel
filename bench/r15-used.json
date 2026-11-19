@@ -356,6 +356,57 @@
    "n7-world-continent-count",
    "n7-math-pythagoras",
    "n7-math-equation"
+  ],
+  [
+   "n7-med-eye",
+   "n8-math-calculus",
+   "n7-med-pregnancy",
+   "n8-llm-rag",
+   "n8-math-fractal",
+   "n8-med-vaccine2",
+   "n8-llm-transformer2",
+   "n8-world-currency",
+   "n8-world-un",
+   "n7-tech-blockchain",
+   "n8-tech-robot",
+   "n7-llm-embedding",
+   "n8-tech-5g",
+   "n8-med-antibiotic2",
+   "n8-tech-cloud2"
+  ],
+  [
+   "n7-llm-what",
+   "n7-llm-attention",
+   "n7-tech-vector-db",
+   "n8-med-heart",
+   "n8-math-algebra2",
+   "n8-meta-eval",
+   "n8-geo-earthquake2",
+   "n7-llm-rag",
+   "n8-meta-hallucination2",
+   "n7-math-prime",
+   "n8-meta-prompt2",
+   "n8-nature-forest2",
+   "n8-bio-dna2",
+   "n7-math-2plus2",
+   "n8-econ-inflation"
+  ],
+  [
+   "n8-nature-desert",
+   "n8-nature-whale2",
+   "n8-culture-chess",
+   "n8-food-coffee",
+   "n8-math-geometry",
+   "n8-astro-moon2",
+   "n8-llm-alignment",
+   "n7-math-geometry",
+   "n8-llm-gpt4",
+   "n8-sport-football2",
+   "n8-med-sleep2",
+   "n8-world-pop2",
+   "n8-food-honey2",
+   "n8-astro-mars",
+   "n8-world-capital2"
   ]
  ]
 }
