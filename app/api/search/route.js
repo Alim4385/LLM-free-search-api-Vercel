@@ -1,4 +1,4 @@
-import { searchAll, searchMilliArxiv, isArchiveTopic, searchAzWikiHint, searchWikipedia } from "../../../lib/search.js";
+import { searchAll, searchMilliArxiv, isArchiveTopic, searchAzWikiHint, searchWikipedia, techEnQuery } from "../../../lib/search.js";
 import { fetchAndExtract, buildDateInfo, normalizeValidIsoDate, fetchJinaMarkdown } from "../../../lib/extract.js";
 import { detectConflicts } from "../../../lib/conflict.js";
 import { selectRelevantParagraphs, tokenize, orderByRecency, isGenericNewsTerm, isNewsSectionTerm, NEWS_WORD_RE, coreSearchQuery } from "../../../lib/rank.js";
@@ -33,7 +33,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 231; // v114: wikipedia provayderində `bridges` ReferenceError düzəldildi, çıxarış büdcəsi hər səhifə üçün ayrı (qismi nəticə), iki mərhələli axtarış + ayrı AbortController, yaxın dublikatların silinməsi, wiki variant sırası; v113: ölçü/say ayrımı, hashtag-spam, alt-domen, conflict, türkcə kaç // v113: ölçü suallarına "sayı" əlavə olunmur (#2), hashtag/spam rəqəm mənbəyi deyil (#3), alt-domen = bir host (#4), fərqli qruplar → agreement conflict (#5), türkcə "kaç ... var" (#7); v112: çarpaz təsdiq, rus say sözü, site:/domen təmizliyi, 8s deadline // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 232; // v114: wikipedia provayderində `bridges` ReferenceError düzəldildi, çıxarış büdcəsi hər səhifə üçün ayrı (qismi nəticə), iki mərhələli axtarış + ayrı AbortController, yaxın dublikatların silinməsi, wiki variant sırası; v113: ölçü/say ayrımı, hashtag-spam, alt-domen, conflict, türkcə kaç // v113: ölçü suallarına "sayı" əlavə olunmur (#2), hashtag/spam rəqəm mənbəyi deyil (#3), alt-domen = bir host (#4), fərqli qruplar → agreement conflict (#5), türkcə "kaç ... var" (#7); v112: çarpaz təsdiq, rus say sözü, site:/domen təmizliyi, 8s deadline // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -348,6 +348,9 @@ async function handleSearch(body, req) {
     ...tokenize(query),
     ...tokenize(normQuery),
     ...(isTechQuery ? [] : tokenize(exp.expanded || "")),
+    // v115: texniki sualda AZ terminləri ilə yanaşı İNGİLİSCƏ ekvivalentlər də skor termini olur
+    // (əks halda docs.python.org/stackoverflow səhifələri 0 bal alıb süzgəcdən düşürdü)
+    ...(isTechQuery ? tokenize(techEnQuery(query)) : []),
     ...(isAzCount ? [] : tokenize(exp.english || "")),
     ...(isAzCount ? [] : tokenize(effAnchor || ""))
   ])].filter(t => !looksLikeGibberish(t));
@@ -360,6 +363,10 @@ async function handleSearch(body, req) {
   // v112: `site:` sorğusunda BİRBAŞA oxunmuş domen səhifəsi istifadəçinin AÇIQ istədiyi
   // mənbədir — termin uyğunluğu azdırsa da siyahıda qalır (skor yenidən hesablananda itirdi).
   scored = scored.map(r => (r.source === "site-direct" ? { ...r, score: Math.max(r.score, 3.2) } : r));
+  // v115: RƏSMİ SƏNƏD mənbələri (wiki-docs: docs.python.org/docs.docker.com…, mdn:
+  // developer.mozilla.org) AZ sorğusunun terminləri ilə bal toplamır — onlar MÖVZUYA görə
+  // seçilib. Skor döşəməsi verilməsə süzgəcdən (>= 1.5) düşürdülər.
+  scored = scored.map(r => ((r.source === "wiki-docs" || r.source === "mdn") ? { ...r, score: Math.max(r.score, 3.0) } : r));
   // v95: snippet boş olsa da güclü bal (>3) nəticə atılmır — məzmun ekstraksiya
   // mərhələsində çəkilir. Əvvəl bbc.com/interfax.az kimi dəqiq başlıqlar itirdi.
   scored = scored.filter(r => r.score >= 1.5 && ((r.snippet || "").trim().length >= 10 || r.score >= 3));
@@ -1016,7 +1023,14 @@ async function handleSearch(body, req) {
   };
 
   const structured = [];
-  if (weather && weatherText) structured.push({ title: `${weather.city} - hava məlumatı (Open-Meteo)`, url: "https://open-meteo.com", snippet: undefined, content: weatherText, sources: ["open-meteo"], source: "open-meteo", published_at: weather.fetched_at, updated_at: null, date_info: buildDateInfo(weather.fetched_at, null, reqLang), untrusted: false });
+  // v115: mənbə adı/URL faktiki provayderə uyğun yazılır (open-meteo əlçatmaz olanda wttr.in
+  // işləyir — "open-meteo" yazmaq yanlış mənbə göstərmək olardı).
+  if (weather && weatherText) {
+    const wProv = weather.source || "open-meteo";
+    const wLabel = wProv === "open-meteo" ? "Open-Meteo" : wProv;
+    const wUrl = wProv === "open-meteo" ? "https://open-meteo.com" : `https://${wProv}/`;
+    structured.push({ title: `${weather.city} - hava məlumatı (${wLabel})`, url: wUrl, snippet: undefined, content: weatherText, sources: [wProv], source: wProv, published_at: weather.fetched_at, updated_at: null, date_info: buildDateInfo(weather.fetched_at, null, reqLang), untrusted: false });
+  }
   if (timeData && timeText && intentExact) structured.push({ title: `${timeData.place || "Azərbaycan"} üçün hazırkı vaxt (${timeData.timezone})`, url: "https://time.is", snippet: undefined, content: timeText, sources: ["asia-baku-time"], source: "asia-baku-time", published_at: timeData.fetched_at, updated_at: null, date_info: buildDateInfo(timeData.fetched_at, null, reqLang), untrusted: false });
   if (nutriData && nutriText) structured.push({ title: `${nutriData.food} — qida tərkibi (USDA)`, url: "https://fdc.nal.usda.gov/", snippet: undefined, content: nutriText, sources: ["usda.gov"], source: "usda", published_at: nutriData.fetched_at, updated_at: null, date_info: buildDateInfo(nutriData.fetched_at, null, reqLang), untrusted: false });
   if (liveStatHit) structured.push({ title: `${liveStatQ.label} (mətndən çıxarıldı)`, url: liveStatHit.url, snippet: undefined, content: liveStatToText(liveStatHit, liveStatQ.label), sources: [(() => { try { return new URL(liveStatHit.url).hostname.replace(/^www\./, ""); } catch { return "mənbə"; } })()], source: "livestat-extract", extracted: true, score: 99, voteCount: 1, published_at: liveStatHit.published_at || null, updated_at: null, date_info: buildDateInfo(liveStatHit.published_at || null, null, reqLang), untrusted: true });
@@ -1546,6 +1560,10 @@ async function handleSearch(body, req) {
   // v101: çıxarılmış cavab (say/ölçü/tarix) reorder mərhələlərindən sonra yenidən başa çəkilir —
   // əvvəl limit kəsməsi onu qurban verə bilirdi (məs. pambıq istehsalı: cavab var, siyahıda yox).
   pinExtracted();
+  // v115: TEXNİKİ sualda RƏSMİ SƏNƏD üçün bir yer ayrılır.
+  // Səbəb: AZ səhifələr dil üstünlüyünə görə ilk 5 yeri tutur və docs.python.org /
+  // developer.mozilla.org / stackoverflow.com kimi kanonik mənbə kənarda qalırdı.
+  // Dil qaydası pozulmur: AZ nəticələr qalır, yalnız ƏN ZƏİF biri əvəz olunur.
   // v97: max_results MÜQAVİLƏSİ — structured cavablar siyahının başındadır, ona görə
   // kəsmə onlardan SONRA edilir: cəm nəticə sayı heç vaxt max_results-ı keçmir.
   if (finalResults.length > maxResults) {
@@ -1554,6 +1572,33 @@ async function handleSearch(body, req) {
     finalResults.push(...limited);
     if (!degradedStages.includes("limit_applied")) degradedStages.push("limit_applied");
   }
+  if (isTechQuery && finalResults.length) {
+    const DOCS_RE = /^(docs\.[a-z0-9-]+\.[a-z]{2,}|developer\.mozilla\.org|stackoverflow\.com|w3schools\.com|readthedocs\.io|[a-z0-9-]+\.readthedocs\.io)$/i;
+    const hostOf = (r) => { try { return new URL(r.url).hostname.replace(/^www\./, ""); } catch { return ""; } };
+    const hasDocs = finalResults.some(r => DOCS_RE.test(hostOf(r)));
+    if (!hasDocs) {
+      // v115: `scored` bir neçə dəfə yenidən hesablanır (relax mərhələləri) və rəsmi sənəd
+      // nəticəsi yenidən 0 bal ala bilir — burada skor döşəməsi TƏKRAR tətbiq olunur.
+      const pool = [...(typeof scoredDedup !== "undefined" && scoredDedup ? scoredDedup : []), ...(scored || [])]
+        .map(r => ((r.source === "wiki-docs" || r.source === "mdn") ? { ...r, score: Math.max(r.score || 0, 3) } : r));
+      const cand = pool.find(r => DOCS_RE.test(hostOf(r)) && (r.score ?? 0) >= 1.5);
+      if (cand && !finalResults.some(r => r.url === cand.url)) {
+        const docRes = { ...cand, id: 0, voteCount: cand.voteCount || 1, date_info: cand.date_info || buildDateInfo(cand.published_at || null, cand.updated_at || null, reqLang) };
+        if (finalResults.length < maxResults) finalResults.push(docRes);
+        else {
+          let idx = -1;
+          for (let i = finalResults.length - 1; i >= 0; i--) {
+            if (finalResults[i].extracted || finalResults[i].source === "site-direct") continue;
+            idx = i; break;
+          }
+          if (idx >= 0) finalResults[idx] = docRes; else finalResults.push(docRes);
+        }
+        finalResults.forEach((r, i) => { r.id = i + 1; });
+        if (!degradedStages.includes("docs_slot")) degradedStages.push("docs_slot");
+      }
+    }
+  }
+
   // v112: ziddiyyətlər REAL qruplara görə (əvvəl meta.conflicts_count həmişə 0 idi)
   let conflicts = [];
   try {
