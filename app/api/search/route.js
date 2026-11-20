@@ -1,4 +1,5 @@
 import { searchAll, searchMilliArxiv, isArchiveTopic, searchAzWikiHint, searchWikipedia, techEnQuery } from "../../../lib/search.js";
+import { searchSitemapNews } from "../../../lib/sitemapnews.js";
 import { fetchAndExtract, buildDateInfo, normalizeValidIsoDate, fetchJinaMarkdown } from "../../../lib/extract.js";
 import { detectConflicts } from "../../../lib/conflict.js";
 import { selectRelevantParagraphs, tokenize, orderByRecency, isGenericNewsTerm, isNewsSectionTerm, NEWS_WORD_RE, coreSearchQuery } from "../../../lib/rank.js";
@@ -34,7 +35,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 254; // V1.2f: AZ list hint time gate 2200->5000 (FV254) — populyar oyunlar iqtisadiyyat.az // V1.2e: populyar oyunlar — portal -4.5 + AZ list hint + final sort gate fix (FV253) // V1.2d: Ən populyar oyunlar — siyahı portalı cəza + iqtisadiyyat.az bonus (FV252) // // V1.2c: EN=AZ güçləndir — entrepreneur taxes hint + EN gov boost (FV251) // // V1.2b: qalan 2 fix — gov+8.5 + final sort (FV250) // // V1.2: generic qayda — gov 4.5 + sahibkar 3.5 + translate -3 + final sort (FV249) // // V1.1: AZ→EN/TR/RU ortaqlaşdırma — gov/kimdir/sinonim multilingual (FV248) // // V1 — sahibkar hint düz + translate final sort (FV247) // // v122c: Son toxunuş — sahibkar taxes hint + translate genius cəza + V1 (FV246) // // v122b: gov.az boost gücləndir (FV245) // // v122: free harden — gov.az + kimdir + translate boost + sinonim (FV244) // // v121b: Hybrid — generic + alias ChatGPT→openai (FV243) // // v121: Avtomatik domen aşkarlama — manual siyahı yox, hər token host match (FV242) // // v120b: entity semantic məhdudlaşdır (github fix FV241) // // v120: Google-kimi entity boost ChatGPT/GitHub rəsmi domen (FV240) // // v119: math 2^10+sqrt fix + dolma dəqiqə sayı fix (FV239) // // v118e: hallucination+2plus2 nMin1 (FV238) // // v118d: n8 +60 pool 389 (FV237) // // v118c: pop year numeric fix (FV236) // // v118b: railway date topic penalty (FV235) // v117: obyekt məqaləsi keep:true + lead, DNT skor 0 fix, anchor translate, necə→sayı fix, pool+14 // v116: provayder termin qapısı yumşaldıldı (subyekt/ad uyğunluğu), wiki kanonik məqalə qaydası + xüsusi ad/hal şəkilçisi variantları, say çıxarışında mövzu tokeni bonusu, r15 nMin buraxılışı; v114: wikipedia provayderində `bridges` ReferenceError düzəldildi, çıxarış büdcəsi hər səhifə üçün ayrı (qismi nəticə), iki mərhələli axtarış + ayrı AbortController, yaxın dublikatların silinməsi, wiki variant sırası; v113: ölçü/say ayrımı, hashtag-spam, alt-domen, conflict, türkcə kaç // v113: ölçü suallarına "sayı" əlavə olunmur (#2), hashtag/spam rəqəm mənbəyi deyil (#3), alt-domen = bir host (#4), fərqli qruplar → agreement conflict (#5), türkcə "kaç ... var" (#7); v112: çarpaz təsdiq, rus say sözü, site:/domen təmizliyi, 8s deadline // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 255; // V1.2g: AZ list sitemap + portal -7 + oyun penalty (FV255) // V1.2f: AZ list hint time gate 2200->5000 (FV254) — populyar oyunlar iqtisadiyyat.az // V1.2e: populyar oyunlar — portal -4.5 + AZ list hint + final sort gate fix (FV253) // V1.2d: Ən populyar oyunlar — siyahı portalı cəza + iqtisadiyyat.az bonus (FV252) // // V1.2c: EN=AZ güçləndir — entrepreneur taxes hint + EN gov boost (FV251) // // V1.2b: qalan 2 fix — gov+8.5 + final sort (FV250) // // V1.2: generic qayda — gov 4.5 + sahibkar 3.5 + translate -3 + final sort (FV249) // // V1.1: AZ→EN/TR/RU ortaqlaşdırma — gov/kimdir/sinonim multilingual (FV248) // // V1 — sahibkar hint düz + translate final sort (FV247) // // v122c: Son toxunuş — sahibkar taxes hint + translate genius cəza + V1 (FV246) // // v122b: gov.az boost gücləndir (FV245) // // v122: free harden — gov.az + kimdir + translate boost + sinonim (FV244) // // v121b: Hybrid — generic + alias ChatGPT→openai (FV243) // // v121: Avtomatik domen aşkarlama — manual siyahı yox, hər token host match (FV242) // // v120b: entity semantic məhdudlaşdır (github fix FV241) // // v120: Google-kimi entity boost ChatGPT/GitHub rəsmi domen (FV240) // // v119: math 2^10+sqrt fix + dolma dəqiqə sayı fix (FV239) // // v118e: hallucination+2plus2 nMin1 (FV238) // // v118d: n8 +60 pool 389 (FV237) // // v118c: pop year numeric fix (FV236) // // v118b: railway date topic penalty (FV235) // v117: obyekt məqaləsi keep:true + lead, DNT skor 0 fix, anchor translate, necə→sayı fix, pool+14 // v116: provayder termin qapısı yumşaldıldı (subyekt/ad uyğunluğu), wiki kanonik məqalə qaydası + xüsusi ad/hal şəkilçisi variantları, say çıxarışında mövzu tokeni bonusu, r15 nMin buraxılışı; v114: wikipedia provayderində `bridges` ReferenceError düzəldildi, çıxarış büdcəsi hər səhifə üçün ayrı (qismi nəticə), iki mərhələli axtarış + ayrı AbortController, yaxın dublikatların silinməsi, wiki variant sırası; v113: ölçü/say ayrımı, hashtag-spam, alt-domen, conflict, türkcə kaç // v113: ölçü suallarına "sayı" əlavə olunmur (#2), hashtag/spam rəqəm mənbəyi deyil (#3), alt-domen = bir host (#4), fərqli qruplar → agreement conflict (#5), türkcə "kaç ... var" (#7); v112: çarpaz təsdiq, rus say sözü, site:/domen təmizliyi, 8s deadline // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -627,24 +628,44 @@ async function handleSearch(body, req) {
       }
     } catch {}
   }
-  // V1.2d: AZ list sorğusunda (ən populyar oyunlar) AZ trusted list mənbəsi — generic, dillə bağlı
+  // V1.2g: AZ list sorğusunda (ən populyar oyunlar) iqtisadiyyat.az sitemap + site hint — generic, dillə bağlı
   if (!hasStructured && !structuredFailed && qType.type === "list" && qLang === "az" && !newsQ
-      && Date.now() - started < 5000 && !scored.some(r => newsTrustBoost(r.url) > 0) && HARD_DEADLINE_MS - (Date.now() - started) > 1500) {
+      && Date.now() - started < 6000 && HARD_DEADLINE_MS - (Date.now() - started) > 1200) {
     try {
-      const coreL = tokenize(normQuery).filter(t => t.length >= 3).slice(0, 5).join(" ");
-      if (coreL) {
-        const domsL = AZ_NEWS_TRUSTED.slice(0, 3);
-        const qSiteL = `${coreL} (site:${domsL[0]} OR site:${domsL[1]} OR site:${domsL[2]})`;
-        const rsL = await withTimeout(searchAll(qSiteL, Math.min(6, maxResults), { freshness, excludeDomains }), 1100, "list az news hint timeout");
-        const tL = [...new Set([...qTerms, ...tokenize(rsL.anchorQuery || "")])];
-        const extraL = (rsL.results || []).filter(r => !isSpamDomain(r.url))
-          .map(r => ({ ...r, score: scoreResult(r, tL, qLang, normQuery) + newsTrustBoost(r.url) + 1.5 }))
-          .filter(r => r.score >= 1.4);
-        if (extraL.length) {
-          degradedStages.push("list_az_news_hint");
-          const seenL = new Set(scored.map(r => r.url));
-          for (const r of extraL.sort((a, b) => b.score - a.score)) if (!seenL.has(r.url)) scored.push(r);
-          scored.sort((a, b) => b.score - a.score);
+      degradedStages.push("list_hint_check");
+      // 1) sitemap-news birbaşa (iqtisadiyyat.az) — ən sürətli və etibarlı
+      try {
+        const sitemapRes = await withTimeout(searchSitemapNews(normQuery, Math.min(4, maxResults)), 1400, "list sitemap timeout");
+        if (sitemapRes && sitemapRes.length) {
+          const tS = [...new Set([...qTerms, ...tokenize(normQuery)])];
+          const extraS = sitemapRes.filter(r => !isSpamDomain(r.url))
+            .map(r => ({ ...r, score: scoreResult(r, tS, qLang, normQuery) + newsTrustBoost(r.url) + 2.0 }))
+            .filter(r => r.score >= 1.2);
+          if (extraS.length) {
+            degradedStages.push("list_sitemap_hit");
+            const seenS = new Set(scored.map(r => r.url));
+            for (const r of extraS) if (!seenS.has(r.url)) scored.push(r);
+            scored.sort((a, b) => b.score - a.score);
+          }
+        }
+      } catch {}
+      // 2) site: hint fallback (brave/yahoo) — sitemap boşdursa
+      if (!scored.some(r => newsTrustBoost(r.url) > 1)) {
+        const coreL = tokenize(normQuery).filter(t => t.length >= 3).slice(0, 5).join(" ");
+        if (coreL) {
+          const domsL = AZ_NEWS_TRUSTED.slice(0, 3);
+          const qSiteL = `${coreL} (site:${domsL[0]} OR site:${domsL[1]} OR site:${domsL[2]})`;
+          const rsL = await withTimeout(searchAll(qSiteL, Math.min(6, maxResults), { freshness, excludeDomains }), 1100, "list az news hint timeout");
+          const tL = [...new Set([...qTerms, ...tokenize(rsL.anchorQuery || "")])];
+          const extraL = (rsL.results || []).filter(r => !isSpamDomain(r.url))
+            .map(r => ({ ...r, score: scoreResult(r, tL, qLang, normQuery) + newsTrustBoost(r.url) + 1.5 }))
+            .filter(r => r.score >= 1.4);
+          if (extraL.length) {
+            degradedStages.push("list_az_news_hint");
+            const seenL = new Set(scored.map(r => r.url));
+            for (const r of extraL.sort((a, b) => b.score - a.score)) if (!seenL.has(r.url)) scored.push(r);
+            scored.sort((a, b) => b.score - a.score);
+          }
         }
       }
     } catch {}
