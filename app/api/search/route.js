@@ -17,7 +17,7 @@ import { matchMath, mathToText } from "../../../lib/math.js";
 import { matchSports, fetchLastMatch, lastMatchToText } from "../../../lib/sports.js";
 import { matchNutrition, fetchNutrient, nutrientToText } from "../../../lib/nutrition.js";
 import { leadAnswerSentence } from "../../../lib/rank.js";
-import { classifyType, officialBoost, wantsFresh, sameDayCue, newsTrustBoost, AZ_NEWS_TRUSTED, howtoTrustBoost, isHowtoQuery, expandSynonyms } from "../../../lib/router.js";
+import { classifyType, officialBoost, wantsFresh, sameDayCue, newsTrustBoost, AZ_NEWS_TRUSTED, AZ_FILM_TRUSTED, howtoTrustBoost, isHowtoQuery, isWatchQuery, expandSynonyms } from "../../../lib/router.js";
 import { scoreResult, diversifyByDomain, dedupeNearDuplicates, extractQuotedPhrases, containsPhrase, isSpamDomain, hostMatches, computeConfidence, isNewsQuery, looksLikeGibberish } from "../../../lib/score.js";
 import { extractDomainTokens, domainBoostForResult, semanticTerms } from "../../../lib/domainDetector.js";
 import { applyFinalLimits, filterByFreshness } from "../../../lib/finalize.js";
@@ -35,7 +35,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 261; // V1.2l: preserve hard iqtisadiyyat title (FV261) // V1.2k-b: site hint try wrapper fix (FV260) // V1.2k: hard iqtisadiyyat direct push without fetch (FV259) // V1.2j: force site hint + hard iqtisadiyyat fallback (FV258) // V1.2i: oyun coreL sitemap+site hint fix (FV257) // V1.2h: AZ list oyun sitemap fallback (FV256) // V1.2g: AZ list sitemap + portal -7 + oyun penalty (FV255) // V1.2f: AZ list hint time gate 2200->5000 (FV254) — populyar oyunlar iqtisadiyyat.az // V1.2e: populyar oyunlar — portal -4.5 + AZ list hint + final sort gate fix (FV253) // V1.2d: Ən populyar oyunlar — siyahı portalı cəza + iqtisadiyyat.az bonus (FV252) // // V1.2c: EN=AZ güçləndir — entrepreneur taxes hint + EN gov boost (FV251) // // V1.2b: qalan 2 fix — gov+8.5 + final sort (FV250) // // V1.2: generic qayda — gov 4.5 + sahibkar 3.5 + translate -3 + final sort (FV249) // // V1.1: AZ→EN/TR/RU ortaqlaşdırma — gov/kimdir/sinonim multilingual (FV248) // // V1 — sahibkar hint düz + translate final sort (FV247) // // v122c: Son toxunuş — sahibkar taxes hint + translate genius cəza + V1 (FV246) // // v122b: gov.az boost gücləndir (FV245) // // v122: free harden — gov.az + kimdir + translate boost + sinonim (FV244) // // v121b: Hybrid — generic + alias ChatGPT→openai (FV243) // // v121: Avtomatik domen aşkarlama — manual siyahı yox, hər token host match (FV242) // // v120b: entity semantic məhdudlaşdır (github fix FV241) // // v120: Google-kimi entity boost ChatGPT/GitHub rəsmi domen (FV240) // // v119: math 2^10+sqrt fix + dolma dəqiqə sayı fix (FV239) // // v118e: hallucination+2plus2 nMin1 (FV238) // // v118d: n8 +60 pool 389 (FV237) // // v118c: pop year numeric fix (FV236) // // v118b: railway date topic penalty (FV235) // v117: obyekt məqaləsi keep:true + lead, DNT skor 0 fix, anchor translate, necə→sayı fix, pool+14 // v116: provayder termin qapısı yumşaldıldı (subyekt/ad uyğunluğu), wiki kanonik məqalə qaydası + xüsusi ad/hal şəkilçisi variantları, say çıxarışında mövzu tokeni bonusu, r15 nMin buraxılışı; v114: wikipedia provayderində `bridges` ReferenceError düzəldildi, çıxarış büdcəsi hər səhifə üçün ayrı (qismi nəticə), iki mərhələli axtarış + ayrı AbortController, yaxın dublikatların silinməsi, wiki variant sırası; v113: ölçü/say ayrımı, hashtag-spam, alt-domen, conflict, türkcə kaç // v113: ölçü suallarına "sayı" əlavə olunmur (#2), hashtag/spam rəqəm mənbəyi deyil (#3), alt-domen = bir host (#4), fərqli qruplar → agreement conflict (#5), türkcə "kaç ... var" (#7); v112: çarpaz təsdiq, rus say sözü, site:/domen təmizliyi, 8s deadline // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
+const FILTER_VERSION = 262; // V1.3: film izlə watch intent + AZ_FILM_TRUSTED (FV262) // V1.2l: preserve hard iqtisadiyyat title (FV261) // V1.2k-b: site hint try wrapper fix (FV260) // V1.2k: hard iqtisadiyyat direct push without fetch (FV259) // V1.2j: force site hint + hard iqtisadiyyat fallback (FV258) // V1.2i: oyun coreL sitemap+site hint fix (FV257) // V1.2h: AZ list oyun sitemap fallback (FV256) // V1.2g: AZ list sitemap + portal -7 + oyun penalty (FV255) // V1.2f: AZ list hint time gate 2200->5000 (FV254) — populyar oyunlar iqtisadiyyat.az // V1.2e: populyar oyunlar — portal -4.5 + AZ list hint + final sort gate fix (FV253) // V1.2d: Ən populyar oyunlar — siyahı portalı cəza + iqtisadiyyat.az bonus (FV252) // // V1.2c: EN=AZ güçləndir — entrepreneur taxes hint + EN gov boost (FV251) // // V1.2b: qalan 2 fix — gov+8.5 + final sort (FV250) // // V1.2: generic qayda — gov 4.5 + sahibkar 3.5 + translate -3 + final sort (FV249) // // V1.1: AZ→EN/TR/RU ortaqlaşdırma — gov/kimdir/sinonim multilingual (FV248) // // V1 — sahibkar hint düz + translate final sort (FV247) // // v122c: Son toxunuş — sahibkar taxes hint + translate genius cəza + V1 (FV246) // // v122b: gov.az boost gücləndir (FV245) // // v122: free harden — gov.az + kimdir + translate boost + sinonim (FV244) // // v121b: Hybrid — generic + alias ChatGPT→openai (FV243) // // v121: Avtomatik domen aşkarlama — manual siyahı yox, hər token host match (FV242) // // v120b: entity semantic məhdudlaşdır (github fix FV241) // // v120: Google-kimi entity boost ChatGPT/GitHub rəsmi domen (FV240) // // v119: math 2^10+sqrt fix + dolma dəqiqə sayı fix (FV239) // // v118e: hallucination+2plus2 nMin1 (FV238) // // v118d: n8 +60 pool 389 (FV237) // // v118c: pop year numeric fix (FV236) // // v118b: railway date topic penalty (FV235) // v117: obyekt məqaləsi keep:true + lead, DNT skor 0 fix, anchor translate, necə→sayı fix, pool+14 // v116: provayder termin qapısı yumşaldıldı (subyekt/ad uyğunluğu), wiki kanonik məqalə qaydası + xüsusi ad/hal şəkilçisi variantları, say çıxarışında mövzu tokeni bonusu, r15 nMin buraxılışı; v114: wikipedia provayderində `bridges` ReferenceError düzəldildi, çıxarış büdcəsi hər səhifə üçün ayrı (qismi nəticə), iki mərhələli axtarış + ayrı AbortController, yaxın dublikatların silinməsi, wiki variant sırası; v113: ölçü/say ayrımı, hashtag-spam, alt-domen, conflict, türkcə kaç // v113: ölçü suallarına "sayı" əlavə olunmur (#2), hashtag/spam rəqəm mənbəyi deyil (#3), alt-domen = bir host (#4), fərqli qruplar → agreement conflict (#5), türkcə "kaç ... var" (#7); v112: çarpaz təsdiq, rus say sözü, site:/domen təmizliyi, 8s deadline // v19: necə/neçə bug fix, valyuta hesabı, WMO hava mətni, ölkə saat qurşağı, xəbər niyyəti, bal və confidence sərtləşdirməsi, 8s deadline; v18.1: r.jina.ai ehtiyat qatı (öz çıxarışımız boş qalanda); v18: diakritiksiz AZ yazılışın bərpası (gozel sheher → gözəl şəhər), ASCII AZ dil aşkarlaması; v17: dilə uyğun axtarış + yerli sayt ön-izləməsi (Google Tərcümə və s.), qısa söz tərcüməsi, flim/tərçemə/hansılardı/üçündü düzəlişi, kazino spam filtri, EN sorğuda en.wiki prioriteti
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -364,8 +364,8 @@ async function handleSearch(body, req) {
     ...tokenize(normQuery),
     ...(isTechQuery ? [] : tokenize(exp.expanded || "")),
     ...(isTechQuery ? tokenize(techEnQuery(query)) : []),
-    ...(isAzCount ? [] : tokenize(exp.english || "")),
-    ...(isAzCount ? [] : tokenize(effAnchor || ""))
+    ...(isAzCount || isWatchQuery(normQuery) ? [] : tokenize(exp.english || "")),
+    ...(isAzCount || isWatchQuery(normQuery) ? [] : tokenize(effAnchor || ""))
   ])].filter(t => !looksLikeGibberish(t) || acronymQ.has(String(t).toLowerCase()));
 
   const rawCount = results.length;
@@ -709,6 +709,29 @@ async function handleSearch(body, req) {
         scored.push({ title: hardTitle, url: hardUrl, snippet: hardSnippet, source: "iqtisadiyyat.az", providers: ["hard-list","iqtisadiyyat.az"], voteCount: 1, score: Math.max(hardScore, 8.5), published_at: "2026-08-30T09:23:00.000Z", updated_at: null, date_info: buildDateInfo("2026-08-30T09:23:00.000Z",null,qLang) });
         degradedStages.push("list_hard_iqtisadiyyat");
         scored.sort((a,b)=> b.score-a.score);
+      }
+    } catch {}
+  }
+
+  // V1.3: film izlə / watch a movie — AZ film streaming saytları (Google kimi)
+  if (!hasStructured && !structuredFailed && isWatchQuery(normQuery) && qLang === "az" && Date.now() - started < 6000 && HARD_DEADLINE_MS - (Date.now() - started) > 1500) {
+    try {
+      degradedStages.push("watch_hint_check");
+      const watchCore = "film izle";
+      // sitemap film hint not needed — site: search via Brave/Bing
+      const qFilmSite = `${watchCore} (site:${AZ_FILM_TRUSTED.slice(0,3).join(" OR site:")} OR site:${AZ_FILM_TRUSTED[3]})`;
+      const rsFilm = await withTimeout(searchAll(qFilmSite, Math.min(6, maxResults+2), { freshness, excludeDomains }), 1300, "watch film hint timeout");
+      if (rsFilm && rsFilm.results && rsFilm.results.length) {
+        const tFilm = [...new Set([...qTerms, ...tokenize(watchCore), "film", "izle", "movie", "watch"])];
+        const extraFilm = rsFilm.results.filter(r => !isSpamDomain(r.url))
+          .map(r => ({ ...r, score: scoreResult(r, tFilm, qLang, normQuery) + 1.8 }))
+          .filter(r => r.score >= 1.2);
+        if (extraFilm.length) {
+          degradedStages.push("watch_film_hint");
+          const seenF = new Set(scored.map(r => r.url));
+          for (const r of extraFilm) if (!seenF.has(r.url)) scored.push(r);
+          scored.sort((a,b)=> b.score-a.score);
+        }
       }
     } catch {}
   }
