@@ -18,10 +18,11 @@ import { matchMath, mathToText } from "../../../lib/math.js";
 import { matchSports, fetchLastMatch, lastMatchToText } from "../../../lib/sports.js";
 import { matchNutrition, fetchNutrient, nutrientToText } from "../../../lib/nutrition.js";
 import { leadAnswerSentence } from "../../../lib/rank.js";
-import { classifyType, officialBoost, wantsFresh, sameDayCue, newsTrustBoost, AZ_NEWS_TRUSTED, AZ_FILM_TRUSTED, howtoTrustBoost, isHowtoQuery, isWatchQuery, expandSynonyms } from "../../../lib/router.js";
+import { isAzOfficialHost, classifyType, officialBoost, wantsFresh, sameDayCue, newsTrustBoost, AZ_NEWS_TRUSTED, AZ_FILM_TRUSTED, howtoTrustBoost, isHowtoQuery, isWatchQuery, expandSynonyms } from "../../../lib/router.js";
 import { scoreResult, diversifyByDomain, dedupeNearDuplicates, extractQuotedPhrases, containsPhrase, isSpamDomain, hostMatches, computeConfidence, isNewsQuery, looksLikeGibberish } from "../../../lib/score.js";
 import { extractDomainTokens, domainBoostForResult, semanticTerms } from "../../../lib/domainDetector.js";
 import { applyFinalLimits, filterByFreshness } from "../../../lib/finalize.js";
+import { extractLeadDate } from "../../../lib/textdate.js";
 import { CORS_HEADERS, makeJsonResponse, makeJsonlResponse, makeSimpleResponse, rateLimitHeaders as makeRateLimitHeaders } from "../../../lib/pipeline/respond.js";
 import { strongAnchor } from "../../../lib/score.js";
 import { bridgeCount, bridgeDate, bridgeMeasure, wikiTitleFromUrl, fetchWikiExtract } from "../../../lib/wikilink.js";
@@ -989,9 +990,12 @@ async function handleSearch(body, req) {
 
     // v16: Mənbə saytın özündən çıxan həqiqi nəşr/yenilənmə tarixini əlavə et (Rule 8: Wikipedia published_at həmişə null qalır!)
     const isWiki = base.source === "wikipedia" || /\.wikipedia\.org$/i.test((() => { try { return new URL(base.url).hostname; } catch { return ""; } })());
-    const pubAt = isWiki
+    const pubAtDirect = isWiki
       ? null
       : (normalizeValidIsoDate(base.published_at) || (ex && ex.published_at) || base.published_at || null);
+    // v118: tarix heç yerdən gəlməyibsə, snippet-in ƏVVƏLİNDƏKİ açıq tarixi ("21 Kasım 2026 ...") istifadə et
+    const textDate = (!pubAtDirect && !isWiki) ? extractLeadDate(base.snippet || "") : null;
+    const pubAt = pubAtDirect || textDate;
     const updAt = normalizeValidIsoDate(base.updated_at) || (ex && ex.updated_at) || base.updated_at || null;
 
     let itemScore = base.score ?? null;
@@ -1073,6 +1077,7 @@ async function handleSearch(body, req) {
       published_at: pubAt,
       updated_at: updAt,
       date_info: buildDateInfo(pubAt, updAt, reqLang),
+      ...(textDate ? { date_source: "snippet" } : {}),
       ...(base.image ? { image: base.image } : {}),
       ...(base.raw_content ? { raw_content: base.raw_content } : {}),
       ...(base.keep ? { keep: true } : {}),
@@ -1215,6 +1220,7 @@ async function handleSearch(body, req) {
     if (fr.results.length >= 1 && fr.results.length < finalResults.length) {
       degradedStages.push("freshness_filter");
       if (fr.undatedKept) degradedStages.push("undated_kept");
+      if (fr.droppedUndated) degradedStages.push("undated_dropped"); // v118: neçə tarixsiz nəticənin atıldığı görünsün
       finalResults.length = 0;
       fr.results.forEach((r, idx) => { r.id = idx + 1; finalResults.push(r); });
     }
@@ -1880,7 +1886,8 @@ async function handleSearch(body, req) {
     r.is_official = Boolean(
       host && (
         /\.(?:gov|edu)(?:\.[a-z]{2})?$/i.test(host) ||
-        (qBrand.length >= 3 && sld === qBrand && !/\.github\.io$/i.test(host))
+        (qBrand.length >= 3 && sld === qBrand && !/\.github\.io$/i.test(host)) ||
+        isAzOfficialHost(host)
       )
     );
     r.score_normalized = Number((Number(r.score || 0) / maxScore).toFixed(3));
