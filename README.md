@@ -47,6 +47,7 @@ VortexSearch is built with and powered by:
 - [Next.js](https://nextjs.org/) & [React](https://react.dev/)
 - [Linkedom](https://github.com/WebReflection/linkedom) (fast server-side HTML parsing)
 - Public data APIs: [Wikipedia](https://www.mediawiki.org/wiki/API:Main_page), [GitHub](https://docs.github.com/en/rest), [Open-Meteo](https://open-meteo.com/), and [CBAR](https://www.cbar.az/)
+- Built & refined with [Arena.ai](https://arena.ai) Agent Mode
 
 ## License
 
