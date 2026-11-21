@@ -36,7 +36,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 271; // FV271: GitHub profile/QA filter & best-movies anchor
+const FILTER_VERSION = 272; // FV272: guaranteed snippet, <untrusted> content, is_official/navigational, score_normalized, dup_group, date_note
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -1859,9 +1859,37 @@ async function handleSearch(body, req) {
   } catch { conflicts = []; }
   // Final safety boundary: recovery/translation must not reintroduce damaged or off-intent hits.
   pinExtracted();
+  const maxScore = finalResults.reduce((m, r) => Math.max(m, Number(r.score || 0)), 0) || 1;
+  const seenContentPrefix = new Map();
+  let dupCounter = 0;
+  const qBrand = query.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
   for (const r of finalResults) {
     if (r.content) r.content = cleanContent(r.content);
-    if (r.snippet) r.snippet = dedupeSnippet(cleanContent(r.snippet), r.content || "");
+    const cleanedSnip = r.snippet ? cleanContent(r.snippet) : "";
+    r.snippet = cleanedSnip || (r.content ? cutWord(r.content, 240) : "");
+    let host = "";
+    try { host = new URL(r.url).hostname.replace(/^www\./, ""); } catch {}
+    r.domain = host;
+    const sld = host.split(".")[0] || "";
+    r.is_official = Boolean(
+      host && (
+        /\.(?:gov|edu)(?:\.[a-z]{2})?$/i.test(host) ||
+        (qBrand.length >= 3 && sld === qBrand && !/\.github\.io$/i.test(host))
+      )
+    );
+    r.score_normalized = Number((Number(r.score || 0) / maxScore).toFixed(3));
+    if (Array.isArray(r.sources)) r.provider_agreement = r.sources.length;
+    const prefix = (r.content || r.snippet || "").toLowerCase().replace(/\s+/g, " ").slice(0, 80);
+    if (prefix) {
+      if (!seenContentPrefix.has(prefix)) seenContentPrefix.set(prefix, ++dupCounter);
+      r.dup_group = seenContentPrefix.get(prefix);
+    }
+    if (r.content && !r.content.startsWith("<untrusted>")) {
+      r.content = `<untrusted>${r.content}</untrusted>`;
+    }
+  }
+  if (intent === "general" && qBrand.length >= 3 && !/\s/.test(query.trim()) && finalResults.some(r => r.is_official)) {
+    intent = "navigational";
   }
   const safeResults = finalResults.filter(r => !hasEncodingDamage(r) && matchesRecommendationIntent(normQueryForIntent, r));
   if (safeResults.length !== finalResults.length) degradedStages.push("final_quality_gate");
@@ -1887,6 +1915,7 @@ async function handleSearch(body, req) {
       provider_errors: safeErrors,
       took_ms: Date.now() - started,
       cached: false,
+      date_note: "basis: 'updated' is not publish date",
       total_chars: totalChars,
       query_lang: reqLang,
       anchor_query: searchResult.anchorQuery || null,
