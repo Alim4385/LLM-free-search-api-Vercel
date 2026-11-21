@@ -41,6 +41,14 @@ VortexSearch is an open-source, **LLM-free** web search API and **Model Context 
   - [Türkçe Rehber (`docs/SETUP.tr.md`)](docs/SETUP.tr.md)
   - [Руководство на русском (`docs/SETUP.ru.md`)](docs/SETUP.ru.md)
 
+## Credits & Open-Source Projects
+
+VortexSearch is built with and powered by:
+- [Next.js](https://nextjs.org/) & [React](https://react.dev/)
+- [Linkedom](https://github.com/WebReflection/linkedom) (fast server-side HTML parsing)
+- Public data APIs: [Wikipedia](https://www.mediawiki.org/wiki/API:Main_page), [GitHub](https://docs.github.com/en/rest), [Open-Meteo](https://open-meteo.com/), and [CBAR](https://www.cbar.az/)
+
 ## License
 
-MIT
+[VortexSearch Attribution License (v1.0)](LICENSE) — Free to use, modify, distribute, and commercialize.  
+**Mandatory Condition:** Any project, fork, or commercial product using this code must prominently display attribution to **VortexSearch** by **Alim4385** (`https://github.com/Alim4385/LLM-free-search-api-Vercel`) in its main `README.md`. Removing this attribution immediately terminates all usage rights.
