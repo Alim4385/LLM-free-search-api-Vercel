@@ -36,7 +36,7 @@ import { checkRateLimit, getClientIp, sanitizeQuery, RATE_LIMIT } from "../../..
 export const runtime = "nodejs";
 export const maxDuration = 30;
 const HARD_DEADLINE_MS = 8000; // v19/v26: maksimum cavab müddəti — modul səviyyəsindədir ki, TDZ xətası olmasın
-const FILTER_VERSION = 273; // FV273: navigational is_official top-sort, mwmbl gate/penalty, github stars bonus
+const FILTER_VERSION = 274; // FV274: coverage_order requires score >= 3.5
 // - anchorQuery tokenləri qTerms + selectRelevantParagraphs-a daxil edildi (tərcümə tapıntıları atılmır)
 // - sual hansı dildədirsə cavablar (title/snippet/content) həmin dilə çevrilir (translateResultsToQueryLang)
 // - AZ xəbər şablonları ("?.az xəbər verir ki,"), təkrarlanan sətirlər və reklam linkləri təmizlənir
@@ -1702,7 +1702,7 @@ async function handleSearch(body, req) {
       covCache.set(r, n);
       return n;
     };
-    const covs = finalResults.map(r => covOf(r));
+    const covs = finalResults.map(r => (r.score || 0) >= 3.5 ? covOf(r) : 0);
     const maxCov = Math.max(...covs);
     const best = Math.max(...finalResults.map(r => r.score || 0));
     // yalnız həqiqətən fərq varsa və aparıcı nəticə zəif əhatəlidirsə sırala
