@@ -1870,6 +1870,12 @@ async function handleSearch(body, req) {
     let host = "";
     try { host = new URL(r.url).hostname.replace(/^www\./, ""); } catch {}
     r.domain = host;
+    r.source_type = /\.(?:gov)(?:\.[a-z]{2})?$/i.test(host) ? "government"
+      : /\.(?:edu)(?:\.[a-z]{2})?$|arxiv\.org$/i.test(host) ? "academic"
+      : /(?:github\.com|gitlab\.com|stackoverflow\.com|npmjs\.com|pypi\.org)$/i.test(host) ? "code"
+      : /wikipedia\.org$/i.test(host) ? "encyclopedia"
+      : /(?:bbc\.|reuters\.|apnews\.|azertag\.|apa\.az|oxu\.az|report\.az)/i.test(host) ? "news"
+      : "web";
     const sld = host.split(".")[0] || "";
     r.is_official = Boolean(
       host && (
@@ -1919,6 +1925,10 @@ async function handleSearch(body, req) {
       took_ms: Date.now() - started,
       cached: false,
       date_note: "basis: 'updated' is not publish date",
+      usage_note: "Snippets locate sources; read content for full details.",
+      freshness_note: (freshness && datedResults * 2 < finalResults.length)
+        ? "Note: undated results are kept; appearing in results does not guarantee recency."
+        : undefined,
       total_chars: totalChars,
       query_lang: reqLang,
       anchor_query: searchResult.anchorQuery || null,
