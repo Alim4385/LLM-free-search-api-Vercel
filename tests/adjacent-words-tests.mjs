@@ -26,12 +26,15 @@ const cases = [
  ['had had that that', 'had had that that'],
  ['https://example.com/word word', 'https://example.com/word word'],
  ['məlumat\nməlumat', 'məlumat\nməlumat'],
+ ["It's a good good day, isn't it?", "It's a good day, isn't it?"],
+ ['məlumat məlumat\nhttps://example.com/word word', 'məlumat\nhttps://example.com/word word'],
 ];
 for (const [input, expected] of cases) {
  assert.equal(clean(input), expected, input);
  assert.equal(clean(clean(input)), expected, `idempotence: ${input}`);
 }
 assert.equal(cleanNavigationAndRepeats('```\nməlumat məlumat\n```'), '```\nməlumat məlumat\n```');
+assert.equal(cleanNavigationAndRepeats('Ana səhifə | Haqqımızda | '), '');
 assert.equal(cleanContent('Saytda saytda yeni məlumat məlumat verilir.'), 'Saytda yeni məlumat verilir.');
 assert.equal(cleanContent('Tez-tez yeni məlumat verilir.'), 'Tez-tez yeni məlumat verilir.');
-console.log(`FV269: ${cases.length * 2 + 3} adjacent word assertions passed`);
+console.log(`FV270: ${cases.length * 2 + 4} adjacent word assertions passed`);
