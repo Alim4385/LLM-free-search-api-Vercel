@@ -33,6 +33,19 @@ VortexSearch is an open-source, **LLM-free** web search API and **Model Context 
 
 ---
 
+## Live Public Demo (REST & MCP)
+
+Want to try VortexSearch before deploying your own instance? Use the public rate-limited demo gateway:
+
+- **Demo Web / Status:** `https://vortex-search-demo-gateway-plum.vercel.app`
+- **Demo REST API:** `https://vortex-search-demo-gateway-plum.vercel.app/api/search?q=Kaggle&n=3`
+- **Demo MCP Endpoint:** `https://vortex-search-demo-gateway-plum.vercel.app/api/mcp`
+
+> **Demo Limits:** `1 request / 10 seconds` and `550 requests / day` per IP (MCP handshake/list calls are not rate-limited).  
+> For **unlimited requests** with your own dedicated IP and quota, click **Deploy with Vercel** above to host your own instance in 30 seconds.
+
+---
+
 ## Documentation
 
 - **Setup, Self-Hosting, REST API & MCP:**
