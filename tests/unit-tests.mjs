@@ -21,8 +21,9 @@ import { makeJsonResponse, makeJsonlResponse, jsonlLines } from "../lib/pipeline
 import fs from "node:fs";
 import { scoreResult, isSpamDomain, hostMatches, diversifyByDomain, dedupeNearDuplicates, isJunkDomain, computeConfidence, looksLikeGibberish, strongAnchor } from "../lib/score.js";
 import { cleanContent, pickAnswer, cutWord, dedupeSnippet, normalizeColloquialAz, detectQueryLanguage, acceptLanguageHeader, wikiExtractUrl, restoreAsciiAz } from "../lib/clean.js";
-import { matchAzertagItems, azertagLangFor } from "../lib/azertag.js";
-import { newsTrustBoost, AZ_NEWS_TRUSTED, howtoTrustBoost, isHowtoQuery, HOWTO_TRUSTED } from "../lib/router.js";
+import { matchAzertagItems, azertagLangFor, azertagRelevant } from "../lib/azertag.js";
+import { extractLeadDate } from "../lib/textdate.js";
+import { newsTrustBoost, AZ_NEWS_TRUSTED, howtoTrustBoost, isHowtoQuery, HOWTO_TRUSTED, isAzOfficialHost } from "../lib/router.js";
 import { matchFact } from "../lib/facts.js";
 import { matchNutrition } from "../lib/nutrition.js";
 import { matchMath } from "../lib/math.js";
@@ -1627,6 +1628,48 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     const src = fs.readFileSync(new URL("../lib/search.js", import.meta.url), "utf8");
     assert("v114: wikipedia taskında bridges təyin olunub", !/searchWikipedia\(q, n, sig, \{ bridges \}\)/.test(src) && /bridges:\s*bridgesReady/.test(src));
     assert("v114: mərhələ üçün ayrı AbortController var", /let deadlineAbort = new AbortController\(\)/.test(src) && /const ctrl = deadlineAbort;/.test(src));
+  }
+
+  // === v118: təzəlik filtri, mətn tarixi, rəsmi domen, azertag mövzu filtri, menyu zibili ===
+  {
+    const now = Date.parse("2026-11-22T00:00:00Z");
+    // 1) Rus ssenarisi: 2 zəif tarixli (USA Today/CNN) nəticə güclü tarixsizləri sıxışdırmamalıdır
+    const ru = filterByFreshness([
+      { url: "usatoday", score: 5, published_at: "2026-11-21" },
+      { url: "cnn", score: 2.8, published_at: "2026-11-21" },
+      { url: "ria", score: 12 },
+      { url: "lenta", score: 9 }
+    ], "week", now);
+    assert("v118: güclü tarixsiz nəticə zəif tarixlilər tərəfindən sıxışdırılmır", ru.results.length === 4 && ru.droppedUndated === 0, JSON.stringify(ru));
+    // 2) Zəif tarixsiz hələ də atılır (köhnə davranış qorunur)
+    const weak = filterByFreshness([
+      { url: "a", score: 3, published_at: "2026-11-21" },
+      { url: "b", score: 3, published_at: "2026-11-20" },
+      { url: "c", score: 2 }
+    ], "day", now);
+    assert("v118: zəif tarixsiz nəticə atılır və sayılır", weak.results.length === 2 && weak.droppedUndated === 1, JSON.stringify(weak));
+    // 3) Mətn tarixi
+    assert("v118: 'Kasım' tarixi snippet başlanğıcından oxunur", extractLeadDate("21 Kasım 2026 Cumartesi - 19:40 Göçük altından", now) === "2026-11-21T12:00:00.000Z");
+    assert("v118: 'noyabr' tarixi oxunur", extractLeadDate("21 noyabr 2026, 19:40 Xəbər", now) === "2026-11-21T12:00:00.000Z");
+    assert("v118: rus 'ноября' tarixi oxunur", extractLeadDate("21 ноября 2026 Новости", now) === "2026-11-21T12:00:00.000Z");
+    assert("v118: 2026/11/20 formatı oxunur", extractLeadDate("2026/11/20 - A comprehensive guide", now) === "2026-11-20T12:00:00.000Z");
+    assert("v118: mətn ortasındakı tarix qəbul edilmir", extractLeadDate("Bu hadisə 21 Kasım 2026 tarixində olub", now) === null);
+    assert("v118: köhnə tarix qəbul edilmir", extractLeadDate("12 mart 2019 xəbər", now) === null);
+    assert("v118: gələcək tarix qəbul edilmir", extractLeadDate("30 Kasım 2026 xəbər", now) === null);
+    assert("v118: mövcud olmayan tarix (31 fevral) qəbul edilmir", extractLeadDate("31 fevral 2026 xəbər", now) === null);
+    // 4) Rəsmi domen
+    assert("v118: cbar.az və www.cbar.az rəsmidir", isAzOfficialHost("cbar.az") && isAzOfficialHost("www.cbar.az"));
+    assert("v118: alt-domen rəsmidir", isAzOfficialHost("x.cbar.az"));
+    assert("v118: oxşar adlı saxta domen rəsmi deyil", !isAzOfficialHost("evil-cbar.az") && !isAzOfficialHost("cbar.az.evil.com"));
+    // 5) Azertag mövzu filtri
+    assert("v118: rus Moskva sorğusunda azertag çağırılmır", azertagRelevant("ru", "новости Москва сегодня") === false);
+    assert("v118: az sorğusunda azertag həmişə var", azertagRelevant("az", "son xəbərlər") === true);
+    assert("v118: rus sorğusunda Азербайджан varsa azertag var", azertagRelevant("ru", "новости Азербайджан") === true);
+    assert("v118: ingilis sorğusunda Baku varsa azertag var", azertagRelevant("en", "latest news Baku") === true);
+    // 6) Menyu zibili
+    const nav = "×GÜNDEMDÜNYABİGPARA ANASAYFABORSADÖVİZALTINVİOP&VARANTANALİZKOBİKRİPTO PARALARSPOR ARENA ANASAYFAFUTBOLBASKETBOLVOLEYBOLCANLI SKORKELEBEK ANASAYFAEKRANDAHAYATSEYAHATSTİLFAKİR HAUSGERATE İLE LEZZETLİ TARİFLERSAĞLIKYAŞAM ANASAYFACUMARTESİPAZARLEZZETLİ HAYATÇOCUKLA HAYATSEYAHATYAZARLARRESMİ İLANLARASTROLOJİTÜMÜ EKONOMİTV REHBERİMAHMUREHÜRRİYET AİLEVİDEO ASTROLOJİHESAPLAMA ARAÇLARIBULMACAEN İYİ ON LEZİZZTEKNOLOJİFOTO GALERİRAMAZANKİTAP SANATHAVA DURUMUAVRUPAEĞİTİMHÜRRİYET İKSON DAKİKAYEREL HABERLERBİZE ULAŞINVERİ POLİTİKASIENERJİ POLİTİKASIKÜNYEGünlük Egazete© Copyright 2026 Hürriyet Gazetecilik ve Matbaacılık A.Ş";
+    assert("v118: birləşmiş böyük hərfli menyu silinir", cleanContent(nav) === "");
+    assert("v118: adi böyük hərfli başlıq toxunulmur", cleanContent("ƏHALİYƏ MÜJDƏ: Pensiyalarda ikinci artım bu şəxslərə şamil olunacaq").length > 40);
   }
 }
 
