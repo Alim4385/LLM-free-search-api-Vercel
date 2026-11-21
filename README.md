@@ -44,6 +44,32 @@ Want to try VortexSearch before deploying your own instance? Use the public rate
 > **Demo Limits:** `1 request / 10 seconds` (shows exact remaining seconds) and `550 requests / day` per IP, with smart concurrency queueing (up to 5 concurrent users, max 10s wait). MCP `initialize` and `tools/list` handshakes are not rate-limited.  
 > For **unlimited requests** with your own dedicated IP and quota, click **Deploy with Vercel** above to host your own instance in 30 seconds.
 
+### Quick Start (Copy & Paste)
+
+**MCP Config (Cursor / Claude Desktop / Windsurf / LM Studio):**
+
+```json
+{
+  "mcpServers": {
+    "vortex-search": {
+      "url": "https://vortex-search-demo-gateway-plum.vercel.app/api/mcp"
+    }
+  }
+}
+```
+
+**REST API (cURL & Python):**
+
+```bash
+curl "https://vortex-search-demo-gateway-plum.vercel.app/api/search?q=Kaggle&n=3"
+```
+
+```python
+import requests
+res = requests.get("https://vortex-search-demo-gateway-plum.vercel.app/api/search", params={"q": "Kaggle", "n": 3})
+print(res.json()["results"][0]["snippet"])
+```
+
 ---
 
 ## Documentation
