@@ -13,7 +13,7 @@ import { readFileSync } from "node:fs";
 import { protectTokens, restoreTokens, protectWithTerms, prepareTranslateInput } from "../lib/translate.js";
 import { detectConflicts, parseNum } from "../lib/conflict.js";
 import { isChallengePage } from "../lib/extract.js";
-import { applyFinalLimits, filterByFreshness } from "../lib/finalize.js";
+import { applyFinalLimits, filterByFreshness, dropJunkDomains } from "../lib/finalize.js";
 import { extractHydrationText } from "../lib/extract.js";
 import { wikiTitleFromUrl, cleanWikiQuery } from "../lib/wikilink.js";
 import { parseMaxResults, parseMaxChars, parseFormat, parseFreshness, parseExcludeDomains, parseLang } from "../lib/pipeline/params.js";
@@ -1739,6 +1739,34 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v121: az-da 'Türkiyə' qorunur", prepareTranslateInput("Türkiyə", "az") === "Türkiyə");
     assert("v121: az-da köhnə davranış qalır ('Çinin paytaxtı' → 'Çin paytaxtı')", prepareTranslateInput("Çinin paytaxtı", "az") === "Çin paytaxtı", prepareTranslateInput("Çinin paytaxtı", "az"));
     assert("v121: boş giriş", prepareTranslateInput("", "az") === "" && prepareTranslateInput(null, "tr") === "");
+  }
+
+  // === v122: şəkilçi kəsmə yalnız böyük hərflə; junk domen doldurucu kimi qalmır; çevirmə izi ===
+  {
+    assert("v122: böyük hərfli 'Bakıda' → 'Bakı'", prepareTranslateInput("Bakıda hava", "az") === "Bakı hava");
+    assert("v122: böyük hərfli 'Gəncədə' → 'Gəncə'", prepareTranslateInput("Gəncədə hava", "az") === "Gəncə hava");
+    assert("v122: böyük hərfli 'Misirin' → 'Misir'", prepareTranslateInput("Misirin paytaxtı", "az") === "Misir paytaxtı");
+    assert("v122: kiçik hərfli 'bakıda' toxunulmur", prepareTranslateInput("bakıda hava", "az") === "bakıda hava");
+    assert("v122: kiçik hərfli 'dünya' toxunulmur", prepareTranslateInput("dünya xəritəsi", "az") === "dünya xəritəsi");
+    assert("v122: kiçik hərfli 'qadın' toxunulmur", prepareTranslateInput("qadın hüquqları", "az") === "qadın hüquqları");
+    assert("v122: 3 hərfli şəkilçi (çinin) köhnə kimi işləyir", prepareTranslateInput("çinin paytaxtı", "az") === "çin paytaxtı");
+
+    const R = (url, score = 5) => ({ url, score, title: "t", snippet: "s" });
+    const news = [R("https://www.cumhuriyet.com.tr/a"), R("https://www.milliyet.com.tr/b"), R("https://www.sondakika.com/c"), R("https://www.instagram.com/istanbul_son_dakika/", 0)];
+    const d1 = dropJunkDomains(news, "İstanbul son dakika haberleri");
+    assert("v122: ≥3 real nəticə varsa Instagram çıxarılır", d1.dropped === 1 && d1.results.length === 3 && !d1.results.some(r => /instagram/.test(r.url)), JSON.stringify(d1));
+    const few = [R("https://www.cumhuriyet.com.tr/a"), R("https://www.instagram.com/x/", 0)];
+    const d2 = dropJunkDomains(few, "İstanbul son dakika haberleri");
+    assert("v122: real nəticə <3 olarsa junk saxlanılır (boş cavab verilmir)", d2.dropped === 0 && d2.results.length === 2, JSON.stringify(d2));
+    const brand = [R("https://a.com/1"), R("https://b.com/2"), R("https://c.com/3"), R("https://www.instagram.com/accounts/login/", 0)];
+    const d3 = dropJunkDomains(brand, "instagram giriş");
+    assert("v122: sorğuda saytın adı varsa ('instagram giriş') toxunulmur", d3.dropped === 0 && d3.results.length === 4, JSON.stringify(d3));
+    const d4 = dropJunkDomains([R("https://www.facebook.com/p", 0), R("https://x.com/p", 0), R("https://a.com/1"), R("https://b.com/2"), R("https://c.com/3")], "hava necədir");
+    assert("v122: facebook və x.com da çıxarılır", d4.dropped === 2 && d4.results.length === 3, JSON.stringify(d4));
+    assert("v122: boş siyahı", dropJunkDomains([], "x").results.length === 0 && dropJunkDomains(null, "x").dropped === 0);
+
+    const tr = await expandQueryAsync("İstanbul bugün son dakika haberleri", 300);
+    assert("v122: expandQueryAsync tərcümə girişini (translateInput) qaytarır", tr.translateInput === "İstanbul bugün son dakika haberleri", JSON.stringify(tr.translateInput));
   }
 }
 
