@@ -22,7 +22,8 @@ import fs from "node:fs";
 import { scoreResult, isSpamDomain, hostMatches, diversifyByDomain, dedupeNearDuplicates, isJunkDomain, computeConfidence, looksLikeGibberish, strongAnchor } from "../lib/score.js";
 import { cleanContent, pickAnswer, cutWord, dedupeSnippet, normalizeColloquialAz, detectQueryLanguage, acceptLanguageHeader, wikiExtractUrl, restoreAsciiAz } from "../lib/clean.js";
 import { matchAzertagItems, azertagLangFor, azertagRelevant } from "../lib/azertag.js";
-import { extractLeadDate } from "../lib/textdate.js";
+import { extractLeadDate, reconcilePubDate } from "../lib/textdate.js";
+import { stripAnchorTimeWords } from "../lib/timewords.js";
 import { newsTrustBoost, AZ_NEWS_TRUSTED, howtoTrustBoost, isHowtoQuery, HOWTO_TRUSTED, isAzOfficialHost } from "../lib/router.js";
 import { matchFact } from "../lib/facts.js";
 import { matchNutrition } from "../lib/nutrition.js";
@@ -1670,6 +1671,33 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     const nav = "×GÜNDEMDÜNYABİGPARA ANASAYFABORSADÖVİZALTINVİOP&VARANTANALİZKOBİKRİPTO PARALARSPOR ARENA ANASAYFAFUTBOLBASKETBOLVOLEYBOLCANLI SKORKELEBEK ANASAYFAEKRANDAHAYATSEYAHATSTİLFAKİR HAUSGERATE İLE LEZZETLİ TARİFLERSAĞLIKYAŞAM ANASAYFACUMARTESİPAZARLEZZETLİ HAYATÇOCUKLA HAYATSEYAHATYAZARLARRESMİ İLANLARASTROLOJİTÜMÜ EKONOMİTV REHBERİMAHMUREHÜRRİYET AİLEVİDEO ASTROLOJİHESAPLAMA ARAÇLARIBULMACAEN İYİ ON LEZİZZTEKNOLOJİFOTO GALERİRAMAZANKİTAP SANATHAVA DURUMUAVRUPAEĞİTİMHÜRRİYET İKSON DAKİKAYEREL HABERLERBİZE ULAŞINVERİ POLİTİKASIENERJİ POLİTİKASIKÜNYEGünlük Egazete© Copyright 2026 Hürriyet Gazetecilik ve Matbaacılık A.Ş";
     assert("v118: birləşmiş böyük hərfli menyu silinir", cleanContent(nav) === "");
     assert("v118: adi böyük hərfli başlıq toxunulmur", cleanContent("ƏHALİYƏ MÜJDƏ: Pensiyalarda ikinci artım bu şəxslərə şamil olunacaq").length > 40);
+  }
+
+  // === v119: anchor zaman sözləri, tarix toqquşması, tr/ru tarix etiketləri ===
+  {
+    assert("v119: 'сегодня' → anchor-dan 'today' çıxarılır", stripAnchorTimeWords("news Moscow today", "новости Москва сегодня") === "news Moscow");
+    assert("v119: türkcə 'bugün' → anchor-dan 'today' çıxarılır", stripAnchorTimeWords("Istanbul news today", "İstanbul bugün haberleri") === "Istanbul news");
+    assert("v119: orijinalda ingiliscə 'today' varsa toxunulmur", stripAnchorTimeWords("USA Today headlines", "USA Today headlines") === "USA Today headlines");
+    assert("v119: çıxarandan sonra 1 söz qalırsa toxunulmur", stripAnchorTimeWords("weather today", "погода сегодня") === "weather today");
+    assert("v119: zaman işarəsi yoxdursa toxunulmur", stripAnchorTimeWords("Moscow news", "новости Москвы") === "Moscow news");
+    assert("v119: anchor null qalır", stripAnchorTimeWords(null, "новости сегодня") === null);
+
+    const now = Date.parse("2026-11-22T00:00:00Z");
+    const conflict = reconcilePubDate({ direct: "2026-11-21T07:14:00.000Z", snippet: "25 июля 2026 г. · Местные новости в Москве сегодня", now });
+    assert("v119: provayder tarixi ilə snippet tarixi toqquşanda snippet seçilir", conflict.pubAt === "2026-07-25T12:00:00.000Z" && conflict.source === "snippet" && conflict.overridden === "2026-11-21T07:14:00.000Z", JSON.stringify(conflict));
+    const close = reconcilePubDate({ direct: "2026-11-21T13:00:00.000Z", snippet: "21 Kasım 2026 Cumartesi - 19:40 xəbər", now });
+    assert("v119: fərq ≤2 gündürsə provayder tarixi qalır", close.pubAt === "2026-11-21T13:00:00.000Z" && close.source === null, JSON.stringify(close));
+    const paged = reconcilePubDate({ direct: "2026-11-21T07:14:00.000Z", pageDate: "2026-11-21T07:14:00.000Z", snippet: "25 июля 2026 г. · xəbər", now });
+    assert("v119: səhifənin öz tarixi varsa snippet üstün gəlmir", paged.pubAt === "2026-11-21T07:14:00.000Z" && paged.source === null, JSON.stringify(paged));
+    assert("v119: snippet tarixi yoxdursa provayder tarixi qalır", reconcilePubDate({ direct: "2026-11-21T07:14:00.000Z", snippet: "Heç bir tarix yoxdur", now }).pubAt === "2026-11-21T07:14:00.000Z");
+    assert("v119: provayder tarixi yoxdursa snippet tarixi istifadə olunur", reconcilePubDate({ direct: null, snippet: "21 noyabr 2026, 19:40 Xəbər", now }).source === "snippet");
+
+    assert("v119: tr 'tarix yoxdur' etiketi türkcədir", buildDateInfo(null, null, "tr").label === "tarih belirtilmemiş");
+    assert("v119: ru 'tarix yoxdur' etiketi rusca", buildDateInfo(null, null, "ru").label === "дата не указана");
+    assert("v119: tr təzə etiketi 'güncel' ilə başlayır", buildDateInfo(new Date().toISOString(), null, "tr").label.startsWith("güncel (bugün"));
+    assert("v119: ru təzə etiketi 'свежий' ilə başlayır", buildDateInfo(new Date().toISOString(), null, "ru").label.startsWith("свежий (сегодня"));
+    assert("v119: naməlum dil az-a düşür", buildDateInfo(null, null, "xx").label === "tarix göstərilməyib");
+    assert("v119: en etiketi dəyişməyib", buildDateInfo(null, null, "en").label === "date unknown");
   }
 }
 
