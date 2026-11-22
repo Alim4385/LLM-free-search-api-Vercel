@@ -23,6 +23,7 @@ import { scoreResult, diversifyByDomain, dedupeNearDuplicates, extractQuotedPhra
 import { extractDomainTokens, domainBoostForResult, semanticTerms } from "../../../lib/domainDetector.js";
 import { applyFinalLimits, filterByFreshness, dropJunkDomains } from "../../../lib/finalize.js";
 import { reconcilePubDate } from "../../../lib/textdate.js";
+import { decodeEntities } from "../../../lib/entities.js";
 import { CORS_HEADERS, makeJsonResponse, makeJsonlResponse, makeSimpleResponse, rateLimitHeaders as makeRateLimitHeaders } from "../../../lib/pipeline/respond.js";
 import { strongAnchor } from "../../../lib/score.js";
 import { bridgeCount, bridgeDate, bridgeMeasure, wikiTitleFromUrl, fetchWikiExtract } from "../../../lib/wikilink.js";
@@ -1822,6 +1823,13 @@ async function handleSearch(body, req) {
   // v97: max_results MÜQAVİLƏSİ — structured cavablar siyahının başındadır, ona görə
   // kəsmə onlardan SONRA edilir: cəm nəticə sayı heç vaxt max_results-ı keçmir.
   // V1.2d: yekun sıralama həmişə skora görə — diversify/rescue pozurdu
+  // v123: provayderlərdən qalan HTML entity-lər ("&middot;", "&hellip;") təmizlənir; "&lt;/&gt;" toxunulmaz qalır
+  for (const r of finalResults) {
+    if (!r) continue;
+    if (typeof r.title === "string") r.title = decodeEntities(r.title, { angle: false });
+    if (typeof r.snippet === "string") r.snippet = decodeEntities(r.snippet, { angle: false });
+    if (typeof r.content === "string") r.content = decodeEntities(r.content, { angle: false });
+  }
   // v122: yetərli real nəticə varsa junk domenləri (sosial şəbəkə və s.) "doldurucu" kimi saxlama
   {
     const jd = dropJunkDomains(finalResults, query, 3);
