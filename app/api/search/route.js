@@ -28,7 +28,7 @@ import { strongAnchor } from "../../../lib/score.js";
 import { bridgeCount, bridgeDate, bridgeMeasure, wikiTitleFromUrl, fetchWikiExtract } from "../../../lib/wikilink.js";
 import { translateAzToEn } from "../../../lib/translate.js";
 import { parseMaxResults, parseMaxChars, parseFormat, parseFreshness, parseExcludeDomains, parseBool, parseTranslateResults, parseLang } from "../../../lib/pipeline/params.js";
-import { cleanContent, cutWord, dedupeSnippet, detectQueryLanguage, isBoilerplateOnly, stripBoilerplateHead } from "../../../lib/clean.js";
+import { cleanContent, cutWord, dedupeSnippet, detectQueryLanguage, isBoilerplateOnly, stripBoilerplateHead, isBlockPageText } from "../../../lib/clean.js";
 import { expandQuery, isMetaQuery, stripMetaInstructions, rewriteSearchIntentAz, stripSiteAndDomains } from "../../../lib/expand.js";
 import { translateResultsToQueryLang } from "../../../lib/translate.js";
 import { cacheGet, cacheSet, cacheKey } from "../../../lib/cache.js";
@@ -1096,6 +1096,8 @@ async function handleSearch(body, req) {
     const challengePage = /client\s*challenge|a\s+required\s+part\s+of\s+this\s+site|required\s+part\s+of\s+this\s+site|enable\s+javascript|just\s+a\s+moment|checking\s+your\s+browser|tələb\s+olunan\s+bir\s+hissəsi\s+yüklənmədi/i
       .test(`${finalClipped || ""} ${finalSnippet || ""}`.slice(0, 1200));
     if (challengePage) { degradedStages.push("challenge_page_skipped"); continue; }
+    // v120: bloklama/icazəsiz giriş səhifəsi ("Доступ ограничен", "Access denied") nəticə kimi qaytarılmasın
+    if (isBlockPageText(finalClipped, out.title) || isBlockPageText(finalSnippet, "")) { degradedStages.push("block_page_skipped"); continue; }
     // v86: səhifə mətni kənar mövzudursa, AMMA axtarış snippet-i sorğuya uyğundursa —
     // nəticə ATILMIR: məzmun snippet-lə əvəzlənir (əvvəl n=0/1-ə düşürdü).
     if (contentOffTopic) {

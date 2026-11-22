@@ -19,12 +19,12 @@ import { wikiTitleFromUrl, cleanWikiQuery } from "../lib/wikilink.js";
 import { parseMaxResults, parseMaxChars, parseFormat, parseFreshness, parseExcludeDomains, parseLang } from "../lib/pipeline/params.js";
 import { makeJsonResponse, makeJsonlResponse, jsonlLines } from "../lib/pipeline/respond.js";
 import fs from "node:fs";
-import { scoreResult, isSpamDomain, hostMatches, diversifyByDomain, dedupeNearDuplicates, isJunkDomain, computeConfidence, looksLikeGibberish, strongAnchor } from "../lib/score.js";
-import { cleanContent, pickAnswer, cutWord, dedupeSnippet, normalizeColloquialAz, detectQueryLanguage, acceptLanguageHeader, wikiExtractUrl, restoreAsciiAz } from "../lib/clean.js";
+import { isTechQuery, scoreResult, isSpamDomain, hostMatches, diversifyByDomain, dedupeNearDuplicates, isJunkDomain, computeConfidence, looksLikeGibberish, strongAnchor } from "../lib/score.js";
+import { cleanContent, pickAnswer, cutWord, dedupeSnippet, normalizeColloquialAz, detectQueryLanguage, acceptLanguageHeader, wikiExtractUrl, restoreAsciiAz, isBlockPageText } from "../lib/clean.js";
 import { matchAzertagItems, azertagLangFor, azertagRelevant } from "../lib/azertag.js";
 import { extractLeadDate, reconcilePubDate } from "../lib/textdate.js";
 import { stripAnchorTimeWords } from "../lib/timewords.js";
-import { newsTrustBoost, AZ_NEWS_TRUSTED, howtoTrustBoost, isHowtoQuery, HOWTO_TRUSTED, isAzOfficialHost } from "../lib/router.js";
+import { newsTrustBoost, AZ_NEWS_TRUSTED, howtoTrustBoost, isHowtoQuery, HOWTO_TRUSTED, isAzOfficialHost, sameDayCue } from "../lib/router.js";
 import { matchFact } from "../lib/facts.js";
 import { matchNutrition } from "../lib/nutrition.js";
 import { matchMath } from "../lib/math.js";
@@ -1698,6 +1698,34 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v119: ru təzə etiketi 'свежий' ilə başlayır", buildDateInfo(new Date().toISOString(), null, "ru").label.startsWith("свежий (сегодня"));
     assert("v119: naməlum dil az-a düşür", buildDateInfo(null, null, "xx").label === "tarix göstərilməyib");
     assert("v119: en etiketi dəyişməyib", buildDateInfo(null, null, "en").label === "date unknown");
+  }
+
+  // === v120: "bugün" ≠ "bug"; sameDayCue-da bugün; bloklama səhifəsi detektoru ===
+  {
+    assert("v120: 'bugün' texniki sorğu sayılmır (bug ≠ bugün)", isTechQuery("İstanbul bugün son dakika haberleri") === false);
+    assert("v120: 'bugün hava necə' texniki deyil", isTechQuery("bugün hava necə") === false);
+    assert("v120: 'hatalı' texniki sayılmır", isTechQuery("hatalı sonuç") === false);
+    assert("v120: 'fix this bug' hələ də texnikidir", isTechQuery("fix this bug") === true);
+    assert("v120: 'kod hatası' hələ də texnikidir", isTechQuery("kod hatası") === true);
+    assert("v120: 'python hata' hələ də texnikidir", isTechQuery("python hata") === true);
+    assert("v120: 'programlama' hələ də texnikidir", isTechQuery("programlama dili") === true);
+    assert("v120: 'Docker error' hələ də texnikidir", isTechQuery("Docker error") === true);
+
+    assert("v120: sameDayCue 'bugün' tanıyır", sameDayCue("İstanbul bugün haberleri") === true);
+    assert("v120: sameDayCue 'bu gün' hələ də işləyir", sameDayCue("bu gün xəbərlər") === true);
+    assert("v120: sameDayCue 'bugünün' (başqa söz) tanımır", sameDayCue("bugünün tarihi") === false);
+
+    const ru = "Спасибо за ваш интерес. Несанкционированный доступ запрещен. Чтобы получить доступ к этому контенту, у вас должно быть предварительное разрешение и действующий контракт.";
+    assert("v120: rus bloklama mətni tutulur", isBlockPageText(ru, "") === true);
+    assert("v120: başlıq tam 'Доступ ограничен' tutulur", isBlockPageText("", "Доступ ограничен") === true);
+    assert("v120: 'Access Denied' başlığı tutulur", isBlockPageText("", "Access Denied") === true);
+    assert("v120: Cloudflare başlığı tutulur", isBlockPageText("", "Attention Required! | Cloudflare") === true);
+    assert("v120: 'erişim engellendi' xəbər başlığı tutulmur", isBlockPageText("Twitter'a erişim engellendi. Bakanlık açıklama yaptı.", "Twitter'a erişim engellendi") === false);
+    assert("v120: 'Access denied for journalists' xəbər başlığı tutulmur", isBlockPageText("", "Access denied for journalists at summit") === false);
+    assert("v120: 'unauthorized access' xəbər cümləsi tutulmur", isBlockPageText("Hackers gained unauthorized access to the company systems last week.", "Breach") === false);
+    assert("v120: uzun məqalə (>900) tutulmur", isBlockPageText("x".repeat(950) + " access denied", "") === false);
+    assert("v120: normal xəbər mətni tutulmur", isBlockPageText("İstanbul Beşiktaş'ta yürüyüş düzenleniyor. Kitle saat 14.30'da toplandı.", "Son dakika İstanbul") === false);
+    assert("v120: boş giriş tutulmur", isBlockPageText("", "") === false);
   }
 }
 
