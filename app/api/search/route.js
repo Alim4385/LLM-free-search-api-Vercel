@@ -22,7 +22,7 @@ import { isAzOfficialHost, classifyType, officialBoost, wantsFresh, sameDayCue, 
 import { scoreResult, diversifyByDomain, dedupeNearDuplicates, extractQuotedPhrases, containsPhrase, isSpamDomain, hostMatches, computeConfidence, isNewsQuery, looksLikeGibberish } from "../../../lib/score.js";
 import { extractDomainTokens, domainBoostForResult, semanticTerms } from "../../../lib/domainDetector.js";
 import { applyFinalLimits, filterByFreshness } from "../../../lib/finalize.js";
-import { extractLeadDate } from "../../../lib/textdate.js";
+import { reconcilePubDate } from "../../../lib/textdate.js";
 import { CORS_HEADERS, makeJsonResponse, makeJsonlResponse, makeSimpleResponse, rateLimitHeaders as makeRateLimitHeaders } from "../../../lib/pipeline/respond.js";
 import { strongAnchor } from "../../../lib/score.js";
 import { bridgeCount, bridgeDate, bridgeMeasure, wikiTitleFromUrl, fetchWikiExtract } from "../../../lib/wikilink.js";
@@ -994,8 +994,12 @@ async function handleSearch(body, req) {
       ? null
       : (normalizeValidIsoDate(base.published_at) || (ex && ex.published_at) || base.published_at || null);
     // v118: tarix heç yerdən gəlməyibsə, snippet-in ƏVVƏLİNDƏKİ açıq tarixi ("21 Kasım 2026 ...") istifadə et
-    const textDate = (!pubAtDirect && !isWiki) ? extractLeadDate(base.snippet || "") : null;
-    const pubAt = pubAtDirect || textDate;
+    // v119: provayder tarixi ilə snippet tarixi ziddiyyətdədirsə (>2 gün), snippet tarixi seçilir
+    const rec = isWiki
+      ? { pubAt: null, source: null, overridden: null }
+      : reconcilePubDate({ direct: pubAtDirect, pageDate: ex && ex.published_at, snippet: base.snippet || "" });
+    const pubAt = rec.pubAt;
+    const textDate = rec.source === "snippet" ? rec.pubAt : null;
     const updAt = normalizeValidIsoDate(base.updated_at) || (ex && ex.updated_at) || base.updated_at || null;
 
     let itemScore = base.score ?? null;
@@ -1078,6 +1082,7 @@ async function handleSearch(body, req) {
       updated_at: updAt,
       date_info: buildDateInfo(pubAt, updAt, reqLang),
       ...(textDate ? { date_source: "snippet" } : {}),
+      ...(rec.overridden ? { provider_published_at: rec.overridden } : {}),
       ...(base.image ? { image: base.image } : {}),
       ...(base.raw_content ? { raw_content: base.raw_content } : {}),
       ...(base.keep ? { keep: true } : {}),
@@ -1917,6 +1922,13 @@ async function handleSearch(body, req) {
   const datedResults = finalResults.filter(r => r.published_at || r.updated_at).length;
   const debug = !!(body && (body.debug === true || body.debug === "1" || body.debug === 1));
 
+  // v119: weather/currency kimi birbaşa (native) intentlərdə axtarış pipeline-ı işləmir → providers_used boş qalırdı
+  const nativeProviders = [
+    weather ? (weather.source || "open-meteo") : null,
+    currencyData ? (currencyData.source || "cbar.az") : null
+  ].filter(Boolean);
+  const providersReported = providersUsed.length ? providersUsed : nativeProviders;
+
   const responseObj = {
     query,
     intent,
@@ -1927,7 +1939,7 @@ async function handleSearch(body, req) {
     time: timeData || undefined,
     currency: currencyData || undefined,
     meta: {
-      providers_used: providersUsed,
+      providers_used: providersReported,
       provider_errors: safeErrors,
       took_ms: Date.now() - started,
       cached: false,
