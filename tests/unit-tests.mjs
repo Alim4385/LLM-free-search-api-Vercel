@@ -10,7 +10,7 @@ import { matchTime, isTimeQuery } from "../lib/time.js";
 import { matchCurrency, isCurrencyQuery } from "../lib/currency.js";
 import { sanitizeQuery, checkRateLimit } from "../lib/ratelimit.js";
 import { readFileSync } from "node:fs";
-import { protectTokens, restoreTokens, protectWithTerms, prepareTranslateInput } from "../lib/translate.js";
+import { protectTokens, restoreTokens, protectWithTerms, prepareTranslateInput, brandTermsFromResult } from "../lib/translate.js";
 import { detectConflicts, parseNum } from "../lib/conflict.js";
 import { isChallengePage } from "../lib/extract.js";
 import { applyFinalLimits, filterByFreshness, dropJunkDomains } from "../lib/finalize.js";
@@ -19,9 +19,11 @@ import { wikiTitleFromUrl, cleanWikiQuery } from "../lib/wikilink.js";
 import { parseMaxResults, parseMaxChars, parseFormat, parseFreshness, parseExcludeDomains, parseLang } from "../lib/pipeline/params.js";
 import { makeJsonResponse, makeJsonlResponse, jsonlLines } from "../lib/pipeline/respond.js";
 import fs from "node:fs";
-import { isTechQuery, scoreResult, isSpamDomain, hostMatches, diversifyByDomain, dedupeNearDuplicates, isJunkDomain, computeConfidence, looksLikeGibberish, strongAnchor } from "../lib/score.js";
+import { isTechQuery, isNewsQuery, scoreResult, isSpamDomain, hostMatches, diversifyByDomain, dedupeNearDuplicates, isJunkDomain, computeConfidence, looksLikeGibberish, strongAnchor } from "../lib/score.js";
 import { cleanContent, pickAnswer, cutWord, dedupeSnippet, normalizeColloquialAz, detectQueryLanguage, acceptLanguageHeader, wikiExtractUrl, restoreAsciiAz, isBlockPageText } from "../lib/clean.js";
 import { matchAzertagItems, azertagLangFor, azertagRelevant } from "../lib/azertag.js";
+import { decodeEntities as decodeEnt } from "../lib/entities.js";
+import { parseRssItems, matchRuNewsItems, ruQueryTerms, ruFeedUrls, DEFAULT_RU_FEEDS, searchRuNews } from "../lib/ru-news.js";
 import { extractLeadDate, reconcilePubDate } from "../lib/textdate.js";
 import { stripAnchorTimeWords } from "../lib/timewords.js";
 import { newsTrustBoost, AZ_NEWS_TRUSTED, howtoTrustBoost, isHowtoQuery, HOWTO_TRUSTED, isAzOfficialHost, sameDayCue } from "../lib/router.js";
@@ -1767,6 +1769,68 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
 
     const tr = await expandQueryAsync("İstanbul bugün son dakika haberleri", 300);
     assert("v122: expandQueryAsync tərcümə girişini (translateInput) qaytarır", tr.translateInput === "İstanbul bugün son dakika haberleri", JSON.stringify(tr.translateInput));
+  }
+
+  // === v123: entity decode, brend adı qoruması, türkcə/rusca xəbər tanıma, ru-news RSS ===
+  {
+    // entities
+    assert("v123: &middot; və &hellip; decode olunur", decodeEnt("Nakkaştepe &middot; Valiliği&hellip;") === "Nakkaştepe · Valiliği…");
+    assert("v123: &ndash; &laquo; &raquo;", decodeEnt("&laquo;Тест&raquo; &ndash; x") === "«Тест» – x");
+    assert("v123: ikiqat decode YOXDUR (&amp;lt; → &lt;)", decodeEnt("&amp;lt;") === "&lt;");
+    assert("v123: angle:false — &lt; və &#60; toxunulmaz", decodeEnt("&lt;b&gt; &#60;i&#62;", { angle: false }) === "&lt;b&gt; &#60;i&#62;");
+    assert("v123: səhv rəqəmli kod RangeError atmır", decodeEnt("&#1114112; &#0; &#55296;") === "&#1114112; &#0; &#55296;");
+    assert("v123: naməlum adlı entity toxunulmaz", decodeEnt("&unknown;") === "&unknown;");
+    assert("v123: 'AT&amp;T' → 'AT&T'", decodeEnt("AT&amp;T") === "AT&T");
+
+    // brend adları
+    assert("v123: 'AP News' brend kimi qorunur", JSON.stringify(brandTermsFromResult("Moscow | AP News", "https://apnews.com/hub/moscow")) === JSON.stringify(["AP News"]));
+    assert("v123: 'Silicon UK' (domen silicon.co.uk) qorunur", JSON.stringify(brandTermsFromResult("Moscow News | Silicon UK", "https://www.silicon.co.uk/tag/moscow")) === JSON.stringify(["Silicon UK"]));
+    assert("v123: 'Ground News' qorunur", JSON.stringify(brandTermsFromResult("Istanbul Headlines | Ground News", "http://ground.news/interest/istanbul-turkey")) === JSON.stringify(["Ground News"]));
+    assert("v123: 'Daily Mail Online' (dailymail.co.uk) qorunur", brandTermsFromResult("Moscow: latest news | Daily Mail Online", "http://www.dailymail.co.uk/news/moscow/index.html")[0] === "Daily Mail Online");
+    assert("v123: brend olmayan başlıq qorunmur", brandTermsFromResult("How to bake bread - Cooking Tips", "https://example.com/x").length === 0);
+    assert("v123: 'Covid-19' bölünmür", brandTermsFromResult("Covid-19 update", "https://example.com/y").length === 0);
+    assert("v123: səhv URL → boş", brandTermsFromResult("x | Y News", "not a url").length === 0);
+
+    // xəbər tanıma
+    for (const q of ["İstanbul bugün son dakika haberleri", "Ankara haberleri", "deprem son dakika", "İstanbul haber", "manşetler bugün", "новости Москва сегодня", "новостей Москвы"]) {
+      assert(`v123: isNewsQuery(${q}) = true`, isNewsQuery(q) === true);
+    }
+    for (const q of ["haberleşme altyapısı", "haberdar olmak", "python flask nədir"]) {
+      assert(`v123: isNewsQuery(${q}) = false`, isNewsQuery(q) === false);
+    }
+
+    // ru-news RSS
+    const xml = `<?xml version="1.0"?><rss version="2.0"><channel>
+      <item><title><![CDATA[В Москве открыли новую станцию метро]]></title><link>https://lenta.ru/news/2026/11/22/metro/</link>
+        <description><![CDATA[<p>Новая станция &laquo;Тест&raquo; &middot; открыта в Москве</p>]]></description><pubDate>Sun, 22 Nov 2026 10:00:00 +0300</pubDate></item>
+      <item><title>Погода в Санкт-Петербурге</title><link>https://lenta.ru/news/2026/11/22/spb/</link><description>Дожди</description><pubDate>Sun, 22 Nov 2026 11:00:00 +0300</pubDate></item>
+      <item><title>Мэр Москвы дал интервью</title><link>https://ria.ru/20261122/mer.html</link><description>Разговор о планах</description><pubDate>Sun, 22 Nov 2026 12:00:00 +0300</pubDate></item>
+      <item><title>Без ссылки</title><link>not-a-url</link></item>
+    </channel></rss>`;
+    const items = parseRssItems(xml, "https://lenta.ru/rss");
+    assert("v123: RSS 3 etibarlı xəbər parse olunur (səhv link atılır)", items.length === 3, String(items.length));
+    assert("v123: RSS tarix ISO-ya çevrilir", items[0].published_at === "2026-11-22T07:00:00.000Z", String(items[0].published_at));
+    assert("v123: RSS snippet-də tag və entity təmizlənir", items[0].snippet === "Новая станция «Тест» · открыта в Москве", items[0].snippet);
+    assert("v123: RSS source/feed sahələri", items[0].source === "ru-news" && items[0].feed === "lenta.ru");
+    const rdf = `<?xml version="1.0"?><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://purl.org/rss/1.0/" xmlns:dc="http://purl.org/dc/elements/1.1/"><item><title>Москва: тест RDF</title><link>https://dw.com/x</link><description>d</description><dc:date>2026-11-22T10:00:00Z</dc:date></item></rdf:RDF>`;
+    assert("v123: RDF formatı da oxunur", parseRssItems(rdf, "https://rss.dw.com/rdf").length === 1);
+    assert("v123: bozuq XML boş qaytarır", parseRssItems("<<<not xml", "x").length === 0);
+
+    assert("v123: ruQueryTerms stop-sözləri atır", JSON.stringify(ruQueryTerms("новости Москва сегодня")) === JSON.stringify(["москва"]));
+    const m1 = matchRuNewsItems(items, "новости Москва сегодня");
+    assert("v123: 'Москва' sorğusu 'Москве/Москвы' xəbərlərini tapır, Peterburq çıxmır", m1.length === 2 && m1.every((x) => /Москв/.test(x.title)), JSON.stringify(m1.map((x) => x.title)));
+    assert("v123: başlıqda uyğunluq olan əvvəldə gəlir", m1[0].title.includes("Москв"));
+    const m2 = matchRuNewsItems(items, "последние новости");
+    assert("v123: mövzusuz sorğuda ən təzə xəbər birincidir", m2[0].url === "https://ria.ru/20261122/mer.html", m2[0] && m2[0].url);
+    assert("v123: 'ё' normallaşdırılır (Берёза ~ береза)", matchRuNewsItems([{ title: "Береза в парке", url: "https://a.ru/1", snippet: "", feed: "a.ru", published_at: null }], "Берёза").length === 1);
+    const many = Array.from({ length: 6 }, (_, i) => ({ title: `Москва событие ${i}`, url: `https://same.ru/${i}`, snippet: "", feed: "same.ru", published_at: `2026-11-22T0${i}:00:00.000Z` }));
+    assert("v123: bir saytdan ən çox 3 nəticə", matchRuNewsItems(many, "Москва", 10).length === 3);
+    assert("v123: mövzu uyğun gəlmirsə boş", matchRuNewsItems(items, "Токио").length === 0);
+
+    assert("v123: RU_NEWS_FEEDS yoxdursa defolt siyahı", ruFeedUrls({}) === DEFAULT_RU_FEEDS && DEFAULT_RU_FEEDS.length >= 4);
+    assert("v123: RU_NEWS_FEEDS env-i keçərli URL-ləri götürür", JSON.stringify(ruFeedUrls({ RU_NEWS_FEEDS: "https://a.ru/rss, bad, http://b.ru/x" })) === JSON.stringify(["https://a.ru/rss", "http://b.ru/x"]));
+    let threw = null; try { await searchRuNews("Москва", 5, undefined, []); } catch (e) { threw = e.message; }
+    assert("v123: feed yoxdursa 'ru-news no results' xətası", threw === "ru-news no results", String(threw));
   }
 }
 
