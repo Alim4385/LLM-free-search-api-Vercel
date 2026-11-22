@@ -10,7 +10,7 @@ import { matchTime, isTimeQuery } from "../lib/time.js";
 import { matchCurrency, isCurrencyQuery } from "../lib/currency.js";
 import { sanitizeQuery, checkRateLimit } from "../lib/ratelimit.js";
 import { readFileSync } from "node:fs";
-import { protectTokens, restoreTokens, protectWithTerms } from "../lib/translate.js";
+import { protectTokens, restoreTokens, protectWithTerms, prepareTranslateInput } from "../lib/translate.js";
 import { detectConflicts, parseNum } from "../lib/conflict.js";
 import { isChallengePage } from "../lib/extract.js";
 import { applyFinalLimits, filterByFreshness } from "../lib/finalize.js";
@@ -1726,6 +1726,19 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v120: uzun məqalə (>900) tutulmur", isBlockPageText("x".repeat(950) + " access denied", "") === false);
     assert("v120: normal xəbər mətni tutulmur", isBlockPageText("İstanbul Beşiktaş'ta yürüyüş düzenleniyor. Kitle saat 14.30'da toplandı.", "Son dakika İstanbul") === false);
     assert("v120: boş giriş tutulmur", isBlockPageText("", "") === false);
+  }
+
+  // === v121: AZ şəkilçi kəsmə yalnız AZ mənbə dilində; "bugün" ≠ "bug" ===
+  {
+    assert("v121: türkcə sorğuya şəkilçi kəsmə tətbiq olunmur ('bugün' qalır)", prepareTranslateInput("İstanbul bugün son dakika haberleri", "tr") === "İstanbul bugün son dakika haberleri");
+    assert("v121: rusca sorğu toxunulmur", prepareTranslateInput("новости Москва сегодня", "ru") === "новости Москва сегодня");
+    assert("v121: 'auto' dildə toxunulmur ('Berlin' qalır)", prepareTranslateInput("Berlin", "auto") === "Berlin");
+    assert("v121: az-da 'bugün' qorunur", prepareTranslateInput("bugün hava", "az") === "bugün hava");
+    assert("v121: az-da 'dünya' qorunur", prepareTranslateInput("dünya", "az") === "dünya");
+    assert("v121: az-da 'Rusiya' qorunur", prepareTranslateInput("Rusiya", "az") === "Rusiya");
+    assert("v121: az-da 'Türkiyə' qorunur", prepareTranslateInput("Türkiyə", "az") === "Türkiyə");
+    assert("v121: az-da köhnə davranış qalır ('Çinin paytaxtı' → 'Çin paytaxtı')", prepareTranslateInput("Çinin paytaxtı", "az") === "Çin paytaxtı", prepareTranslateInput("Çinin paytaxtı", "az"));
+    assert("v121: boş giriş", prepareTranslateInput("", "az") === "" && prepareTranslateInput(null, "tr") === "");
   }
 }
 
