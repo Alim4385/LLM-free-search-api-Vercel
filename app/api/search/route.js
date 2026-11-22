@@ -21,7 +21,7 @@ import { leadAnswerSentence } from "../../../lib/rank.js";
 import { isAzOfficialHost, classifyType, officialBoost, wantsFresh, sameDayCue, newsTrustBoost, AZ_NEWS_TRUSTED, AZ_FILM_TRUSTED, howtoTrustBoost, isHowtoQuery, isWatchQuery, expandSynonyms } from "../../../lib/router.js";
 import { scoreResult, diversifyByDomain, dedupeNearDuplicates, extractQuotedPhrases, containsPhrase, isSpamDomain, hostMatches, computeConfidence, isNewsQuery, looksLikeGibberish } from "../../../lib/score.js";
 import { extractDomainTokens, domainBoostForResult, semanticTerms } from "../../../lib/domainDetector.js";
-import { applyFinalLimits, filterByFreshness } from "../../../lib/finalize.js";
+import { applyFinalLimits, filterByFreshness, dropJunkDomains } from "../../../lib/finalize.js";
 import { reconcilePubDate } from "../../../lib/textdate.js";
 import { CORS_HEADERS, makeJsonResponse, makeJsonlResponse, makeSimpleResponse, rateLimitHeaders as makeRateLimitHeaders } from "../../../lib/pipeline/respond.js";
 import { strongAnchor } from "../../../lib/score.js";
@@ -1822,6 +1822,16 @@ async function handleSearch(body, req) {
   // v97: max_results MÜQAVİLƏSİ — structured cavablar siyahının başındadır, ona görə
   // kəsmə onlardan SONRA edilir: cəm nəticə sayı heç vaxt max_results-ı keçmir.
   // V1.2d: yekun sıralama həmişə skora görə — diversify/rescue pozurdu
+  // v122: yetərli real nəticə varsa junk domenləri (sosial şəbəkə və s.) "doldurucu" kimi saxlama
+  {
+    const jd = dropJunkDomains(finalResults, query, 3);
+    if (jd.dropped) {
+      finalResults.length = 0;
+      finalResults.push(...jd.results);
+      finalResults.forEach((r, i) => { r.id = i + 1; });
+      degradedStages.push("junk_domain_dropped");
+    }
+  }
   finalResults.sort((a,b)=> (b.score||0)-(a.score||0));
   if (finalResults.length > maxResults) {
     const limited = applyFinalLimits(finalResults, maxResults);
@@ -1953,6 +1963,9 @@ async function handleSearch(body, req) {
       total_chars: totalChars,
       query_lang: reqLang,
       anchor_query: searchResult.anchorQuery || null,
+      // v122: hər çevirmə addımı görünsün — "bugün→bug" kimi bag 1 baxışda tapılsın
+      rewritten_query: (searchResult.rewrittenQuery && searchResult.rewrittenQuery !== query) ? searchResult.rewrittenQuery : null,
+      translate_input: searchResult.translateInput || null,
       translated: searchResult.translated || false,
       results_translated: resultsTranslated,
       confidence,
