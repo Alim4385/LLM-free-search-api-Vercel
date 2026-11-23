@@ -1963,6 +1963,8 @@ async function handleSearch(body, req) {
     meta: {
       providers_used: providersReported,
       providers_attempted: [...new Set([...(searchResult.providersAttempted || []), ...(altAttempted || [])])],
+      // v125: provayder-spesifik diaqnostika (hazırda yalnız ru-news: hər feed üçün status/ms/xəta)
+      ...(searchResult.providerDiag && Object.keys(searchResult.providerDiag).length ? { provider_diag: searchResult.providerDiag } : {}),
       provider_errors: safeErrors,
       took_ms: Date.now() - started,
       cached: false,
