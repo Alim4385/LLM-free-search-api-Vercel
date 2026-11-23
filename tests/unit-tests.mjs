@@ -1832,6 +1832,31 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     let threw = null; try { await searchRuNews("Москва", 5, undefined, []); } catch (e) { threw = e.message; }
     assert("v123: feed yoxdursa 'ru-news no results' xətası", threw === "ru-news no results", String(threw));
   }
+
+  // === v124: brend + akronim qoruması (protectWithTerms sırası), müəllif hüququ sətri, providers_attempted ===
+  {
+    for (const [title, url, brand] of [
+      ["Moscow News | Silicon UK", "https://www.silicon.co.uk/tag/moscow", "Silicon UK"],
+      ["Istanbul Latest News - India TV News", "https://www.indiatvnews.com/topic/istanbul/news", "India TV News"],
+      ["Moscow | AP News", "https://apnews.com/hub/moscow", "AP News"]
+    ]) {
+      const terms = brandTermsFromResult(title, url);
+      const pr = protectWithTerms(title, terms);
+      assert(`v124: '${brand}' tam qorunur (akronim hissəsi də daxil)`, terms.includes(brand) && !pr.txt.includes(brand.split(" ")[0]) , JSON.stringify(pr));
+      assert(`v124: '${brand}' placeholder-dən geri düzgün qayıdır`, restoreTokens(pr.txt, pr.keep) === title, restoreTokens(pr.txt, pr.keep));
+    }
+    const pr2 = protectWithTerms("Rust ownership nədir NASA ilə", ["Rust"]);
+    assert("v124: köhnə davranış: termin + akronim birlikdə qorunur", restoreTokens(pr2.txt, pr2.keep) === "Rust ownership nədir NASA ilə" && !pr2.txt.includes("Rust") && !pr2.txt.includes("NASA"), JSON.stringify(pr2));
+    const pr3 = protectWithTerms("Node.js və React hooks", []);
+    assert("v124: terminsiz çağırış (yalnız ümumi tokenlər) işləyir", restoreTokens(pr3.txt, pr3.keep) === "Node.js və React hooks" && !pr3.txt.includes("Node.js"), JSON.stringify(pr3));
+
+    const hurriyet = "Türkiye'den ve Dünya'dan son dakika haberleri, güncel haberler. Hurriyet.com.tr haber içerikleri izin alınmadan, kaynak gösterilse dahi iktibas edilemez, kopyalanamaz.";
+    assert("v124: Hürriyet müəllif hüququ bəyanatı zibil sayılır", cleanContent(hurriyet) === "", JSON.stringify(cleanContent(hurriyet)));
+    assert("v124: rus 'Все права защищены' sətri silinir", cleanContent("Все права защищены. Любое использование материалов без разрешения запрещено.") === "");
+    assert("v124: 'all rights reserved' sətri silinir", cleanContent("Copyright 2026 Example Inc. All rights reserved.") === "");
+    assert("v124: real xəbər 'izin alınmadan inşaat' silinmir", cleanContent("Belediye ekipleri, izin alınmadan inşaat yapılan binada denetim gerçekleştirdi ve çalışmaları durdurdu.").length > 40);
+    assert("v124: adi xəbər cümləsi silinmir", cleanContent("İstanbul'da fırtına nedeniyle bazı seferler iptal edildi, vatandaşlar dikkatli olmaya çağrıldı.").length > 40);
+  }
 }
 
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);

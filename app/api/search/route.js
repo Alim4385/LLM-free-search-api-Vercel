@@ -274,6 +274,7 @@ async function handleSearch(body, req) {
     : null;
 
   let results = [], providersUsed = [], errors = {};
+  let altAttempted = []; // v124: ikinci (alt) axtarışın cəhd etdiyi provayderlər
   if (!hasStructured && !unintelligible) {
     try {
       // v42.1: provayderlərdən DAHA ÇOX namizəd al (sonradan filtr 1-ə düşməsin)
@@ -330,6 +331,7 @@ async function handleSearch(body, req) {
         const seen = new Set(results.map(r => r.url));
         for (const r of alt.results || []) if (!seen.has(r.url)) { seen.add(r.url); results.push(r); }
         providersUsed = [...new Set([...providersUsed, ...(alt.providersUsed || [])])];
+        altAttempted = [...altAttempted, ...(alt.providersAttempted || [])];
         degradedStages.push("count_rewrite_fallback");
       } catch { /* ikinci cəhd uğursuz olsa əsas nəticələr qalır */ }
     }
@@ -1960,6 +1962,7 @@ async function handleSearch(body, req) {
     currency: currencyData || undefined,
     meta: {
       providers_used: providersReported,
+      providers_attempted: [...new Set([...(searchResult.providersAttempted || []), ...(altAttempted || [])])],
       provider_errors: safeErrors,
       took_ms: Date.now() - started,
       cached: false,
