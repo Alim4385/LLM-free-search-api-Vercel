@@ -1857,6 +1857,80 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v124: real xəbər 'izin alınmadan inşaat' silinmir", cleanContent("Belediye ekipleri, izin alınmadan inşaat yapılan binada denetim gerçekleştirdi ve çalışmaları durdurdu.").length > 40);
     assert("v124: adi xəbər cümləsi silinmir", cleanContent("İstanbul'da fırtına nedeniyle bazı seferler iptal edildi, vatandaşlar dikkatli olmaya çağrıldı.").length > 40);
   }
+
+  // === v125: ru-news per-feed diaqnostika + ümumi vaxt büdcəsi (stub fetch) ===
+  {
+    const realFetch = globalThis.fetch;
+    const rssXml = `<?xml version="1.0"?><rss version="2.0"><channel>
+      <item><title>В Москве открыли новую станцию метро</title><link>https://ok.test/a</link><description>Москва</description><pubDate>Mon, 23 Nov 2026 10:00:00 +0300</pubDate></item>
+      <item><title>Мэр Москвы дал интервью</title><link>https://ok.test/b</link><description>Разговор</description><pubDate>Mon, 23 Nov 2026 11:00:00 +0300</pubDate></item>
+    </channel></rss>`;
+    try {
+      globalThis.fetch = async (url, init) => {
+        const u = String(url);
+        if (u.includes("ok.test")) return new Response(rssXml, { status: 200 });
+        if (u.includes("forbidden.test")) return new Response("no", { status: 403 });
+        if (u.includes("hang.test")) return new Promise((_, rej) => init.signal.addEventListener("abort", () => rej(init.signal.reason || new Error("aborted"))));
+        if (u.includes("never.test")) return new Promise(() => {}); // abort-a da cavab verməyən feed
+        throw new Error("unexpected " + u);
+      };
+      const d1 = {};
+      const r1 = await searchRuNews("Москва", 5, undefined, ["https://ok.test/rss", "https://forbidden.test/rss", "https://hang.test/rss"], d1, { feedTimeoutMs: 120, overallMs: 1500 });
+      assert("v125: qarışıq feed-lərdə nəticə qaytarır (ok + 403 + asılan)", r1.length === 2 && d1.state === "done", JSON.stringify(d1));
+      assert("v125: ok feed — status ok, 2 xəbər", d1.feeds["ok.test"].status === "ok" && d1.feeds["ok.test"].items === 2, JSON.stringify(d1.feeds));
+      assert("v125: 403 feed — error http_403", d1.feeds["forbidden.test"].status === "error" && d1.feeds["forbidden.test"].error === "http_403", JSON.stringify(d1.feeds));
+      assert("v125: asılan feed — error timeout", d1.feeds["hang.test"].status === "error" && d1.feeds["hang.test"].error === "timeout", JSON.stringify(d1.feeds));
+      assert("v125: diag.matched / items / total_ms yazılır", d1.matched === 2 && d1.items === 2 && typeof d1.total_ms === "number", JSON.stringify(d1));
+
+      const d2 = {};
+      const t0 = Date.now();
+      const r2 = await searchRuNews("Москва", 5, undefined, ["https://ok.test/rss2", "https://never.test/rss"], d2, { feedTimeoutMs: 5000, overallMs: 250 });
+      assert("v125: ümumi büdcə bitəndə hazır feed-lərlə davam edir (asılmır)", r2.length === 2 && Date.now() - t0 < 1500, `${Date.now() - t0}ms ${JSON.stringify(d2)}`);
+      assert("v125: büdcə bitəndə overall_timeout və pending işarələnir", d2.overall_timeout === true && d2.feeds["never.test"].status === "pending", JSON.stringify(d2));
+
+      const d3 = {};
+      let e3 = null; try { await searchRuNews("Москва", 5, undefined, ["https://forbidden.test/x"], d3, { feedTimeoutMs: 100, overallMs: 500 }); } catch (e) { e3 = e.message; }
+      assert("v125: bütün feed-lər uğursuzdursa 'ru-news no results' və state=failed", e3 === "ru-news no results" && d3.state === "failed", `${e3} ${JSON.stringify(d3)}`);
+
+      const d4 = {};
+      let e4 = null; try { await searchRuNews("Токио", 5, undefined, ["https://ok.test/rss4"], d4, { feedTimeoutMs: 100, overallMs: 500 }); } catch (e) { e4 = e.message; }
+      assert("v125: uyğun xəbər yoxdursa 'ru-news no match'", e4 === "ru-news no match" && d4.state === "failed" && d4.items === 2, `${e4} ${JSON.stringify(d4)}`);
+    } finally {
+      globalThis.fetch = realFetch;
+    }
+  }
+
+  // === v125: kiril tokenizasiya + rusca təzəlik siqnalı ===
+  {
+    const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+    assert("v125: tokenize('последние новости России') → yalnız mövzu termini", eq(tokenize("последние новости России"), ["росс"]), JSON.stringify(tokenize("последние новости России")));
+    assert("v125: tokenize('новости Москва') → ['моск']", eq(tokenize("новости Москва"), ["моск"]));
+    assert("v125: Москвы/Москве eyni kökə düşür", eq(tokenize("Москвы"), tokenize("Москве")));
+    assert("v125: tokenize('Москва погода') → 2 termin", eq(tokenize("Москва погода"), ["моск", "пого"]));
+    assert("v125: qarışıq latın+kiril: 'Tesla Model 3 Москва'", eq(tokenize("Tesla Model 3 Москва"), ["tesla", "model", "моск"]));
+    assert("v125: 'что такое блокчейн' → sual sözləri atılır", eq(tokenize("что такое блокчейн"), ["блокче"]), JSON.stringify(tokenize("что такое блокчейн")));
+    assert("v125: latın tokenizasiyası DƏYİŞMİR (tr)", eq(tokenize("İstanbul son dakika haberleri"), ["istanbul", "dakika", "haber"]));
+    assert("v125: latın tokenizasiyası DƏYİŞMİR (az)", eq(tokenize("Azərbaycanın paytaxtı"), ["azerbaycan", "paytaxt"]));
+    assert("v125: yalnız ümumi sözlü rus sorğusu → boş (gating yoxdur)", tokenize("последние новости сегодня").length === 0);
+
+    const daysAgo = (d) => new Date(Date.now() - d * 86400000).toISOString();
+    const mkRu = (o) => ({ title: "Новости России: последние события", url: "https://www.example.org/news/x/", snippet: "Последние новости России сегодня: главные события дня в стране", content: "Последние новости России сегодня: главные события дня в стране и мире, подробности", source: "yahoo", ...o });
+    const qRu = "последние новости России", tRu = tokenize(qRu);
+    const sStale = scoreResult(mkRu({ published_at: daysAgo(177), url: "https://www.example.org/a/" }), tRu, "ru", qRu);
+    const sFresh = scoreResult(mkRu({ published_at: daysAgo(0.3), url: "https://www.example.com/c/" }), tRu, "ru", qRu);
+    assert("v125: 'последние' sorğusunda təzə xəbər 177 günlükdən ≥2.5 xal yuxarıdır", sFresh - sStale >= 2.5, `${sFresh} vs ${sStale}`);
+    const sMid = scoreResult(mkRu({ published_at: daysAgo(10), url: "https://www.example.net/b/" }), tRu, "ru", qRu);
+    assert("v125: 30 gündən köhnə (177g) 10 günlükdən aşağıdır, 48 saatlıq ən yuxarıdır", sFresh > sMid && sMid > sStale, `${sFresh} > ${sMid} > ${sStale}`);
+
+    const qM = "новости Москва", tM = tokenize(qM);
+    const rel = scoreResult(mkRu({ title: "Новости Москвы", snippet: "Новости Москва: открыли станцию метро", content: "В Москве открыли новую станцию метро, подробности", url: "https://www.example.net/m/" }), tM, "ru", qM);
+    const irr = scoreResult(mkRu({ title: "Погода в Санкт-Петербурге", snippet: "Дожди и ветер в Петербурге", content: "Синоптики обещают дожди и сильный ветер в северной столице", url: "https://www.example.net/p/" }), tM, "ru", qM);
+    assert("v125: mövzuya uyğun rus nəticəsi xal alır (>0)", rel > 0, String(rel));
+    assert("v125: mövzuya uyğun OLMAYAN rus nəticəsi 0 alır (əvvəl gating yox idi)", irr === 0, String(irr));
+
+    assert("v125: türkcə 'güncel' təzəlik siqnalını işə salır", scoreResult({ title: "Güncel haberler İstanbul", url: "https://www.example.org/t/", snippet: "İstanbul güncel haberler son durum", content: "İstanbul güncel haberler son durum ve gelişmeler", source: "yahoo", published_at: daysAgo(0.3) }, tokenize("güncel haberler İstanbul"), "tr", "güncel haberler İstanbul")
+      > scoreResult({ title: "Güncel haberler İstanbul", url: "https://www.example.com/t/", snippet: "İstanbul güncel haberler son durum", content: "İstanbul güncel haberler son durum ve gelişmeler", source: "yahoo", published_at: daysAgo(200) }, tokenize("güncel haberler İstanbul"), "tr", "güncel haberler İstanbul") + 2.5);
+  }
 }
 
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);
