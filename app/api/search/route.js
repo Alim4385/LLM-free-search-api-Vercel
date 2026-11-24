@@ -887,6 +887,19 @@ async function handleSearch(body, req) {
       degradedStages.push("entity_kept_after_diversify");
     }
   }
+  // v127: yerli xəbər mənbələri (ru-news/az-news/azertag) fetch olunan İLK maxResults-a düşsün. `diversifyByDomain(…, maxResults+2)`
+  // yalnız ən yüksək xallı 7 namizədi saxlayır, fetch dövrü isə ilk maxResults uğurlu nəticədən sonra dayanır. Tək provayderdən gələn
+  // real məqalələr (xal ~2.5) 2-3 provayderin səsini toplayan hub-ların (xal 5.5–7) arxasında qalır və heç oxunmurdu.
+  if (newsQ) {
+    const poolRest = scoredDedup.filter(r => !filtered.some(f => f.url === r.url));
+    // kvota İLK maxResults-da olmalıdır (fetch dövrü ilk maxResults uğurlu nəticədən sonra dayanır; 6-7-ci yer ehtiyatdır)
+    const merged = promoteNativeNews([...filtered, ...poolRest], maxResults, { quota: 2 });
+    const head = merged.slice(0, maxResults + 2);
+    if (head.some((r, i) => r !== filtered[i])) {
+      filtered = head;
+      degradedStages.push("native_news_candidates");
+    }
+  }
   const filteredCount = scored.length;
 
   const toFetch = filtered.slice(0, maxResults + 2); // v39.4: 2 ehtiyat namizəd (zibil səhifə düşsə əvəzlənsin)

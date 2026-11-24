@@ -1988,6 +1988,49 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     assert("v126: maxResults ≥ uzunluq → dəyişmir", promoteNativeNews(none, 10, { quota: 2 }).every((r, i) => r === none[i]));
     assert("v126: boş/null giriş", promoteNativeNews([], 5).length === 0 && promoteNativeNews(null, 5).length === 0);
   }
+
+  // === v127: INTEQRASİYA — rəqib hub-lar yüksək xal alsa belə yerli xəbər (ru-news) son nəticələrə düşür (stub şəbəkə, tam handler) ===
+  {
+    const realFetch = globalThis.fetch;
+    try {
+      const nowMs = Date.now();
+      const hrs = (h) => new Date(nowMs - h * 3600000).toUTCString();
+      const feedXml = (host, items) => `<?xml version="1.0"?><rss version="2.0"><channel>${items.map(([t, d, h], i) => `<item><title>${t}</title><link>https://${host}/news/${i}</link><description>${d}</description><pubDate>${hrs(h)}</pubDate></item>`).join("")}</channel></rss>`;
+      const FEEDS = {
+        "ria.ru": [["Путин провёл встречу с главой МИД России", "Президент России обсудил внешнюю политику страны", 2], ["В России заработал новый закон о платформенной экономике", "Закон вступил в силу по всей России", 5], ["Россия увеличила экспорт пшеницы", "Экспорт зерна из России вырос", 9]],
+        "kommersant.ru": [["Россия и Китай подписали соглашение о поставках газа", "Москва и Пекин договорились об увеличении поставок", 3], ["ЦБ России сохранил ключевую ставку", "Банк России принял решение по ставке", 6]],
+        "vedomosti.ru": [["Российские банки нарастили прибыль", "Прибыль банков России выросла за октябрь", 4]],
+        "meduza.io": [["В России задержали журналиста", "Задержание произошло в одном из регионов России", 7]]
+      };
+      const HUBS = [["Россия | Сегодняшние новости от Аль-Джазиры", "aljazeera.com/where/russia/", "Будьте в курсе последних событий в России", 1], ["Новости России: Последние новости | 7NEWS", "7news.com.au/news/russia", "Все последние новости из России", 2], ["TASS Русское информационное агентство", "tass.com/", "Последние новости России и мира", 3], ["RT - Последние новости, новости России", "rtnewsru.com/", "Новости России и мира", 4], ["Новости России | Reuters", "reuters.com/world/russia/", "Последние новости России", 5], ["Россия — последние новости | Euronews", "euronews.com/tag/russia", "Новости России сегодня", 6], ["Россия - BBC News", "bbc.com/news/world/russia", "Последние новости о России", 7], ["Russia news | CNN", "cnn.com/europe/russia", "Последние новости России", 8]];
+      const page = "<p>Новости России: подробности события. В России сообщили о новых решениях властей, экспертам предстоит оценить последствия для экономики страны и регионов. Россия продолжает обсуждение ключевых вопросов внутренней и внешней политики, а также международных отношений с соседними государствами.</p>".repeat(3);
+      globalThis.fetch = async (url) => {
+        const u = new URL(String(url));
+        const host = u.hostname.replace(/^www\./, "");
+        if (FEEDS[host] && /rss/i.test(u.pathname)) return new Response(feedXml(host, FEEDS[host]), { status: 200 });
+        if (host.endsWith("bing.com") && String(url).includes("format=rss")) {
+          return new Response(`<?xml version="1.0"?><rss version="2.0"><channel>${HUBS.map(([t, link, d, h]) => `<item><title>${t}</title><link>https://${link}</link><description>${d}</description><pubDate>${hrs(h)}</pubDate></item>`).join("")}</channel></rss>`, { status: 200 });
+        }
+        if (/^(ria|kommersant|vedomosti|meduza|lenta)\./.test(host) || /aljazeera|7news|tass|rtnewsru|reuters|euronews|bbc|cnn/.test(host)) {
+          return new Response(`<html><head><title>Новости России</title></head><body><article>${page}</article></body></html>`, { status: 200, headers: { "content-type": "text/html; charset=utf-8" } });
+        }
+        throw new Error("offline");
+      };
+      const { POST: handlePost } = await import("../app/api/search/route.js");
+      const res = await handlePost(new Request("http://localhost/api/search", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ query: "последние новости России", lang: "ru", max_results: 5 }) }));
+      const j = await res.json();
+      const m = j.meta || {};
+      const nativeN = (j.results || []).filter((r) => r.source === "ru-news" || (r.providers || []).includes("ru-news")).length;
+      assert("v127: inteqrasiya — handler 200 qaytarır, 5 nəticə", res.status === 200 && (j.results || []).length === 5, `status ${res.status}, n=${(j.results || []).length}`);
+      assert("v127: inteqrasiya — hub-lar yüksək xallı olsa da son 5-də ≥2 ru-news nəticəsi var", nativeN >= 2, `native=${nativeN}: ${JSON.stringify((j.results || []).map((r) => r.source + " " + r.url))}`);
+      assert("v127: inteqrasiya — hub nəticələri də qalır (hamısı sıxışdırılmayıb)", (j.results || []).some((r) => r.source === "bing-rss"));
+      assert("v127: inteqrasiya — degraded_stages-də native_news_candidates", (m.degraded_stages || []).includes("native_news_candidates"), JSON.stringify(m.degraded_stages));
+      assert("v127: inteqrasiya — providers_used-də ru-news", (m.providers_used || []).includes("ru-news"), JSON.stringify(m.providers_used));
+      assert("v127: inteqrasiya — provider_diag['ru-news'] state=done", m.provider_diag && m.provider_diag["ru-news"] && m.provider_diag["ru-news"].state === "done", JSON.stringify(m.provider_diag));
+    } finally {
+      globalThis.fetch = realFetch;
+    }
+  }
 }
 
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);
