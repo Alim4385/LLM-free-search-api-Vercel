@@ -21,7 +21,7 @@ import { leadAnswerSentence } from "../../../lib/rank.js";
 import { isAzOfficialHost, classifyType, officialBoost, wantsFresh, sameDayCue, newsTrustBoost, AZ_NEWS_TRUSTED, AZ_FILM_TRUSTED, howtoTrustBoost, isHowtoQuery, isWatchQuery, expandSynonyms } from "../../../lib/router.js";
 import { scoreResult, diversifyByDomain, dedupeNearDuplicates, extractQuotedPhrases, containsPhrase, isSpamDomain, hostMatches, computeConfidence, isNewsQuery, looksLikeGibberish } from "../../../lib/score.js";
 import { extractDomainTokens, domainBoostForResult, semanticTerms } from "../../../lib/domainDetector.js";
-import { applyFinalLimits, filterByFreshness, dropJunkDomains } from "../../../lib/finalize.js";
+import { applyFinalLimits, filterByFreshness, dropJunkDomains, promoteNativeNews } from "../../../lib/finalize.js";
 import { reconcilePubDate } from "../../../lib/textdate.js";
 import { decodeEntities } from "../../../lib/entities.js";
 import { CORS_HEADERS, makeJsonResponse, makeJsonlResponse, makeSimpleResponse, rateLimitHeaders as makeRateLimitHeaders } from "../../../lib/pipeline/respond.js";
@@ -1843,6 +1843,16 @@ async function handleSearch(body, req) {
     }
   }
   finalResults.sort((a,b)=> (b.score||0)-(a.score||0));
+  // v126: xəbər sorğusunda yerli xəbər mənbələrinə (ru-news/az-news/azertag) kvota — hub səhifələri onları sıxışdırmasın
+  if (newsQ && finalResults.length > maxResults) {
+    const promoted = promoteNativeNews(finalResults, maxResults, { quota: 2 });
+    if (promoted.some((r, i) => r !== finalResults[i])) {
+      finalResults.length = 0;
+      finalResults.push(...promoted);
+      finalResults.forEach((r, i) => { r.id = i + 1; });
+      degradedStages.push("native_news_promoted");
+    }
+  }
   if (finalResults.length > maxResults) {
     const limited = applyFinalLimits(finalResults, maxResults);
     finalResults.length = 0;
