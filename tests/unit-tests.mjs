@@ -13,7 +13,7 @@ import { readFileSync } from "node:fs";
 import { protectTokens, restoreTokens, protectWithTerms, prepareTranslateInput, brandTermsFromResult } from "../lib/translate.js";
 import { detectConflicts, parseNum } from "../lib/conflict.js";
 import { isChallengePage } from "../lib/extract.js";
-import { applyFinalLimits, filterByFreshness, dropJunkDomains } from "../lib/finalize.js";
+import { applyFinalLimits, filterByFreshness, dropJunkDomains, promoteNativeNews } from "../lib/finalize.js";
 import { extractHydrationText } from "../lib/extract.js";
 import { wikiTitleFromUrl, cleanWikiQuery } from "../lib/wikilink.js";
 import { parseMaxResults, parseMaxChars, parseFormat, parseFreshness, parseExcludeDomains, parseLang } from "../lib/pipeline/params.js";
@@ -1930,6 +1930,63 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
 
     assert("v125: türkcə 'güncel' təzəlik siqnalını işə salır", scoreResult({ title: "Güncel haberler İstanbul", url: "https://www.example.org/t/", snippet: "İstanbul güncel haberler son durum", content: "İstanbul güncel haberler son durum ve gelişmeler", source: "yahoo", published_at: daysAgo(0.3) }, tokenize("güncel haberler İstanbul"), "tr", "güncel haberler İstanbul")
       > scoreResult({ title: "Güncel haberler İstanbul", url: "https://www.example.com/t/", snippet: "İstanbul güncel haberler son durum", content: "İstanbul güncel haberler son durum ve gelişmeler", source: "yahoo", published_at: daysAgo(200) }, tokenize("güncel haberler İstanbul"), "tr", "güncel haberler İstanbul") + 2.5);
+  }
+
+  // === v126: ru-news straggler olmasın (erkən qayıtma) + yerli xəbər kvotası ===
+  {
+    const realFetch = globalThis.fetch;
+    const xmlOf = (host) => `<?xml version="1.0"?><rss version="2.0"><channel>
+      <item><title>Россия и Китай подписали соглашение (${host})</title><link>https://${host}/a</link><description>Россия</description><pubDate>Mon, 23 Nov 2026 10:00:00 +0300</pubDate></item>
+      <item><title>Россия: новые меры (${host})</title><link>https://${host}/b</link><description>Россия</description><pubDate>Mon, 23 Nov 2026 11:00:00 +0300</pubDate></item></channel></rss>`;
+    try {
+      globalThis.fetch = async (url) => {
+        const host = new URL(String(url)).hostname;
+        if (host.startsWith("slow")) return new Promise((res) => setTimeout(() => res(new Response(xmlOf(host), { status: 200 })), host.includes("1500") ? 1500 : 600));
+        return new Response(xmlOf(host), { status: 200 });
+      };
+      // 3 sürətli feed + 1 yavaş → "enough": yavaşı GÖZLƏMİR
+      const d1 = {}; const t1 = Date.now();
+      const r1 = await searchRuNews("Россия", 6, undefined, ["https://early-a.test/rss", "https://early-b.test/rss", "https://early-c.test/rss", "https://slow600.test/rss"], d1, { feedTimeoutMs: 3000, graceMs: 800, overallMs: 2600, minFeeds: 3 });
+      assert("v126: 3 feed hazır olanda yavaş feed gözlənilmir (early=enough)", d1.early === "enough" && Date.now() - t1 < 400 && r1.length > 0, `${d1.early} ${Date.now() - t1}ms`);
+      assert("v126: yavaş feed 'pending' qalır (arxa planda davam edir)", d1.feeds["slow600.test"].status === "pending", JSON.stringify(d1.feeds));
+
+      // 1 sürətli + 1 yavaş, minFeeds=3 yetmir → grace ilə qayıdır
+      const d2 = {}; const t2 = Date.now();
+      const r2 = await searchRuNews("Россия", 6, undefined, ["https://grace-a.test/rss", "https://slow1500.test/rss"], d2, { feedTimeoutMs: 3000, graceMs: 150, overallMs: 2600, minFeeds: 3 });
+      assert("v126: ≥1 feed hazırdırsa graceMs-dən sonra qayıdır (early=grace)", d2.early === "grace" && Date.now() - t2 < 700 && r2.length > 0, `${d2.early} ${Date.now() - t2}ms`);
+
+      // hamısı sürətli, amma minFeeds-dən az → "all"
+      const d3 = {};
+      await searchRuNews("Россия", 6, undefined, ["https://all-a.test/rss", "https://all-b.test/rss"], d3, { feedTimeoutMs: 1000, graceMs: 800, overallMs: 2600, minFeeds: 3 });
+      assert("v126: bütün feed-lər bitibsə early=all", d3.early === "all", JSON.stringify(d3));
+    } finally {
+      globalThis.fetch = realFetch;
+    }
+
+    // yerli xəbər kvotası
+    const mkHub = (n, score) => ({ url: `https://hub${n}.example/world/russia/`, score, source: "bing-rss", providers: ["bing-rss", "bing"] });
+    const mkNat = (n, score) => ({ url: `https://news${n}.ru/doc/${n}`, score, source: "ru-news", providers: ["ru-news"] });
+    const pool = [mkHub(1, 7.2), mkHub(2, 6.9), mkHub(3, 6.8), mkHub(4, 6.1), mkHub(5, 5.5), mkNat(1, 4.6), mkNat(2, 4.2), mkNat(3, 3.0)];
+    const pr = promoteNativeNews(pool, 5, { quota: 2 });
+    const head = pr.slice(0, 5);
+    assert("v126: ilk 5-də 2 yerli (ru-news) nəticə var", head.filter((r) => r.source === "ru-news").length === 2, JSON.stringify(head.map((r) => r.url)));
+    assert("v126: ən yaxşı 2 hub qalır, ən zəif 2 hub çıxır", head.some((r) => r.url.includes("hub1")) && head.some((r) => r.url.includes("hub3")) && !head.some((r) => r.url.includes("hub5")) && !head.some((r) => r.url.includes("hub4")));
+    assert("v126: seçilən yerlilər ən yüksək xallılardır (news1, news2)", head.some((r) => r.url.includes("news1")) && head.some((r) => r.url.includes("news2")) && !head.some((r) => r.url.includes("news3")));
+    assert("v126: nəticə xala görə sıralanır", head.every((r, i) => i === 0 || (head[i - 1].score || 0) >= (r.score || 0)));
+    assert("v126: heç bir nəticə itmir (cəmi sayı eynidir)", pr.length === pool.length && new Set(pr.map((r) => r.url)).size === pool.length);
+    assert("v126: giriş massivi dəyişmir", pool[0].url.includes("hub1") && pool.length === 8);
+
+    const already = [mkNat(1, 7), mkNat(2, 6.5), mkHub(1, 6), mkHub(2, 5), mkHub(3, 4), mkNat(3, 3)];
+    assert("v126: kvota artıq ödənibsə sıra dəyişmir", promoteNativeNews(already, 5, { quota: 2 }).every((r, i) => r === already[i]));
+    const none = [mkHub(1, 7), mkHub(2, 6), mkHub(3, 5), mkHub(4, 4), mkHub(5, 3), mkHub(6, 2)];
+    assert("v126: yerli namizəd yoxdursa sıra dəyişmir", promoteNativeNews(none, 5, { quota: 2 }).every((r, i) => r === none[i]));
+    const one = [mkHub(1, 7), mkHub(2, 6), mkHub(3, 5), mkHub(4, 4), mkHub(5, 3), mkNat(1, 2)];
+    const prOne = promoteNativeNews(one, 5, { quota: 2 });
+    assert("v126: yalnız 1 yerli namizəd varsa 1-i qaldırılır", prOne.slice(0, 5).filter((r) => r.source === "ru-news").length === 1 && !prOne.slice(0, 5).some((r) => r.url.includes("hub5")));
+    const viaProviders = [mkHub(1, 7), mkHub(2, 6), { url: "https://merged.example/x", score: 5, source: "bing-rss", providers: ["bing-rss", "az-news"] }, mkHub(3, 4), mkHub(4, 3), mkNat(1, 2)];
+    assert("v126: providers siyahısında az-news olan nəticə də yerli sayılır", promoteNativeNews(viaProviders, 5, { quota: 1 }).every((r, i) => r === viaProviders[i]));
+    assert("v126: maxResults ≥ uzunluq → dəyişmir", promoteNativeNews(none, 10, { quota: 2 }).every((r, i) => r === none[i]));
+    assert("v126: boş/null giriş", promoteNativeNews([], 5).length === 0 && promoteNativeNews(null, 5).length === 0);
   }
 }
 
