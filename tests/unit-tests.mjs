@@ -2031,6 +2031,95 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
       globalThis.fetch = realFetch;
     }
   }
+
+  // === v128: mövzulu xəbər sorğusunda yalnız ümumi sözə ("news", "latest") uyğunluq nəticəni təsdiqləmir; engine_version ===
+  {
+    const qRu = "последние новости России";
+    const tRu = [...new Set([...tokenize(qRu), ...tokenize("latest news from Russia")])];
+    assert("v128: route-a oxşar terminlər (kiril kök + anchor sözləri)", tRu.includes("росс") && tRu.includes("news") && tRu.includes("russia"), JSON.stringify(tRu));
+    const nowIso = new Date().toISOString();
+    const abc = scoreResult({ title: "ABC News - Breaking News, Latest News and Videos", url: "https://abcnews.com/", snippet: "Download the ABC News app. Stay up to date with the latest news.", content: "Thanksgiving parade through the years. Latest news and videos from ABC News.", source: "bing-rss", published_at: nowIso }, tRu, "ru", qRu);
+    assert("v128: Rusiya ilə əlaqəsiz 'ABC News' ana səhifəsi 0 alır (əvvəl ~6 idi)", abc === 0, String(abc));
+    const usat = scoreResult({ title: "USA TODAY - Latest news, breaking news today", url: "https://cm.usatoday.com/", snippet: "USA TODAY provides current national and local news.", content: "Latest national news.", source: "bing-rss", published_at: nowIso }, tRu, "ru", qRu);
+    assert("v128: 'USA TODAY' ana səhifəsi 0 alır", usat === 0, String(usat));
+    const aj = scoreResult({ title: "Russia | Today's latest news | Al Jazeera", url: "https://www.aljazeera.com/where/russia/", snippet: "Stay informed about the latest developments in Russia with Al Jazeera.", content: "EU plans sanctions against Russia over crypto financing.", source: "bing-rss", published_at: nowIso }, tRu, "ru", qRu);
+    assert("v128: Rusiya haqqında səhifə xal alır (>0)", aj > 0, String(aj));
+    const art = scoreResult({ title: "Россия и Китай подписали соглашение о поставках газа", url: "https://www.kommersant.ru/doc/1", snippet: "Москва и Пекин договорились", content: "Россия и Китай подписали соглашение", source: "ru-news", published_at: nowIso }, tRu, "ru", qRu);
+    assert("v128: rusca məqalə (kiril kökə uyğun) xal alır (>0)", art > 0, String(art));
+
+    // qısa köklü sorğu ("Bakı" → bak, 3 hərf): baza davranışı saxlanılır (reqressiya yoxdur)
+    const qAz = "Bakı xəbərlər";
+    const tAz = tokenize(qAz);
+    const azGeneric = scoreResult({ title: "Son xəbərlər - Report.az ana səhifə", url: "https://report.az/", snippet: "Son xəbərlər, siyasət, iqtisadiyyat", content: "Son xəbərlər və analitika", source: "yahoo", published_at: nowIso }, tAz, "az", qAz);
+    assert("v128: qısa köklü sorğuda ('Bakı xəbərlər') ümumi xəbər səhifəsi baza kimi xal alır (reqressiya yoxdur)", azGeneric > 0, String(azGeneric));
+    // uzun mövzu terminli AZ xəbər sorğusu: Rusiya ilə əlaqəsiz səhifə 0, "Rusiyada" olan səhifə xal alır
+    const qRuAz = "Rusiya xəbərləri";
+    const tRuAz = tokenize(qRuAz);
+    const azNo = scoreResult({ title: "ABC News - Breaking News and Latest Headlines", url: "https://abcnews.com/", snippet: "Latest news and videos", content: "Latest news", source: "yahoo", published_at: nowIso }, tRuAz, "az", qRuAz);
+    assert("v128: 'Rusiya xəbərləri' sorğusunda əlaqəsiz ümumi xəbər saytı 0 alır", azNo === 0, String(azNo));
+    const azYes = scoreResult({ title: "Rusiyada yeni qanun qüvvəyə mindi", url: "https://report.az/dunya/rusiyada-yeni-qanun-quvveye-mindi/", snippet: "Rusiyada yeni qanun qüvvəyə minib, xəbərlər agentliyi bildirir", content: "Rusiyada yeni qanun qüvvəyə mindi", source: "yahoo", published_at: nowIso }, tRuAz, "az", qRuAz);
+    assert("v128: 'Rusiya xəbərləri' sorğusunda 'Rusiyada' məqaləsi (prefiks uyğunluğu) xal alır", azYes > 0, String(azYes));
+    // türkcə
+    const qTr = "İstanbul son dakika haberleri";
+    const tTr = tokenize(qTr);
+    const trNo = scoreResult({ title: "Son dakika haberleri | Hürriyet", url: "https://www.hurriyet.com.tr/", snippet: "Türkiye'den ve dünyadan son dakika haberleri", content: "Son dakika haberleri", source: "yahoo", published_at: nowIso }, tTr, "tr", qTr);
+    const trYes = scoreResult({ title: "İstanbul son dakika haberleri", url: "https://www.sondakika.com/istanbul/", snippet: "İstanbul'dan son dakika haberleri ve gelişmeler", content: "İstanbul son dakika", source: "yahoo", published_at: nowIso }, tTr, "tr", qTr);
+    assert("v128: 'İstanbul son dakika haberleri' — İstanbul olmayan ümumi səhifə 0 alır", trNo === 0, String(trNo));
+    assert("v128: 'İstanbul son dakika haberleri' — İstanbul səhifəsi xal alır", trYes > 0, String(trYes));
+    const tGen = tokenize("son xəbərlər");
+    const genOnly = scoreResult({ title: "Son xəbərlər", url: "https://report.az/", snippet: "Son xəbərlər", content: "Son xəbərlər", source: "yahoo", published_at: nowIso }, tGen, "az", "son xəbərlər");
+    assert("v128: yalnız ümumi 'son xəbərlər' sorğusu dəyişmir (təzəlik rejimi, >0)", genOnly > 0, String(genOnly));
+
+    // engine version
+    const { engineInfo, ENGINE_VERSION } = await import("../lib/version.js");
+    assert("v128: engineInfo versiya və commit qaytarır", engineInfo({ VERCEL_GIT_COMMIT_SHA: "778507e1234567" }).commit === "778507e" && engineInfo({}).commit === null && engineInfo({}).engine_version === ENGINE_VERSION);
+  }
+
+  // === v128: INTEQRASİYA — Rusiya ilə əlaqəsiz Amerika ana səhifələri çıxarılır, ru-news qalır (stub şəbəkə, tam handler) ===
+  {
+    const realFetch = globalThis.fetch;
+    try {
+      const nowMs = Date.now();
+      const hrs = (h) => new Date(nowMs - h * 3600000).toUTCString();
+      const feedXml = (host, items) => `<?xml version="1.0"?><rss version="2.0"><channel>${items.map(([t, d, h], i) => `<item><title>${t}</title><link>https://${host}/news/${i}</link><description>${d}</description><pubDate>${hrs(h)}</pubDate></item>`).join("")}</channel></rss>`;
+      const FEEDS = {
+        "ria.ru": [["Путин провёл встречу с главой МИД России", "Президент России обсудил внешнюю политику страны", 2], ["В России заработал новый закон", "Закон вступил в силу по всей России", 5]],
+        "kommersant.ru": [["Россия и Китай подписали соглашение о поставках газа", "Москва и Пекин договорились об увеличении поставок", 3]],
+        "vedomosti.ru": [["Российские банки нарастили прибыль", "Прибыль банков России выросла за октябрь", 4]]
+      };
+      // canlıdakı kimi: başlıq/snippet artıq rusca (brend adında "News" qalır), Rusiya haqqında HEÇ NƏ yoxdur
+      const US = [["ABC News - последние новости, последние новости и видео", "abcnews.com/", "Загрузите приложение ABC News. Будьте в курсе последних новостей с помощью видео.", 1], ["USA TODAY — последние новости и последние новости сегодня", "cm.usatoday.com/", "USA TODAY предоставляет текущие национальные и местные новости, новости спорта и развлечений.", 2], ["Последние новости | HuffPost News", "huffpost.com/news/", "Последние истории и новости из политики и СМИ от HuffPost.", 3], ["Fox News - Последние новости | Фотографии и новостные видео", "foxnews.com/", "Последние текущие новости: США, Мир, Развлечения, Здоровье, Бизнес, Технологии.", 4], ["Yahoo News: последние новости, заголовки и многое другое", "yahoo.com/news/", "Последние новости и заголовки Yahoo News с видео и фотографиями.", 5]];
+      const page = "<p>Подробности события. В России сообщили о новых решениях властей, экспертам предстоит оценить последствия для экономики страны и регионов. Россия продолжает обсуждение ключевых вопросов внутренней и внешней политики и отношений с соседними государствами.</p>".repeat(3);
+      globalThis.fetch = async (url, init) => {
+        const u = new URL(String(url));
+        const host = u.hostname.replace(/^www\./, "");
+        if (host === "translate.google.com") {
+          // canlıdakı kimi: sorğunun ingiliscə anchor-u qTerms-ə "latest/news/russia" əlavə edir
+          const pp = new URLSearchParams(String((init && init.body) || ""));
+          const q = pp.get("q") || "";
+          const out = (pp.get("tl") === "en" && /последние новости России/.test(q)) ? "latest news from Russia" : q;
+          return new Response(JSON.stringify([[[out, q, null, null, 1]], null, pp.get("sl") || "ru"]), { status: 200, headers: { "content-type": "application/json" } });
+        }
+        if (FEEDS[host] && /rss/i.test(u.pathname)) return new Response(feedXml(host, FEEDS[host]), { status: 200 });
+        if (host.endsWith("bing.com") && String(url).includes("format=rss")) {
+          return new Response(`<?xml version="1.0"?><rss version="2.0"><channel>${US.map(([t, link, d, h]) => `<item><title>${t}</title><link>https://${link}</link><description>${d}</description><pubDate>${hrs(h)}</pubDate></item>`).join("")}</channel></rss>`, { status: 200 });
+        }
+        if (/^(ria|kommersant|vedomosti)\./.test(host)) return new Response(`<html><head><title>Новости</title></head><body><article>${page}</article></body></html>`, { status: 200, headers: { "content-type": "text/html; charset=utf-8" } });
+        if (/abcnews|usatoday|huffpost|foxnews|yahoo/.test(host)) return new Response(`<html><head><title>News</title></head><body><article>${"<p>Парад в честь Дня благодарения начался как процессия длиной в два квартала, запрошенная сотрудниками универмага в 1924 году. С тех пор парад привлек миллионы зрителей и десятки миллионов телезрителей и стал для многих семей началом праздничного сезона. Местные репортеры описывают толпы, гигантские воздушные шары над Манхэттеном и прогноз погоды на выходные.</p>".repeat(3)}</article></body></html>`, { status: 200, headers: { "content-type": "text/html" } });
+        throw new Error("offline");
+      };
+      const { POST: handlePost2 } = await import("../app/api/search/route.js");
+      const res = await handlePost2(new Request("http://localhost/api/search", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ query: "последние новости России сегодня", lang: "ru", max_results: 5 }) }));
+      const j = await res.json();
+      const m = j.meta || {};
+      const doms = (j.results || []).map((r) => r.domain || "");
+      assert("v128: inteqrasiya — Rusiya ilə əlaqəsiz Amerika ana səhifələri nəticələrdə YOXDUR", !doms.some((d) => /abcnews|usatoday|huffpost|foxnews|yahoo/.test(d)), JSON.stringify(doms));
+      assert("v128: inteqrasiya — ru-news xəbərləri qalır (≥2)", (j.results || []).filter((r) => r.source === "ru-news" || (r.providers || []).includes("ru-news")).length >= 2, JSON.stringify((j.results || []).map((r) => r.source + " " + r.url)));
+      assert("v128: inteqrasiya — meta.engine_version var", m.engine_version === "v128", JSON.stringify([m.engine_version, m.commit]));
+    } finally {
+      globalThis.fetch = realFetch;
+    }
+  }
 }
 
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);
