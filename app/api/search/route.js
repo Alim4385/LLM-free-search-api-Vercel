@@ -24,6 +24,7 @@ import { extractDomainTokens, domainBoostForResult, semanticTerms } from "../../
 import { applyFinalLimits, filterByFreshness, dropJunkDomains, promoteNativeNews } from "../../../lib/finalize.js";
 import { reconcilePubDate } from "../../../lib/textdate.js";
 import { decodeEntities } from "../../../lib/entities.js";
+import { engineInfo } from "../../../lib/version.js";
 import { CORS_HEADERS, makeJsonResponse, makeJsonlResponse, makeSimpleResponse, rateLimitHeaders as makeRateLimitHeaders } from "../../../lib/pipeline/respond.js";
 import { strongAnchor } from "../../../lib/score.js";
 import { bridgeCount, bridgeDate, bridgeMeasure, wikiTitleFromUrl, fetchWikiExtract } from "../../../lib/wikilink.js";
@@ -373,6 +374,17 @@ async function handleSearch(body, req) {
     ...(isAzCount || isWatchQuery(normQuery) ? [] : tokenize(effAnchor || ""))
   ])].filter(t => !looksLikeGibberish(t) || acronymQ.has(String(t).toLowerCase()));
 
+  // v128: yerli dildə olan nəticələr (ru-news/az-news/azertag — mətn sorğu ilə EYNİ dildədir) yalnız yerli sorğu terminləri ilə
+  // qiymətləndirilir. qTerms tərcümədən gələn ingiliscə anchor sözlərini ("latest", "news", "russia") də daşıyır; rus/AZ mətn
+  // onlara uyğun gələ bilmir və çoxsözlü sorğunun "qismən örtülmə" cəzasını alırdı (ru-news xalları 1 / 0 / −0.2).
+  const NATIVE_NEWS_SRC = new Set(["ru-news", "az-news", "azertag"]);
+  const nativeTerms = [...new Set([
+    ...tokenize(query),
+    ...tokenize(normQuery),
+    ...(isTechQuery ? [] : tokenize(exp.expanded || ""))
+  ])].filter(t => !looksLikeGibberish(t) || acronymQ.has(String(t).toLowerCase()));
+  const termsFor = (r) => (nativeTerms.length && NATIVE_NEWS_SRC.has(r && r.source)) ? nativeTerms : qTerms;
+
   const rawCount = results.length;
   // v42.5: "Access Denied / Just a moment / 403 Forbidden" kimi bloklanmış səhifələr nəticə deyil
   const ERR_PAGE = /^(access\s+denied|forbidden|403\s+forbidden|404|not\s+found|just\s+a\s+moment|attention\s+required|are\s+you\s+a\s+robot|robot\s+check|blocked|Əlçatmaz|Giriş\s+qadağandır|Доступ\s+запрещ|拒绝访问)/iu;
@@ -380,7 +392,7 @@ async function handleSearch(body, req) {
   // v121: Avtomatik domen aşkarlama — sorğuda keçən hər hansı marka/token host-da varsa boost (manual siyahı yox, sonsuz domen)
   const _domainTokens = extractDomainTokens(query);
   const _semantic = semanticTerms(query);
-  let scored = results.map(r => ({ ...r, score: scoreResult(r, qTerms, qLang, normQuery) + domainBoostForResult(r, _domainTokens) }));
+  let scored = results.map(r => ({ ...r, score: scoreResult(r, termsFor(r), qLang, normQuery) + domainBoostForResult(r, _domainTokens) }));
   if (_domainTokens.tokens.length || _domainTokens.explicitDomains.length) {
     if (_semantic.length) {
       const extraTerms = _semantic.flatMap(s=> s.split(/\s+/));
@@ -1984,6 +1996,7 @@ async function handleSearch(body, req) {
     time: timeData || undefined,
     currency: currencyData || undefined,
     meta: {
+      ...engineInfo(),
       providers_used: providersReported,
       providers_attempted: [...new Set([...(searchResult.providersAttempted || []), ...(altAttempted || [])])],
       // v125: provayder-spesifik diaqnostika (hazırda yalnız ru-news: hər feed üçün status/ms/xəta)
