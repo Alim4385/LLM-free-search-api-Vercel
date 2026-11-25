@@ -2115,7 +2115,141 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
       const doms = (j.results || []).map((r) => r.domain || "");
       assert("v128: inteqrasiya — Rusiya ilə əlaqəsiz Amerika ana səhifələri nəticələrdə YOXDUR", !doms.some((d) => /abcnews|usatoday|huffpost|foxnews|yahoo/.test(d)), JSON.stringify(doms));
       assert("v128: inteqrasiya — ru-news xəbərləri qalır (≥2)", (j.results || []).filter((r) => r.source === "ru-news" || (r.providers || []).includes("ru-news")).length >= 2, JSON.stringify((j.results || []).map((r) => r.source + " " + r.url)));
-      assert("v128: inteqrasiya — meta.engine_version var", m.engine_version === "v128", JSON.stringify([m.engine_version, m.commit]));
+      assert("v128: inteqrasiya — meta.engine_version var", m.engine_version === (await import("../lib/version.js")).ENGINE_VERSION, JSON.stringify([m.engine_version, m.commit]));
+    } finally {
+      globalThis.fetch = realFetch;
+    }
+  }
+
+  // === v129: DEBUG TRACE — "namizəd X niyə nəticədə yoxdur?" sualına bir sorğuda cavab ===
+  {
+    const { createTrace } = await import("../lib/trace.js");
+    const tr = createTrace();
+    const mk = (u, o = {}) => ({ url: u, source: "bing-rss", providers: ["bing-rss"], score: 5, ...o });
+    const raw = [mk("https://a.test/1"), mk("https://b.test/2"), mk("https://c.test/3"), mk("https://d.test/4", { source: "ru-news" })];
+    tr.raw(raw);
+    tr.zero("https://b.test/2", "topical_term_missing_v128");
+    tr.scores(raw.map((r) => (r.url.includes("b.test") ? { ...r, score: 0 } : r)));
+    tr.snap("min_score", [raw[0], raw[2], raw[3]], "score<1.5");
+    tr.snap("diversify", [raw[0], raw[3]], "domain diversity");
+    tr.snap("native_quota", [raw[0], raw[3], raw[2]], "native quota");  // c.test geri qayıdır (revived)
+    tr.drop("https://d.test/4", "fetch_loop", "boilerplate-only page");
+    tr.final([raw[0]]);
+    const out = tr.toJSON({ lang: "ru" });
+    const by = Object.fromEntries(out.candidates.map((c) => [c.url, c]));
+    assert("v129: trace — kept namizəd rank alır", by["https://a.test/1"].status === "kept" && by["https://a.test/1"].rank === 1);
+    assert("v129: trace — snap düşənin mərhələsini və səbəbini yazır, zero səbəbi qatılır", by["https://b.test/2"].status === "dropped" && by["https://b.test/2"].stage === "min_score" && /zero:topical_term_missing_v128/.test(by["https://b.test/2"].why), JSON.stringify(by["https://b.test/2"]));
+    assert("v129: trace — geri qayıdan namizəd 'revived' işarələnir, sonra final-da kept", by["https://c.test/3"].status === "dropped" && by["https://c.test/3"].stage === "unknown_cut" && by["https://c.test/3"].revived === "native_quota", JSON.stringify(by["https://c.test/3"]));
+    assert("v129: trace — drop() fetch dövrü səbəbini saxlayır", by["https://d.test/4"].stage === "fetch_loop" && by["https://d.test/4"].why === "boilerplate-only page");
+    assert("v129: trace — mərhələ siyahısı in/out/dropped/revived sayır", out.stages.some((s) => s.stage === "min_score" && s.in === 4 && s.out === 3 && s.dropped === 1) && out.stages.some((s) => s.stage === "native_quota" && s.revived === 1), JSON.stringify(out.stages));
+    assert("v129: trace — extra sahələr toJSON-a qatılır, say düzgündür", out.lang === "ru" && out.candidates_total === 4 && out.dropped_total === 3);
+    const big = createTrace();
+    const many = Array.from({ length: 150 }, (_, i) => mk(`https://x.test/${"p".repeat(120)}${i}`, { score: i }));
+    big.raw(many); big.final(many.slice(0, 5));
+    const bj = big.toJSON({}, 40);
+    assert("v129: trace — namizəd sayı məhdudlaşdırılır, uzun URL qısaldılır, ümumi say saxlanılır", bj.candidates.length === 40 && bj.candidates_total === 150 && bj.candidates.every((c) => c.url.length <= 110), `${bj.candidates.length}/${bj.candidates_total}`);
+
+    // scoreResult explain
+    const exA = {};
+    const sA = scoreResult({ title: "ABC News - Breaking News, Latest News", url: "https://abcnews.com/", snippet: "Latest news and videos", content: "Latest news", source: "bing-rss", published_at: new Date().toISOString() }, ["росс", "latest", "news", "russia"], "ru", "последние новости России", exA);
+    assert("v129: explain — 0 xalın səbəbi yazılır (topical_term_missing_v128)", sA === 0 && exA.zero === "topical_term_missing_v128", JSON.stringify([sA, exA]));
+    const exB = {};
+    const sB = scoreResult({ title: "Instagram", url: "https://www.instagram.com/x/", snippet: "photos", content: "", source: "yahoo" }, ["foto"], "az", "foto", exB);
+    assert("v129: explain — junk domen səbəbi", sB === 0 && exB.zero === "junk_domain_or_auth_root", JSON.stringify(exB));
+    const exC = {};
+    const sC = scoreResult({ title: "Россия и Китай подписали соглашение", url: "https://www.kommersant.ru/doc/1", snippet: "Москва и Пекин договорились", content: "Россия и Китай", source: "ru-news", published_at: new Date().toISOString() }, ["росс"], "ru", "последние новости России", exC);
+    assert("v129: explain — müsbət xalda zero yazılmır", sC > 0 && exC.zero === undefined, JSON.stringify([sC, exC]));
+    const sNoEx = scoreResult({ title: "ABC News", url: "https://abcnews.com/", snippet: "Latest news", content: "", source: "bing-rss" }, ["росс", "latest", "news", "russia"], "ru", "последние новости России");
+    assert("v129: explain verilməyibsə scoreResult işləyir (exception yoxdur)", sNoEx === 0);
+
+    // MCP sxemi
+    const { POST: mcpPost } = await import("../app/api/mcp/route.js");
+    const listRes = await mcpPost(new Request("http://localhost/api/mcp", { method: "POST", body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list" }) }));
+    const listJ = await listRes.json();
+    const ws = (listJ.result.tools || []).find((t) => t.name === "web_search");
+    assert("v129: MCP web_search sxemində debug (boolean) var", ws && ws.inputSchema.properties.debug && ws.inputSchema.properties.debug.type === "boolean", JSON.stringify(ws && ws.inputSchema.properties.debug));
+  }
+
+  // === v129: INTEQRASİYA — #debug / debug=1 / MCP; GET n; cutoff (gecikən provayder) ===
+  {
+    const realFetch = globalThis.fetch;
+    try {
+      const nowMs = Date.now();
+      const hrs = (h) => new Date(nowMs - h * 3600000).toUTCString();
+      const feedXml = (host, items) => `<?xml version="1.0"?><rss version="2.0"><channel>${items.map(([t, d, h], i) => `<item><title>${t}</title><link>https://${host}/news/${i}</link><description>${d}</description><pubDate>${hrs(h)}</pubDate></item>`).join("")}</channel></rss>`;
+      const FEEDS = {
+        "ria.ru": [["Путин провёл встречу с главой МИД России", "Президент России обсудил внешнюю политику страны", 2], ["В России заработал новый закон", "Закон вступил в силу по всей России", 5]],
+        "kommersant.ru": [["Россия и Китай подписали соглашение о поставках газа", "Москва и Пекин договорились об увеличении поставок", 3]],
+        "vedomosti.ru": [["Российские банки нарастили прибыль", "Прибыль банков России выросла за октябрь", 4]]
+      };
+      const US = [["ABC News - последние новости, последние новости и видео", "abcnews.com/", "Загрузите приложение ABC News. Будьте в курсе последних новостей с помощью видео.", 1], ["Fox News - Последние новости | Фотографии и новостные видео", "foxnews.com/", "Последние текущие новости: США, Мир, Развлечения, Здоровье, Бизнес, Технологии.", 4]];
+      const ruPage = "<p>Подробности события. В России сообщили о новых решениях властей, экспертам предстоит оценить последствия для экономики страны и регионов. Россия продолжает обсуждение ключевых вопросов внутренней и внешней политики.</p>".repeat(3);
+      const usPage = "<p>Парад в честь Дня благодарения начался как процессия длиной в два квартала, запрошенная сотрудниками универмага в 1924 году. С тех пор парад привлек миллионы зрителей и десятки миллионов телезрителей и стал для многих семей началом праздничного сезона.</p>".repeat(3);
+      let delays = { rss: 0, news: 0 };
+      const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+      globalThis.fetch = async (url, init) => {
+        const u = new URL(String(url));
+        const host = u.hostname.replace(/^www\./, "");
+        if (host === "translate.google.com") {
+          const pp = new URLSearchParams(String((init && init.body) || ""));
+          const q = pp.get("q") || "";
+          const out = (pp.get("tl") === "en" && /последние новости России/.test(q)) ? "latest news from Russia" : q;
+          return new Response(JSON.stringify([[[out, q, null, null, 1]], null, pp.get("sl") || "ru"]), { status: 200, headers: { "content-type": "application/json" } });
+        }
+        if (FEEDS[host] && /rss/i.test(u.pathname)) return new Response(feedXml(host, FEEDS[host]), { status: 200 });
+        if (host.endsWith("bing.com") && String(url).includes("format=rss")) {
+          const isNews = u.pathname.startsWith("/news");
+          const d = isNews ? delays.news : delays.rss;
+          if (d) await sleep(d);
+          return new Response(`<?xml version="1.0"?><rss version="2.0"><channel>${US.map(([t, l, dd, h]) => `<item><title>${t}</title><link>https://${l}</link><description>${dd}</description><pubDate>${hrs(h)}</pubDate></item>`).join("")}</channel></rss>`, { status: 200 });
+        }
+        if (/^(ria|kommersant|vedomosti)\./.test(host)) return new Response(`<html><head><title>Новости</title></head><body><article>${ruPage}</article></body></html>`, { status: 200, headers: { "content-type": "text/html; charset=utf-8" } });
+        if (/abcnews|foxnews/.test(host)) return new Response(`<html><head><title>News</title></head><body><article>${usPage}</article></body></html>`, { status: 200, headers: { "content-type": "text/html" } });
+        throw new Error("offline");
+      };
+      const route = await import("../app/api/search/route.js");
+      const post = async (bodyObj) => { const r = await route.POST(new Request("http://localhost/api/search", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(bodyObj) })); return r.json(); };
+
+      // 1) #debug
+      const j1 = await post({ query: "последние новости России #debug", lang: "ru", max_results: 5 });
+      const d1 = (j1.meta || {}).debug;
+      assert("v129: #debug işarəsi sorğudan çıxarılır", j1.query === "последние новости России", JSON.stringify(j1.query));
+      assert("v129: #debug → meta.debug var", !!d1 && Array.isArray(d1.stages) && Array.isArray(d1.candidates), JSON.stringify(Object.keys(d1 || {})));
+      assert("v129: debug.terms yerli və anchor terminlərini göstərir", d1 && d1.terms.native_terms.includes("росс") && d1.terms.query_terms.includes("news") && d1.terms.anchor_query === "latest news from Russia", JSON.stringify(d1 && d1.terms));
+      assert("v129: debug.providers['ru-news'] status=ok, n>0", d1 && d1.providers["ru-news"] && d1.providers["ru-news"].status === "ok" && d1.providers["ru-news"].n > 0, JSON.stringify(d1 && d1.providers));
+      const abc = d1 && d1.candidates.find((c) => /abcnews\.com/.test(c.url));
+      assert("v129: debug — ABC News 'dropped', mərhələ və dəqiq 0-səbəbi ilə", abc && abc.status === "dropped" && abc.stage === "min_score_1.5" && abc.zero === "topical_term_missing_v128", JSON.stringify(abc));
+      assert("v129: debug — kept namizədlər rank alır (ru-news)", d1 && d1.candidates.some((c) => c.status === "kept" && c.src === "ru-news" && c.rank >= 1));
+      assert("v129: debug — mərhələlərdə raw_candidates və min_score_1.5 var", d1 && d1.stages.some((s) => s.stage === "raw_candidates") && d1.stages.some((s) => s.stage === "min_score_1.5"));
+      assert("v129: debug — engine və degraded_stages daxildir", d1 && d1.engine && d1.engine.engine_version && Array.isArray(d1.degraded_stages));
+
+      // 2) debug yoxdursa meta.debug YOXDUR
+      const j2 = await post({ query: "последние новости России", lang: "ru", max_results: 5 });
+      assert("v129: debug istənilməyibsə meta.debug yoxdur", !(j2.meta || {}).debug, JSON.stringify(Object.keys(j2.meta || {})));
+
+      // 3) body.debug=true
+      const j3 = await post({ query: "последние новости России", lang: "ru", max_results: 5, debug: true });
+      assert("v129: body.debug=true də trace verir", !!((j3.meta || {}).debug), "");
+
+      // 4) GET ?n=2 (MCP n göndərir, əvvəl oxunmurdu) + debug=1
+      const gRes = await route.GET(new Request("http://localhost/api/search?q=" + encodeURIComponent("последние новости России") + "&lang=ru&n=2&no_cache=1&debug=1", { method: "GET" }));
+      const gj = await gRes.json();
+      assert("v129: GET n=2 → ən çox 2 nəticə (MCP max_results artıq oxunur)", (gj.results || []).length <= 2 && (gj.results || []).length >= 1, String((gj.results || []).length));
+
+      // 5) MCP tools/call debug:true → trace JSON mətnində
+      const { POST: mcpPost2 } = await import("../app/api/mcp/route.js");
+      const mRes = await mcpPost2(new Request("http://localhost/api/mcp", { method: "POST", body: JSON.stringify({ jsonrpc: "2.0", id: 2, method: "tools/call", params: { name: "web_search", arguments: { query: "последние новости России", lang: "ru", max_results: 3, debug: true } } }) }));
+      const mj = await mRes.json();
+      const mdata = JSON.parse(mj.result.content[0].text);
+      assert("v129: MCP web_search debug:true → meta.debug, max_results=3 hörmət olunur", !!(mdata.meta && mdata.meta.debug) && (mdata.results || []).length <= 3, JSON.stringify(Object.keys((mdata.meta || {}))));
+
+      // 6) cutoff: bing-rss ~1300ms (straggler qaydasını işə salır), bing-news ~3500ms (cutoff olur)
+      delays = { rss: 1300, news: 3500 };
+      const t6 = Date.now();
+      const j6 = await post({ query: "последние новости России #debug", lang: "ru", max_results: 5 });
+      const p6 = (((j6.meta || {}).debug || {}).providers) || {};
+      assert("v129: gecikən provayder 'cutoff' + cutoff_after_ms (≥1100) işarələnir", p6["bing-news"] && p6["bing-news"].status === "cutoff" && p6["bing-news"].cutoff_after_ms >= 1000, JSON.stringify(p6["bing-news"]) + ` took ${Date.now() - t6}ms`);
+      assert("v129: cutoff provayderi gözlənilməyib (cavab 3.5 s-dən tez gəlib)", Date.now() - t6 < 3300, `${Date.now() - t6}ms`);
     } finally {
       globalThis.fetch = realFetch;
     }

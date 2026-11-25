@@ -14,6 +14,7 @@ const TOOLS = [
         max_results: { type: "integer", minimum: 1, maximum: 10, default: 5 },
         lang: { type: "string", enum: ["auto", "az", "tr", "en", "ru"], default: "auto" },
         freshness: { type: "string", enum: ["day", "week", "month", "year"] },
+        debug: { type: "boolean", description: "Include meta.debug: per-provider status and per-candidate drop reasons (stage + why). Same as appending #debug to the query." },
       },
       required: ["query"],
     },
@@ -66,6 +67,7 @@ export async function POST(req) {
       if (args.max_results) sp.set("n", String(args.max_results));
       if (args.lang && args.lang !== "auto") sp.set("lang", String(args.lang));
       if (args.freshness) sp.set("freshness", String(args.freshness));
+      if (args.debug === true) sp.set("debug", "1");
       const res = await searchGet(new Request(`http://localhost/api/search?${sp.toString()}`, { method: "GET" }));
       const data = await res.json();
       return ok(id, { content: [{ type: "text", text: JSON.stringify(data, null, 2) }], isError: !res.ok });
