@@ -2056,6 +2056,7 @@ async function handleSearch(body, req) {
         lang: qLang,
         terms: { query_terms: qTerms, native_terms: nativeTerms, anchor_query: searchResult.anchorQuery || null, rewritten_query: searchResult.rewrittenQuery || null, translate_input: searchResult.translateInput || null },
         providers: searchResult.providerStats || {},
+        search_timing: searchResult.searchTiming || {},
         degraded_stages: degradedStages
       }) } : {}),
       ...(debug ? { provider_errors_raw: Object.fromEntries(Object.entries(errors).map(([k, v]) => [k, String(v).slice(0, 120)])) } : {}),
