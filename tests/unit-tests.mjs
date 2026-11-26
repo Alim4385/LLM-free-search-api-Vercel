@@ -2254,6 +2254,55 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
       globalThis.fetch = realFetch;
     }
   }
+
+  // === v130: provayder pəncərəsi büdcə sıxılmasında; ru-news sürəti; abort təsnifatı; rus sayt UI zibili; trace başlıqları ===
+  {
+    const { wave1Limit } = await import("../lib/search.js");
+    assert("v130: büdcə sıxılanda (left=895) provayderlərə ən azı 1600 ms verilir (əvvəl 595 idi)", wave1Limit(895) === 1600, String(wave1Limit(895)));
+    assert("v130: kifayət qədər vaxt varsa left-300 istifadə olunur", wave1Limit(3000) === 2700);
+    assert("v130: yuxarı hədd 3400", wave1Limit(9000) === 3400);
+    assert("v130: mənfi/NaN büdcədə də min qaytarılır", wave1Limit(-500) === 1600 && wave1Limit(NaN) === 1600 && wave1Limit(undefined) === 1600);
+
+    // ru-news: defolt minFeeds=2 — 2 sürətli feed hazır olanda yavaşı gözləmir
+    const realFetch = globalThis.fetch;
+    try {
+      const xmlOf = (host) => `<?xml version="1.0"?><rss version="2.0"><channel><item><title>Россия: новости (${host})</title><link>https://${host}/a</link><description>Россия</description><pubDate>Mon, 23 Nov 2026 10:00:00 +0300</pubDate></item></channel></rss>`;
+      globalThis.fetch = async (url, init) => {
+        const host = new URL(String(url)).hostname;
+        if (host.startsWith("slowdef")) return new Promise((res) => setTimeout(() => res(new Response(xmlOf(host), { status: 200 })), 900));
+        if (host.startsWith("hangabort")) return new Promise((_, rej) => init.signal.addEventListener("abort", () => rej(init.signal.reason || new Error("aborted"))));
+        return new Response(xmlOf(host), { status: 200 });
+      };
+      const dd = {}; const tt = Date.now();
+      const rr = await searchRuNews("Россия", 6, undefined, ["https://def-a.test/rss", "https://def-b.test/rss", "https://slowdef.test/rss"], dd, { feedTimeoutMs: 3000 });
+      assert("v130: defoltlarla 2 feed hazır olanda qayıdır (early=enough, <400ms)", dd.early === "enough" && Date.now() - tt < 400 && rr.length > 0, `${dd.early} ${Date.now() - tt}ms`);
+
+      // mərhələ bağlananda (signal abort) feed xətası "timeout" yox, "aborted_by_stage_cutoff"
+      const ac = new AbortController();
+      const d2 = {};
+      setTimeout(() => ac.abort(), 120);
+      await searchRuNews("Россия", 6, ac.signal, ["https://ok-abort.test/rss", "https://hangabort.test/rss"], d2, { feedTimeoutMs: 3000, graceMs: 5000, overallMs: 1500, minFeeds: 3 }).catch(() => null);
+      assert("v130: stage abort feed xətası 'aborted_by_stage_cutoff' kimi yazılır ('timeout' deyil)", d2.feeds["hangabort.test"] && d2.feeds["hangabort.test"].error === "aborted_by_stage_cutoff", JSON.stringify(d2.feeds));
+    } finally {
+      globalThis.fetch = realFetch;
+    }
+
+    // rus sayt UI zibili (ria.ru) təmizlənir, real xəbər cümlələri qalır
+    const riaSample = "ВС России за ночь уничтожили 33 украинских беспилотника над регионами страны.\nМинистерство обороны сообщило, что дроны перехвачены над Брянской и Курской областями.\nСсылка для восстановления пароля отправлена на адрес. Введите новый пароль. Срок действия ссылки истек.\nЧтобы воспользоваться формой обратной связи, Вы были заблокированы за нарушение правил комментирования. Срок блокировки: 7 дней. Если Вы не согласны с блокировкой, воспользуйтесь формой обратной связи.\nПодпишитесь на наш канал, чтобы не пропустить новости.";
+    const riaClean = cleanContent(riaSample);
+    assert("v130: ria.ru UI zibili (parol bərpası, şərh qaydaları, abunə) silinir", !/пароль|пароля|блокиров|комментирования|подпишитесь|обратной связи/i.test(riaClean), JSON.stringify(riaClean));
+    assert("v130: ria.ru real xəbər cümlələri qalır", /33 украинских беспилотника/.test(riaClean) && /Министерство обороны сообщило/.test(riaClean), JSON.stringify(riaClean));
+    const pw = cleanContent("Закон предусматривает ограничение пароля для временных сотрудников. Пароль изменен не будет, сообщили в министерстве.");
+    assert("v130: parol haqqında real xəbər cümləsi silinmir", /ограничение пароля/.test(pw) && /Пароль изменен не будет/.test(pw), JSON.stringify(pw));
+
+    // trace başlıqları
+    const { createTrace: ct2 } = await import("../lib/trace.js");
+    const tr2 = ct2();
+    tr2.raw([{ url: "https://x.test/1", title: "Очень   длинный заголовок ".repeat(10), source: "bing-rss" }]);
+    tr2.final([{ url: "https://x.test/1", title: "x", score: 1 }]);
+    const tj = tr2.toJSON({});
+    assert("v130: trace namizədi başlıq (t) saxlayır, boşluqlar yığılır, 70 simvola kəsilir", tj.candidates[0].t && tj.candidates[0].t.length <= 70 && !/\s{2,}/.test(tj.candidates[0].t), JSON.stringify(tj.candidates[0].t));
+  }
 }
 
 console.log(`\nUNIT NƏTİCƏ: ${pass} keçdi, ${fail} uğursuz`);
