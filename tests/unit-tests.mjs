@@ -13,7 +13,7 @@ import { readFileSync } from "node:fs";
 import { protectTokens, restoreTokens, protectWithTerms, prepareTranslateInput, brandTermsFromResult } from "../lib/translate.js";
 import { detectConflicts, parseNum } from "../lib/conflict.js";
 import { isChallengePage } from "../lib/extract.js";
-import { applyFinalLimits, filterByFreshness, dropJunkDomains, promoteNativeNews } from "../lib/finalize.js";
+import { applyFinalLimits, filterByFreshness, dropJunkDomains, promoteNativeNews, dropStaleForRecency, RECENCY_CUE_RE } from "../lib/finalize.js";
 import { extractHydrationText } from "../lib/extract.js";
 import { wikiTitleFromUrl, cleanWikiQuery } from "../lib/wikilink.js";
 import { parseMaxResults, parseMaxChars, parseFormat, parseFreshness, parseExcludeDomains, parseLang } from "../lib/pipeline/params.js";
@@ -2302,6 +2302,50 @@ console.log("\n=== V17: DİLƏ GÖRƏ AXTARIŞ, QISA SÖZ TƏRCÜMƏSİ, TYPO/KA
     tr2.final([{ url: "https://x.test/1", title: "x", score: 1 }]);
     const tj = tr2.toJSON({});
     assert("v130: trace namizədi başlıq (t) saxlayır, boşluqlar yığılır, 70 simvola kəsilir", tj.candidates[0].t && tj.candidates[0].t.length <= 70 && !/\s{2,}/.test(tj.candidates[0].t), JSON.stringify(tj.candidates[0].t));
+  }
+
+  // === v131: "latest" sorğusunda köhnə doldurucu nəticə atılır; ria.ru AI-xülasə etiketi; INTEQRASİYA ===
+  {
+    const NOW = Date.parse("2026-11-26T12:00:00Z");
+    const daysAgoIso = (d) => new Date(NOW - d * 86400000).toISOString();
+    const R = (url, d) => ({ url, score: 1, published_at: d === null ? undefined : daysAgoIso(d) });
+    const mix = [R("https://fresh.test/1", 0.2), R("https://old.test/2", 1449), R("https://undated.test/3", null), R("https://mid.test/4", 200)];
+
+    const a = dropStaleForRecency(mix, "последние новости России", { now: NOW });
+    assert("v131: rusca 'последние' — 4 yaşlı atılır, təzə/tarixsiz/200 günlük qalır", a.dropped === 1 && a.results.length === 3 && !a.results.some((r) => r.url.includes("old.test")), JSON.stringify(a.results.map((r) => r.url)));
+    for (const q of ["son dakika haberleri İstanbul", "bugün haberleri", "latest news Moscow", "breaking news Russia", "Bakı son xəbərlər", "свежие новости"]) {
+      assert(`v131: təzəlik işarəsi tanınır (${q})`, RECENCY_CUE_RE.test(q) && dropStaleForRecency(mix, q, { now: NOW }).dropped === 1);
+    }
+    const noCue = dropStaleForRecency(mix, "история России XX век", { now: NOW });
+    assert("v131: təzəlik işarəsi yoxdursa köhnə nəticə SAXLANILIR", noCue.dropped === 0 && noCue.results.length === 4);
+    const onlyOld = [R("https://old.test/1", 800), R("https://old.test/2", 1200)];
+    const keepAll = dropStaleForRecency(onlyOld, "последние новости", { now: NOW });
+    assert("v131: hamısı köhnədirsə siyahı BOŞALMIR (dəyişmir)", keepAll.dropped === 0 && keepAll.results.length === 2);
+    const edge = dropStaleForRecency([R("https://a.test/1", 364), R("https://b.test/2", 366), R("https://c.test/3", 1)], "latest news", { now: NOW });
+    assert("v131: hədd 365 gün (364 qalır, 366 atılır)", edge.results.some((r) => r.url.includes("a.test")) && !edge.results.some((r) => r.url.includes("b.test")));
+    const input = mix.slice();
+    dropStaleForRecency(input, "latest news", { now: NOW });
+    assert("v131: giriş massivi dəyişmir", input.length === 4 && input[1].url.includes("old.test"));
+    assert("v131: boş/null giriş", dropStaleForRecency([], "latest").results.length === 0 && dropStaleForRecency(null, "latest").dropped === 0);
+
+    // ria.ru AI-xülasə etiketi
+    const riaLbl = cleanContent("Россия будет содействовать социальной адаптации участников СВОКраткий пересказ от РИА ИИРоссия будет содействовать ресоциализации участников специальной военной операции.");
+    assert("v131: 'Краткий пересказ от РИА ИИ' etiketi silinir", !/пересказ|РИА ИИ/i.test(riaLbl), JSON.stringify(riaLbl));
+    assert("v131: etiketdən sonrakı real mətn qalır", /ресоциализации участников специальной военной операции/.test(riaLbl), JSON.stringify(riaLbl));
+
+    // INTEQRASİYA (AYRI PROSES): gate_relaxed/retry ilə qaytarılan 2022 məqaləsi (canlı trace) atılır
+    {
+      const { execFileSync } = await import("node:child_process");
+      const simOut = execFileSync(process.execPath, ["tests/sim-stale.mjs"], { cwd: new URL("..", import.meta.url).pathname, encoding: "utf8", timeout: 60000, stdio: ["ignore", "pipe", "ignore"] });
+      const simLine = simOut.split("\n").find((l) => l.startsWith("SIM_RESULT "));
+      const sim = JSON.parse(simLine.slice("SIM_RESULT ".length));
+      assert("v131: inteqrasiya — handler 200", sim.status === 200);
+      assert("v131: inteqrasiya — 2022-ci il CBC məqaləsi 'latest' sorğusunda nəticədə YOXDUR", !sim.urls.some((u) => /cbc\.ca/.test(u)), JSON.stringify(sim.urls));
+      assert("v131: inteqrasiya — təzə ru-news xəbəri qalır", sim.urls.some((u) => /ria\.ru/.test(u)), JSON.stringify(sim.urls));
+      assert("v131: inteqrasiya — degraded_stages-də stale_dropped", sim.degraded.includes("stale_dropped"), JSON.stringify(sim.degraded));
+      const cbc = sim.candidates.find((c) => /cbc\.ca/.test(c.url));
+      assert("v131: inteqrasiya — trace: CBC 'stale_for_recency_query' mərhələsində, səbəbi ilə atılıb", cbc && cbc.status === "dropped" && cbc.stage === "stale_for_recency_query" && /365 days/.test(cbc.why || ""), JSON.stringify(cbc));
+    }
   }
 }
 

@@ -21,7 +21,7 @@ import { leadAnswerSentence } from "../../../lib/rank.js";
 import { isAzOfficialHost, classifyType, officialBoost, wantsFresh, sameDayCue, newsTrustBoost, AZ_NEWS_TRUSTED, AZ_FILM_TRUSTED, howtoTrustBoost, isHowtoQuery, isWatchQuery, expandSynonyms } from "../../../lib/router.js";
 import { scoreResult, diversifyByDomain, dedupeNearDuplicates, extractQuotedPhrases, containsPhrase, isSpamDomain, hostMatches, computeConfidence, isNewsQuery, looksLikeGibberish } from "../../../lib/score.js";
 import { extractDomainTokens, domainBoostForResult, semanticTerms } from "../../../lib/domainDetector.js";
-import { applyFinalLimits, filterByFreshness, dropJunkDomains, promoteNativeNews } from "../../../lib/finalize.js";
+import { applyFinalLimits, filterByFreshness, dropJunkDomains, promoteNativeNews, dropStaleForRecency } from "../../../lib/finalize.js";
 import { reconcilePubDate } from "../../../lib/textdate.js";
 import { decodeEntities } from "../../../lib/entities.js";
 import { engineInfo } from "../../../lib/version.js";
@@ -1284,6 +1284,17 @@ async function handleSearch(body, req) {
   }
 
   trace?.snap("freshness_filter", finalResults, "outside freshness window / undated while >=2 dated");
+  // v131: "latest/последние" sorğusunda >1 il köhnə doldurucu nəticə (daha təzə varsa) atılır
+  if (newsQ && finalResults.length > 1) {
+    const st = dropStaleForRecency(finalResults, normQuery);
+    if (st.dropped) {
+      finalResults.length = 0;
+      finalResults.push(...st.results);
+      finalResults.forEach((r, i) => { r.id = i + 1; });
+      degradedStages.push("stale_dropped");
+    }
+  }
+  trace?.snap("stale_for_recency_query", finalResults, ">365 days old under a recency cue (fresher results exist)");
   // Səhifə tarixindən sonra köhnə mənbə cəzalandırılıbsa, sıralamanı yenilə və həddən aşağı düşənləri çıxar
   if (currentIntent && finalResults.length > 1) {
     finalResults.sort((a, b) => ((b.score ?? 0) - (a.score ?? 0)) || ((b.voteCount || 0) - (a.voteCount || 0)));
